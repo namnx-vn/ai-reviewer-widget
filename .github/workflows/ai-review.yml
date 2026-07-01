@@ -1,4 +1,4 @@
-name: AI Review
+name: 🤖 AI Code Review
 
 on:
   pull_request:
@@ -10,28 +10,40 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  issues: write
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   review:
+    name: AI Review
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      - name: Install
+        run: npm ci
 
-      - name: Run deterministic analysis
+      - name: Test
         run: npm test
 
-      - name: AI review
+      - name: Build
+        run: npm run build
+
+      - name: Review PR
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
-        run: |
-          echo "AI review worker goes here."
-          echo "Never expose AI_API_KEY to browser code."
+        run: npm run review:pr
