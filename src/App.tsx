@@ -1,35 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { reviewFiles } from "./review/reviewer";
 
-function App() {
-  const [count, setCount] = useState(0)
+import { ScoreCard } from "./components/ScoreCard";
+import { FindingCard } from "./components/FindingCard";
+
+const demoFiles = [
+  {
+    path: "src/remote/Checkout.tsx",
+
+    content: `
+      import Payment from "@remote/payment";
+
+      export function Checkout() {
+        console.log("checkout mounted");
+
+        return <Payment />;
+      }
+    `,
+  },
+
+  {
+    path: "src/utils/parser.ts",
+
+    content: `
+      export function parse(input: string) {
+        return eval(input);
+      }
+    `,
+  },
+];
+
+export default function App() {
+  const result = reviewFiles(demoFiles);
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <main>
+      <header>
+        <p>AI ENGINEERING PLATFORM</p>
 
-export default App
+        <h1>
+          Review code with
+          <br />
+          architectural context.
+        </h1>
+
+        <p>
+          Deterministic AST analysis +
+          architecture policies +
+          AI reasoning.
+        </p>
+      </header>
+
+      <ScoreCard score={result.score} />
+
+      <section>
+        <h2>Findings</h2>
+
+        {result.findings.map((finding) => (
+          <FindingCard
+            key={finding.id}
+            finding={finding}
+          />
+        ))}
+      </section>
+    </main>
+  );
+}
