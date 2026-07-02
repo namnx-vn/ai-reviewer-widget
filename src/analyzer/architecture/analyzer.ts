@@ -11,9 +11,7 @@ export function analyzeArchitecture(
   const lines = source.split(/\r?\n/);
 
   lines.forEach((line, index) => {
-    const match = line.match(
-      /(?:from|import)\s+["']([^"']+)["']/,
-    );
+    const match = line.match(/(?:from|import)\s+["']([^"']+)["']/);
 
     if (!match) {
       return;
@@ -26,27 +24,23 @@ export function analyzeArchitecture(
         continue;
       }
 
-      findings.push({
+      const finding: ReviewFinding = {
         id: `${rule.id}:${file}:${index + 1}`,
-
         ruleId: rule.id,
-
         title: "Micro-Frontend boundary violation",
-
         message: rule.description,
-
         severity: "high",
-
         source: "architecture",
-
         location: {
           file,
           line: index + 1,
         },
-
         suggestion:
           "Move the dependency behind a shared package or explicit domain contract.",
-      });
+        confidence: 0.9,
+      };
+
+      findings.push(finding);
     }
   });
 

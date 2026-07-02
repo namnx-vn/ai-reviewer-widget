@@ -21,30 +21,24 @@ export const noConsoleRule: ASTRule = {
       return [];
     }
 
-    return [
-      {
-        id: `quality.no-console:${file}:${node.loc.start.line}`,
-
-        ruleId: "quality.no-console",
-
-        title: "Console logging detected",
-
-        message:
-          "Production code should use the application's structured logging mechanism.",
-
-        severity: "low",
-
-        source: "ast",
-
-        location: {
-          file,
-          line: node.loc.start.line,
-          column: node.loc.start.column,
-        },
-
-        suggestion:
-          "Replace console.log() with the project's logging abstraction.",
+    const item = {
+      id: `quality.no-console:${file}:${node.loc.start.line}`,
+      ruleId: "quality.no-console",
+      title: "Console logging detected",
+      message:
+        "Production code should use the application's structured logging mechanism.",
+      severity: "low",
+      confidence: "high",
+      source: "ast",
+      location: {
+        file,
+        line: node.loc.start.line,
+        column: node.loc.start.column,
       },
-    ];
+      suggestion:
+        "Replace console.log() with the project's logging abstraction.",
+    };
+
+    return [item as unknown as ReviewFinding];
   },
 };

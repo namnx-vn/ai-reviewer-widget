@@ -15,30 +15,30 @@ export const noEvalRule: ASTRule = {
       return [];
     }
 
-    return [
-      {
-        id: `security.no-eval:${file}:${node.loc.start.line}`,
+    const item = {
+      id: `security.no-eval:${file}:${node.loc.start.line}`,
 
-        ruleId: "security.no-eval",
+      ruleId: "security.no-eval",
 
-        title: "Unsafe eval() usage",
+      title: "Unsafe eval() usage",
 
-        message:
-          "eval() can execute arbitrary code and introduces code injection risks.",
+      message:
+        "eval() can execute arbitrary code and introduces code injection risks.",
 
-        severity: "critical",
+      severity: "critical",
 
-        source: "ast",
+      source: "ast",
 
-        location: {
-          file,
-          line: node.loc.start.line,
-          column: node.loc.start.column,
-        },
-
-        suggestion:
-          "Replace eval() with explicit parsing or a data-driven implementation.",
+      location: {
+        file,
+        line: node.loc.start.line,
+        column: node.loc.start.column,
       },
-    ];
+
+      suggestion:
+        "Replace eval() with explicit parsing or a data-driven implementation.",
+    };
+
+    return [item as unknown as ReviewFinding];
   },
 };
