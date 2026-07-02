@@ -14,12 +14,7 @@ export interface AIReviewResult {
 
     message: string;
 
-    severity:
-      | "critical"
-      | "high"
-      | "medium"
-      | "low"
-      | "info";
+    severity: "critical" | "high" | "medium" | "low" | "info";
 
     suggestion?: string;
 
@@ -28,7 +23,11 @@ export interface AIReviewResult {
 }
 
 export interface AIProvider {
-  review(
-    input: AIReviewInput,
-  ): Promise<AIReviewResult>;
+  review(input: AIReviewInput): Promise<AIReviewResult>;
+}
+
+export interface PromptCache {
+  get(key: string): Promise<AIReviewResult | null>;
+
+  set(key: string, value: AIReviewResult): Promise<void>;
 }
