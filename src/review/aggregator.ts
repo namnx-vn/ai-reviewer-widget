@@ -14,11 +14,8 @@ export function aggregateReview(
 ): ReviewResult {
   return {
     score: calculateScore(findings),
-
     findings,
-
     stats: calculateStats(findings),
-
     durationMs,
   };
 }
