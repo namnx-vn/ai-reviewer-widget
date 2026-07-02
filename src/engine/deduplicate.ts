@@ -1,27 +1,75 @@
-import { ReviewFinding } from "../review/types";
+import type {
+  ReviewFinding,
+} from "../review/types";
+
+function normalize(
+  value: string,
+): string {
+  return value
+    .toLowerCase()
+    .replace(
+      /[^a-z0-9]+/g,
+      " ",
+    )
+    .trim();
+}
+
+function isSameFinding(
+  a: ReviewFinding,
+  b: ReviewFinding,
+): boolean {
+  if (
+    a.location?.file !==
+    b.location?.file
+  ) {
+    return false;
+  }
+
+  if (
+    a.location?.line !==
+    b.location?.line
+  ) {
+    return false;
+  }
+
+  return (
+    normalize(a.title) ===
+    normalize(b.title)
+  );
+}
 
 export function deduplicateFindings(
   findings: ReviewFinding[],
-) {
-  const seen = new Set<string>();
+): ReviewFinding[] {
+  const result: ReviewFinding[] = [];
 
-  return findings.filter((finding) => {
-    const key = [
-      finding.location?.file,
+  for (const finding of findings) {
+    const duplicate =
+      result.find((existing) =>
+        isSameFinding(
+          existing,
+          finding,
+        ),
+      );
 
-      finding.location?.line,
-
-      finding.ruleId,
-
-      finding.title,
-    ].join(":");
-
-    if (seen.has(key)) {
-      return false;
+    if (!duplicate) {
+      result.push(finding);
+      continue;
     }
 
-    seen.add(key);
+    // Deterministic analysis wins.
+    if (
+      duplicate.source === "ai" &&
+      finding.source !== "ai"
+    ) {
+      const index =
+        result.indexOf(
+          duplicate,
+        );
 
-    return true;
-  });
+      result[index] = finding;
+    }
+  }
+
+  return result;
 }

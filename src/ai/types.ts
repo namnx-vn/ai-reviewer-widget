@@ -1,3 +1,7 @@
+import type {
+  Severity,
+} from "../review/types";
+
 export interface AIReviewInput {
   pullRequestTitle: string;
 
@@ -8,26 +12,30 @@ export interface AIReviewInput {
   deterministicFindings: string;
 }
 
+export interface AIReviewFinding {
+  title: string;
+
+  message: string;
+
+  severity: Severity;
+
+  suggestion?: string;
+
+  confidence: number;
+
+  file?: string;
+
+  line?: number;
+}
+
 export interface AIReviewResult {
-  findings: Array<{
-    title: string;
-
-    message: string;
-
-    severity: "critical" | "high" | "medium" | "low" | "info";
-
-    suggestion?: string;
-
-    confidence?: number;
-  }>;
+  findings: AIReviewFinding[];
 }
 
 export interface AIProvider {
-  review(input: AIReviewInput): Promise<AIReviewResult>;
-}
+  readonly name: string;
 
-export interface PromptCache {
-  get(key: string): Promise<AIReviewResult | null>;
-
-  set(key: string, value: AIReviewResult): Promise<void>;
+  review(
+    input: AIReviewInput,
+  ): Promise<AIReviewResult>;
 }

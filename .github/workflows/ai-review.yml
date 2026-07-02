@@ -10,7 +10,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  issues: write
+  checks: write
 
 concurrency:
   group: ai-review-${{ github.event.pull_request.number }}
@@ -31,8 +31,14 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Install
+      - name: Install dependencies
         run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
 
       - name: Test
         run: npm test
@@ -40,10 +46,11 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Review PR
+      - name: AI Review
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: npm run review:pr

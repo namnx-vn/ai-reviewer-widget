@@ -1,25 +1,56 @@
-import type { ReviewFinding } from "../review/types";
+import type {
+  ReviewFinding,
+  Severity,
+} from "../review/types";
+
+function downgrade(
+  severity: Severity,
+): Severity {
+  switch (severity) {
+    case "critical":
+      return "high";
+
+    case "high":
+      return "medium";
+
+    case "medium":
+      return "low";
+
+    case "low":
+      return "info";
+
+    case "info":
+      return "info";
+  }
+}
 
 export function adjustSeverity(
   findings: ReviewFinding[],
 ): ReviewFinding[] {
-  return findings.map((finding): ReviewFinding => {
-    if (
-      finding.source !== "ai"
-    ) {
+  return findings.map(
+    (
+      finding,
+    ): ReviewFinding => {
+      if (
+        finding.source !== "ai"
+      ) {
+        return finding;
+      }
+
+      if (
+        finding.confidence < 0.75
+      ) {
+        return {
+          ...finding,
+
+          severity:
+            downgrade(
+              finding.severity,
+            ),
+        };
+      }
+
       return finding;
-    }
-
-    if (
-      finding.severity === "critical" &&
-      (finding.confidence ?? 1) < 0.5
-    ) {
-      return {
-        ...finding,
-        severity: "medium",
-      };
-    }
-
-    return finding;
-  });
+    },
+  );
 }

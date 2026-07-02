@@ -1,7 +1,6 @@
-export type ReviewDecision =
-  | "PASS"
-  | "WARN"
-  | "FAIL";
+import type {
+  ReviewDecision,
+} from "../review/types";
 
 export function buildDecision(
   score: number,

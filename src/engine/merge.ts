@@ -1,11 +1,15 @@
-import type { ReviewFinding } from "../review/types";
+import type {
+  ReviewFinding,
+} from "../review/types";
 
 export function mergeFindings(
-  deterministicFindings: ReviewFinding[],
-  aiFindings: ReviewFinding[],
+  deterministic:
+    ReviewFinding[],
+  ai:
+    ReviewFinding[],
 ): ReviewFinding[] {
   return [
-    ...deterministicFindings,
-    ...aiFindings,
+    ...deterministic,
+    ...ai,
   ];
 }

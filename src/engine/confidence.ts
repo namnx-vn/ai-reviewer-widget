@@ -1,30 +1,26 @@
-import { ReviewFinding } from "../review/types";
+import type {
+  ReviewFinding,
+} from "../review/types";
 
 export function applyConfidence(
   findings: ReviewFinding[],
-) {
-  return findings.map((finding) => ({
-    ...finding,
+): ReviewFinding[] {
+  return findings.map(
+    (finding): ReviewFinding => ({
+      ...finding,
 
-    confidence:
-      finding.confidence ??
-      defaultConfidence(
-        finding.source,
-      ),
-  }));
-}
-
-function defaultConfidence(
-  source: ReviewFinding["source"],
-) {
-  switch (source) {
-    case "ast":
-      return 1;
-
-    case "architecture":
-      return 1;
-
-    case "ai":
-      return 0.75;
-  }
+      confidence:
+        finding.source === "ast" ||
+        finding.source ===
+          "architecture"
+          ? 1
+          : Math.min(
+              1,
+              Math.max(
+                0,
+                finding.confidence,
+              ),
+            ),
+    }),
+  );
 }

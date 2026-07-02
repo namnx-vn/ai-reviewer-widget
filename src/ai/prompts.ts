@@ -1,38 +1,76 @@
-import type { AIReviewInput } from "./types";
+import type {
+  AIReviewInput,
+} from "./types";
 
-export function buildReviewPrompt(input: AIReviewInput): string {
+export function buildReviewPrompt(
+  input: AIReviewInput,
+): string {
   return `
-You are a Staff Frontend Engineer and Software Architect.
+You are a Staff Frontend Engineer,
+Software Architect and Security Engineer.
 
-Review the following pull request.
+Review this GitHub Pull Request.
+
+Your goal is to identify REAL engineering problems.
+
+Do NOT report:
+
+- formatting preferences
+- naming preferences
+- subjective style choices
+- issues already clearly detected by deterministic rules
 
 Focus on:
 
 1. Correctness
-2. React architecture
-3. TypeScript design
+2. React behavior
+3. TypeScript correctness
 4. Security
 5. Performance
-6. Testing
+6. State management
 7. API contracts
-8. Micro-Frontend boundaries
-9. Maintainability
-10. Developer experience
+8. Testing
+9. Accessibility
+10. Micro-Frontend architecture
+11. Maintainability
 
-Do not report stylistic preferences as defects.
+Severity:
 
-Prioritize actionable findings.
+critical:
+Immediate security, data loss or production-breaking issue.
 
-Return JSON only:
+high:
+Major correctness, security or architecture problem.
+
+medium:
+Meaningful engineering problem.
+
+low:
+Minor issue worth addressing.
+
+info:
+Observation or improvement.
+
+Confidence:
+
+0.0 - 1.0
+
+Only report findings when confidence >= 0.65.
+
+Return JSON only.
+
+Schema:
 
 {
   "findings": [
     {
-      "title": "...",
-      "message": "...",
+      "title": "string",
+      "message": "string",
       "severity": "critical|high|medium|low|info",
-      "suggestion": "...",
-      "confidence": 0.0
+      "suggestion": "string",
+      "confidence": 0.0,
+      "file": "string",
+      "line": 1
     }
   ]
 }
@@ -43,7 +81,7 @@ ${input.pullRequestTitle}
 
 PR DESCRIPTION:
 
-${input.pullRequestDescription ?? ""}
+${input.pullRequestDescription ?? "N/A"}
 
 DETERMINISTIC FINDINGS:
 

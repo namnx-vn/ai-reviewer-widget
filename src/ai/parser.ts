@@ -2,74 +2,127 @@ import type {
   AIReviewResult,
 } from "./types";
 
-const severities = new Set([
-  "critical",
-  "high",
-  "medium",
-  "low",
-  "info",
-]);
+import type {
+  Severity,
+} from "../review/types";
+
+const severities =
+  new Set<Severity>([
+    "critical",
+    "high",
+    "medium",
+    "low",
+    "info",
+  ]);
+
+function isSeverity(
+  value: unknown,
+): value is Severity {
+  return (
+    typeof value === "string" &&
+    severities.has(
+      value as Severity,
+    )
+  );
+}
 
 export function parseAIResult(
-  value: unknown,
+  input: unknown,
 ): AIReviewResult {
   if (
-    !value ||
-    typeof value !== "object"
+    !input ||
+    typeof input !== "object"
   ) {
     return {
       findings: [],
     };
   }
 
-  const input =
-    value as Record<string, unknown>;
+  const value =
+    input as Record<string, unknown>;
 
-  if (!Array.isArray(input.findings)) {
+  if (!Array.isArray(value.findings)) {
     return {
       findings: [],
     };
   }
 
   return {
-    findings: input.findings
-      .filter(
-        (item): item is Record<string, unknown> =>
-          Boolean(
-            item &&
-              typeof item === "object",
-          ),
-      )
-      .map((item) => ({
-        title:
-          typeof item.title === "string"
-            ? item.title
-            : "AI finding",
+    findings: value.findings.flatMap(
+      (item) => {
+        if (
+          !item ||
+          typeof item !== "object"
+        ) {
+          return [];
+        }
 
-        message:
-          typeof item.message === "string"
-            ? item.message
-            : "",
+        const finding =
+          item as Record<
+            string,
+            unknown
+          >;
 
-        severity:
-          typeof item.severity === "string" &&
-          severities.has(item.severity)
-            ? item.severity as
-                AIReviewResult["findings"][number]["severity"]
-            : "info",
+        if (
+          typeof finding.title !==
+            "string" ||
+          typeof finding.message !==
+            "string" ||
+          !isSeverity(
+            finding.severity,
+          )
+        ) {
+          return [];
+        }
 
-        suggestion:
-          typeof item.suggestion === "string"
-            ? item.suggestion
-            : undefined,
-
-        confidence:
-          typeof item.confidence === "number"
+        const confidence =
+          typeof finding.confidence ===
+          "number"
             ? Math.min(
                 1,
-                Math.max(0, item.confidence),
+                Math.max(
+                  0,
+                  finding.confidence,
+                ),
               )
-            : undefined,
-      })),
+            : 0;
+
+        if (confidence < 0.65) {
+          return [];
+        }
+
+        return [
+          {
+            title: finding.title,
+
+            message:
+              finding.message,
+
+            severity:
+              finding.severity,
+
+            suggestion:
+              typeof finding.suggestion ===
+              "string"
+                ? finding.suggestion
+                : undefined,
+
+            confidence,
+
+            file:
+              typeof finding.file ===
+              "string"
+                ? finding.file
+                : undefined,
+
+            line:
+              typeof finding.line ===
+              "number"
+                ? finding.line
+                : undefined,
+          },
+        ];
+      },
+    ),
   };
 }

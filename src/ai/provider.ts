@@ -1,63 +1,27 @@
-import type { AIProvider, AIReviewInput, AIReviewResult } from "./types";
+import type {
+  AIProvider,
+  AIReviewInput,
+  AIReviewResult,
+} from "./types";
 
-import { buildReviewPrompt } from "./prompts";
+export interface AIProviderConfig {
+  apiKey: string;
 
-export class OpenAICompatibleProvider implements AIProvider {
+  model: string;
+
+  baseUrl: string;
+}
+
+export abstract class BaseAIProvider
+  implements AIProvider
+{
+  abstract readonly name: string;
+
   constructor(
-    private readonly config: {
-      baseUrl: string;
-      apiKey: string;
-      model: string;
-    },
+    protected readonly config: AIProviderConfig,
   ) {}
 
-  async review(input: AIReviewInput): Promise<AIReviewResult> {
-    const response = await fetch(`${this.config.baseUrl}/chat/completions`, {
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-
-        Authorization: `Bearer ${this.config.apiKey}`,
-      },
-
-      body: JSON.stringify({
-        model: this.config.model,
-
-        temperature: 0.1,
-
-        response_format: {
-          type: "json_object",
-        },
-
-        messages: [
-          {
-            role: "system",
-
-            content: "You are an expert software engineering reviewer.",
-          },
-
-          {
-            role: "user",
-
-            content: buildReviewPrompt(input),
-          },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`AI request failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    const content = data.choices?.[0]?.message?.content;
-
-    if (!content) {
-      throw new Error("AI returned empty response");
-    }
-
-    return JSON.parse(content) as AIReviewResult;
-  }
+  abstract review(
+    input: AIReviewInput,
+  ): Promise<AIReviewResult>;
 }

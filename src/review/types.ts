@@ -10,6 +10,11 @@ export type FindingSource =
   | "architecture"
   | "ai";
 
+export type ReviewDecision =
+  | "PASS"
+  | "WARN"
+  | "FAIL";
+
 export interface ReviewLocation {
   file: string;
   line?: number;
@@ -33,7 +38,7 @@ export interface ReviewFinding {
 
   suggestion?: string;
 
-  confidence?: number;
+  confidence: number;
 }
 
 export interface ReviewStats {
@@ -46,6 +51,8 @@ export interface ReviewStats {
 
 export interface ReviewResult {
   score: number;
+
+  decision: ReviewDecision;
 
   findings: ReviewFinding[];
 
