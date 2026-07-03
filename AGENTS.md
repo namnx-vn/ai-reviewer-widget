@@ -75,6 +75,84 @@ Use the package scripts in `package.json`:
 
 The system is layered: diff collection -> AST/architecture analysis -> review engine -> formatted findings. Keep those boundaries clear when adding new rules or providers.
 
+Before modifying code:
+
+1. Read `AGENTS.md`
+2. Read `package.json`
+3. Read the relevant plan
+4. Inspect existing implementation
+5. Implement
+6. Test
+7. Validate
+
+## Architecture
+
+[high-level architecture only]
+
+## Tech Stack
+
+[actual current stack only]
+
+## Engineering Rules
+
+- Strict TypeScript
+- No `any`
+- No unsafe casts
+- No disabled lint/typecheck
+- Tests required
+- Deterministic analysis before AI
+- AI output must be validated
+- Respect module boundaries
+
+## Implementation Roadmap
+
+Detailed plans are maintained in `/plans`.
+
+| Phase  | Status         | Plan                                                                                   |
+| ------ | -------------- | -------------------------------------------------------------------------------------- |
+| 1      | ✅ Complete    | [Phase 1](./plans/phase-1-foundation.md)                                               |
+| 2      | ✅ Complete    | [Phase 2](./plans/phase-2-ast-analysis.md)                                             |
+| 3.1    | ✅ Complete    | [3.1](./plans/phase-3/3.1-ai-review-core.md)                                           |
+| 3.2    | ✅ Complete    | [3.2](./plans/phase-3/3.2-architecture-intelligence.md)                                |
+| 3.3    | ✅ Complete    | [3.3](./plans/phase-3/3.3-ai-review-engine.md)                                         |
+| 3.4.1  | 🚧 In Progress | [React Rule Framework](./plans/phase-3/3.4-react-intelligence/3.4.1-rule-framework.md) |
+| 3.4.2  | 📌 Next        | [Hooks](./plans/phase-3/3.4-react-intelligence/3.4.2-hooks.md)                         |
+| 3.4.3  | ⏳ Planned     | [Rendering](./plans/phase-3/3.4-react-intelligence/3.4.3-rendering.md)                 |
+| 3.4.4  | ⏳ Planned     | [Performance](./plans/phase-3/3.4-react-intelligence/3.4.4-performance.md)             |
+| 3.4.5  | ⏳ Planned     | [State](./plans/phase-3/3.4-react-intelligence/3.4.5-state.md)                         |
+| 3.4.6  | ⏳ Planned     | [Context](./plans/phase-3/3.4-react-intelligence/3.4.6-context.md)                     |
+| 3.4.7  | ⏳ Planned     | [Accessibility](./plans/phase-3/3.4-react-intelligence/3.4.7-accessibility.md)         |
+| 3.4.8  | ⏳ Conditional | [React Query](./plans/phase-3/3.4-react-intelligence/3.4.8-react-query.md)             |
+| 3.4.9  | ⏳ Planned     | [Suspense](./plans/phase-3/3.4-react-intelligence/3.4.9-suspense.md)                   |
+| 3.4.10 | ⏳ Conditional | [Next.js](./plans/phase-3/3.4-react-intelligence/3.4.10-nextjs.md)                     |
+| 3.4.11 | ⏳ Planned     | [Testing](./plans/phase-3/3.4-react-intelligence/3.4.11-testing.md)                    |
+| 3.5    | ⏳ Planned     | [Micro Frontend](./plans/phase-3/3.5-micro-frontend-intelligence.md)                   |
+| 3.6    | ⏳ Planned     | [Security](./plans/phase-3/3.6-security-intelligence.md)                               |
+| 3.7    | ⏳ Planned     | [Performance](./plans/phase-3/3.7-performance-intelligence.md)                         |
+| 3.8    | ⏳ Planned     | [Plugin SDK](./plans/phase-3/3.8-plugin-sdk.md)                                        |
+
+## Plan Execution Rule
+
+When implementing a phase:
+
+1. Read `AGENTS.md`
+2. Open the corresponding plan
+3. Follow the plan
+4. Inspect current code
+5. Do not invent architecture
+6. Update the plan status when completed
+7. Run validation
+
+## Validation
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run build
+
+```
+
 # 1. Project Identity
 
 Project:
