@@ -6,15 +6,9 @@ import {
   findScopeForNode,
   type MutableScope,
 } from "./scope-utils";
-import type {
-  DeclarationInput,
-} from "./scope-utils";
-import type {
-  ScopeBuildResult,
-} from "./scope-builder";
-import type {
-  Reference,
-} from "./scope-types";
+import type { DeclarationInput } from "./scope-utils";
+import type { ScopeBuildResult } from "./scope-builder";
+import type { Reference } from "./scope-types";
 
 export interface ReferenceAnalysisResult {
   readonly references: readonly Reference[];
@@ -26,26 +20,17 @@ export function analyzeReferences(
   declarations: readonly DeclarationInput[],
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
 ): ReferenceAnalysisResult {
-  const declarationMap =
-    new Map<string, DeclarationInput[]>();
+  const declarationMap = new Map<string, DeclarationInput[]>();
 
   for (const declaration of declarations) {
-    const existing =
-      declarationMap.get(
-        declaration.name,
-      );
+    const existing = declarationMap.get(declaration.name);
 
     if (existing === undefined) {
-      declarationMap.set(
-        declaration.name,
-        [declaration],
-      );
+      declarationMap.set(declaration.name, [declaration]);
       continue;
     }
 
-    existing.push(
-      declaration,
-    );
+    existing.push(declaration);
   }
 
   const references: Reference[] = [];
@@ -69,18 +54,10 @@ function visitNode(
   currentScope: MutableScope,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
-  const scope =
-    findScopeForNode(
-      node,
-      currentScope,
-      scopeBuild,
-    );
+  const scope = findScopeForNode(node, currentScope, scopeBuild);
 
   switch (node.type) {
     case "ImportDeclaration":
@@ -140,13 +117,7 @@ function visitNode(
       return;
 
     case "Identifier":
-      visitIdentifier(
-        node,
-        scope,
-        declarationNodes,
-        declarations,
-        references,
-      );
+      visitIdentifier(node, scope, declarationNodes, declarations, references);
       return;
 
     case "AssignmentExpression":
@@ -229,10 +200,7 @@ function visitNode(
       return;
 
     case "JSXExpressionContainer":
-      if (
-        node.expression.type !==
-        "JSXEmptyExpression"
-      ) {
+      if (node.expression.type !== "JSXEmptyExpression") {
         visitNode(
           node.expression,
           scope,
@@ -274,10 +242,7 @@ function visitVariableDeclaration(
   scope: MutableScope,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
   for (const declaration of node.declarations) {
@@ -298,14 +263,10 @@ function visitFunctionDeclaration(
   node: TSESTree.FunctionDeclaration,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
-  const functionScope =
-    scopeBuild.scopeByNode.get(node);
+  const functionScope = scopeBuild.scopeByNode.get(node);
 
   if (functionScope === undefined) {
     return;
@@ -333,19 +294,13 @@ function visitFunctionDeclaration(
 }
 
 function visitFunctionExpression(
-  node:
-    | TSESTree.FunctionExpression
-    | TSESTree.ArrowFunctionExpression,
+  node: TSESTree.FunctionExpression | TSESTree.ArrowFunctionExpression,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
-  const functionScope =
-    scopeBuild.scopeByNode.get(node);
+  const functionScope = scopeBuild.scopeByNode.get(node);
 
   if (functionScope === undefined) {
     return;
@@ -377,10 +332,7 @@ function visitPatternDefaults(
   scope: MutableScope,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
   switch (node.type) {
@@ -423,10 +375,7 @@ function visitPatternDefaults(
 
     case "ObjectPattern":
       for (const property of node.properties) {
-        if (
-          property.type ===
-          "RestElement"
-        ) {
+        if (property.type === "RestElement") {
           visitPatternDefaults(
             property.argument,
             scope,
@@ -459,10 +408,7 @@ function visitClassDeclaration(
   scope: MutableScope,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
   if (node.superClass !== null) {
@@ -490,14 +436,10 @@ function visitClassExpression(
   node: TSESTree.ClassExpression,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
-  const scope =
-    scopeBuild.scopeByNode.get(node);
+  const scope = scopeBuild.scopeByNode.get(node);
 
   if (scope === undefined) {
     return;
@@ -529,10 +471,7 @@ function visitClassBody(
   scope: MutableScope,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
   for (const element of node.body) {
@@ -551,26 +490,14 @@ function visitIdentifier(
   node: TSESTree.Identifier,
   scope: MutableScope,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
-  if (
-    declarationNodes.has(node) ||
-    !isReferenceIdentifier(node)
-  ) {
+  if (declarationNodes.has(node) || !isReferenceIdentifier(node)) {
     return;
   }
 
-  addReference(
-    node,
-    scope,
-    false,
-    declarations,
-    references,
-  );
+  addReference(node, scope, false, declarations, references);
 }
 
 function visitAssignmentExpression(
@@ -578,10 +505,7 @@ function visitAssignmentExpression(
   scope: MutableScope,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
   visitWriteTarget(
@@ -608,32 +532,18 @@ function visitWriteTarget(
   scope: MutableScope,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
   if (node.type === "Identifier") {
-    if (
-      !declarationNodes.has(node)
-    ) {
-      addReference(
-        node,
-        scope,
-        true,
-        declarations,
-        references,
-      );
+    if (!declarationNodes.has(node)) {
+      addReference(node, scope, true, declarations, references);
     }
 
     return;
   }
 
-  if (
-    node.type ===
-      "MemberExpression"
-  ) {
+  if (node.type === "MemberExpression") {
     visitNode(
       node.object,
       scope,
@@ -657,10 +567,7 @@ function visitWriteTarget(
     return;
   }
 
-  if (
-    node.type === "ArrayPattern" ||
-    node.type === "ObjectPattern"
-  ) {
+  if (node.type === "ArrayPattern" || node.type === "ObjectPattern") {
     visitPatternWrite(
       node,
       scope,
@@ -673,32 +580,17 @@ function visitWriteTarget(
 }
 
 function visitPatternWrite(
-  node:
-    | TSESTree.ArrayPattern
-    | TSESTree.ObjectPattern
-    | TSESTree.AssignmentPattern
-    | TSESTree.RestElement,
+  node: TSESTree.Node,
   scope: MutableScope,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
   switch (node.type) {
     case "Identifier":
-      if (
-        !declarationNodes.has(node)
-      ) {
-        addReference(
-          node,
-          scope,
-          true,
-          declarations,
-          references,
-        );
+      if (!declarationNodes.has(node)) {
+        addReference(node, scope, true, declarations, references);
       }
       return;
 
@@ -750,10 +642,7 @@ function visitPatternWrite(
 
     case "ObjectPattern":
       for (const property of node.properties) {
-        if (
-          property.type ===
-          "RestElement"
-        ) {
+        if (property.type === "RestElement") {
           visitPatternWrite(
             property.argument,
             scope,
@@ -794,10 +683,7 @@ function visitMemberExpression(
   scope: MutableScope,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
   visitNode(
@@ -826,10 +712,7 @@ function visitProperty(
   scope: MutableScope,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
   if (node.computed) {
@@ -858,10 +741,7 @@ function visitMethodDefinition(
   scope: MutableScope,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
   if (node.computed) {
@@ -890,17 +770,11 @@ function visitJSXElement(
   scope: MutableScope,
   scopeBuild: ScopeBuildResult,
   declarationNodes: ReadonlySet<TSESTree.Identifier>,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
   for (const attribute of node.openingElement.attributes) {
-    if (
-      attribute.type ===
-      "JSXSpreadAttribute"
-    ) {
+    if (attribute.type === "JSXSpreadAttribute") {
       visitNode(
         attribute.argument,
         scope,
@@ -914,10 +788,8 @@ function visitJSXElement(
 
     if (
       attribute.value !== null &&
-      attribute.value.type ===
-        "JSXExpressionContainer" &&
-      attribute.value.expression.type !==
-        "JSXEmptyExpression"
+      attribute.value.type === "JSXExpressionContainer" &&
+      attribute.value.expression.type !== "JSXEmptyExpression"
     ) {
       visitNode(
         attribute.value.expression,
@@ -946,18 +818,10 @@ function addReference(
   node: TSESTree.Identifier,
   scope: MutableScope,
   isWrite: boolean,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
   references: Reference[],
 ): void {
-  const declaration =
-    resolveDeclaration(
-      scope,
-      node.name,
-      declarations,
-    );
+  const declaration = resolveDeclaration(scope, node.name, declarations);
 
   const reference: Reference = {
     name: node.name,
@@ -987,36 +851,23 @@ function addReference(
 function resolveDeclaration(
   scope: MutableScope,
   name: string,
-  declarations: ReadonlyMap<
-    string,
-    readonly DeclarationInput[]
-  >,
+  declarations: ReadonlyMap<string, readonly DeclarationInput[]>,
 ): DeclarationInput | undefined {
-  let current:
-    | MutableScope
-    | undefined = scope;
+  let current: MutableScope | undefined = scope;
 
   while (current !== undefined) {
-    const local =
-      current.declarations.find(
-        (declaration) =>
-          declaration.name ===
-          name,
-      );
+    const local = current.declarations.find(
+      (declaration) => declaration.name === name,
+    );
 
     if (local !== undefined) {
       return local;
     }
 
-    current =
-      findParentScope(
-        current,
-        scope,
-      );
+    current = findParentScope(current, scope);
   }
 
-  const global =
-    declarations.get(name);
+  const global = declarations.get(name);
 
   return global?.[0];
 }
@@ -1029,10 +880,7 @@ function findParentScope(
     return undefined;
   }
 
-  return findScopeById(
-    root,
-    scope.parentId,
-  );
+  return findScopeById(root, scope.parentId);
 }
 
 function findScopeById(
@@ -1044,11 +892,7 @@ function findScopeById(
   }
 
   for (const child of scope.children) {
-    const found =
-      findScopeById(
-        child,
-        id,
-      );
+    const found = findScopeById(child, id);
 
     if (found !== undefined) {
       return found;
@@ -1056,17 +900,4 @@ function findScopeById(
   }
 
   return undefined;
-}
-
-function isReferenceIdentifier(
-  node: TSESTree.Identifier,
-): boolean {
-  /*
-   * All declaration positions are removed by declarationNodes.
-   * Property keys and member properties are handled explicitly
-   * by their owning visitors, so a remaining Identifier is a
-   * JavaScript reference.
-   */
-  void node;
-  return true;
 }

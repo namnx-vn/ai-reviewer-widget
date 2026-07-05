@@ -121,14 +121,7 @@ function analyzeFunctionDeclaration(
 
   const scope = findInnermostScope(rootScope, node);
 
-  addDeclaration(
-    node.id,
-    "function",
-    node,
-    scope,
-    declarations,
-    declarationNodes,
-  );
+  addDeclaration(node.id, "function", scope, declarations, declarationNodes);
 
   analyzeFunctionParameters(node, rootScope, declarations, declarationNodes);
 }
@@ -145,7 +138,7 @@ function analyzeClassDeclaration(
 
   const scope = findInnermostScope(rootScope, node);
 
-  addDeclaration(node.id, "class", node, scope, declarations, declarationNodes);
+  addDeclaration(node.id, "class", scope, declarations, declarationNodes);
 }
 
 function analyzeImportDeclaration(
@@ -160,7 +153,6 @@ function analyzeImportDeclaration(
     addDeclaration(
       specifier.local,
       "import",
-      specifier,
       scope,
       declarations,
       declarationNodes,
@@ -212,12 +204,7 @@ function analyzeCatchClause(
 }
 
 function collectPatternDeclarations(
-  node:
-    | TSESTree.BindingName
-    | TSESTree.AssignmentPattern
-    | TSESTree.RestElement
-    | TSESTree.ArrayPattern
-    | TSESTree.ObjectPattern,
+  node: TSESTree.Node,
   kind: BindingKind,
   scope: MutableScope,
   declarations: Declaration[],
@@ -225,7 +212,7 @@ function collectPatternDeclarations(
 ): void {
   switch (node.type) {
     case "Identifier":
-      addDeclaration(node, kind, node, scope, declarations, declarationNodes);
+      addDeclaration(node, kind, scope, declarations, declarationNodes);
       return;
 
     case "AssignmentPattern":

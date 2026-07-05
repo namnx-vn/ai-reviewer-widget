@@ -1,7 +1,6 @@
 import type { TSESTree } from "@typescript-eslint/typescript-estree";
 import {
   getJSXAttributeName,
-  getJSXChildren,
   getJSXElementName,
   getJSXEventHandlerNames,
   getJSXKeyAttribute,
@@ -21,9 +20,7 @@ export interface JSXAttributeMetadata {
   readonly name?: string;
   readonly isSpread: boolean;
   readonly hasValue: boolean;
-  readonly node:
-    | TSESTree.JSXAttribute
-    | TSESTree.JSXSpreadAttribute;
+  readonly node: TSESTree.JSXAttribute | TSESTree.JSXSpreadAttribute;
 }
 
 export interface JSXElementMetadata {
@@ -51,16 +48,13 @@ export interface JSXAnalysisResult {
   readonly fragments: readonly JSXFragmentMetadata[];
 }
 
-export function analyzeJSX(
-  ast: TSESTree.Program,
-): JSXAnalysisResult {
+export function analyzeJSX(ast: TSESTree.Program): JSXAnalysisResult {
   const elements: JSXElementMetadata[] = [];
   const fragments: JSXFragmentMetadata[] = [];
 
   visit(ast, (node) => {
     if (isJSXElement(node)) {
-      const metadata =
-        createElementMetadata(node);
+      const metadata = createElementMetadata(node);
 
       if (metadata !== undefined) {
         elements.push(metadata);
@@ -70,9 +64,7 @@ export function analyzeJSX(
     }
 
     if (isJSXFragment(node)) {
-      fragments.push(
-        createFragmentMetadata(node),
-      );
+      fragments.push(createFragmentMetadata(node));
     }
   });
 
@@ -85,15 +77,14 @@ export function analyzeJSX(
 function createElementMetadata(
   node: TSESTree.JSXElement,
 ): JSXElementMetadata | undefined {
-  const name = getJSXElementName(
-    node.openingElement,
-  );
+  const name = getJSXElementName(node.openingElement);
 
   if (name === undefined) {
     return undefined;
   }
 
-  const children = getJSXChildren(node);
+  const children = getMeaningfulJSXChildren(node.children);
+  const childCount = children.length;
 
   return {
     name: name.name,
@@ -101,27 +92,18 @@ function createElementMetadata(
     node,
     openingElement: node.openingElement,
     location: getLocation(node),
-    attributes:
-      getAttributeMetadata(
-        node.openingElement,
-      ),
-    eventHandlers:
-      getJSXEventHandlerNames(
-        node.openingElement,
-      ),
-    hasKey:
-      getJSXKeyAttribute(
-        node.openingElement,
-      ) !== undefined,
-    childCount: children.length,
-    hasChildren: children.length > 0,
+    attributes: getAttributeMetadata(node.openingElement),
+    eventHandlers: getJSXEventHandlerNames(node.openingElement),
+    hasKey: getJSXKeyAttribute(node.openingElement) !== undefined,
+    childCount: childCount,
+    hasChildren: childCount > 0,
   };
 }
 
 function createFragmentMetadata(
   node: TSESTree.JSXFragment,
 ): JSXFragmentMetadata {
-    const children = getMeaningfulJSXChildren(node.children);
+  const children = getMeaningfulJSXChildren(node.children);
   const childCount = children.length;
 
   return {
@@ -135,26 +117,22 @@ function createFragmentMetadata(
 function getAttributeMetadata(
   element: TSESTree.JSXOpeningElement,
 ): readonly JSXAttributeMetadata[] {
-  return element.attributes.map(
-    (attribute): JSXAttributeMetadata => {
-      if (
-        isJSXSpreadAttribute(attribute)
-      ) {
-        return {
-          isSpread: true,
-          hasValue: true,
-          node: attribute,
-        };
-      }
-
+  return element.attributes.map((attribute): JSXAttributeMetadata => {
+    if (isJSXSpreadAttribute(attribute)) {
       return {
-        name: getJSXAttributeName(attribute),
-        isSpread: false,
-        hasValue: attribute.value !== null,
+        isSpread: true,
+        hasValue: true,
         node: attribute,
       };
-    },
-  );
+    }
+
+    return {
+      name: getJSXAttributeName(attribute),
+      isSpread: false,
+      hasValue: attribute.value !== null,
+      node: attribute,
+    };
+  });
 }
 
 function visit(
@@ -181,13 +159,8 @@ function visit(
   }
 }
 
-function isNode(
-  value: unknown,
-): value is TSESTree.Node {
-  if (
-    typeof value !== "object" ||
-    value === null
-  ) {
+function isNode(value: unknown): value is TSESTree.Node {
+  if (typeof value !== "object" || value === null) {
     return false;
   }
 
@@ -195,14 +168,10 @@ function isNode(
     return false;
   }
 
-  return (
-    typeof value.type === "string"
-  );
+  return typeof value.type === "string";
 }
 
-function getLocation(
-  node: TSESTree.Node,
-): JSXLocation {
+function getLocation(node: TSESTree.Node): JSXLocation {
   return {
     line: node.loc?.start.line ?? 1,
     column: node.loc?.start.column ?? 0,

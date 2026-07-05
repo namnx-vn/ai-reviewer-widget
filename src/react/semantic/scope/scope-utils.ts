@@ -313,14 +313,6 @@ export function isReferenceIdentifier(node: TSESTree.Identifier): boolean {
   }
 
   if (
-    parent.type === "OptionalMemberExpression" &&
-    parent.property === node &&
-    !parent.computed
-  ) {
-    return false;
-  }
-
-  if (
     parent.type === "Property" &&
     parent.key === node &&
     !parent.computed &&

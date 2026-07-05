@@ -176,7 +176,7 @@ describe(
         expect(
           reference?.declaration
             ?.location.line,
-        ).toBe(5);
+        ).toBe(6);
       },
     );
 

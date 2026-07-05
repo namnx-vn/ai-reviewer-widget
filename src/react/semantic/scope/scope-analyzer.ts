@@ -1,16 +1,8 @@
 import type { TSESTree } from "@typescript-eslint/typescript-estree";
-import {
-  analyzeDeclarations,
-} from "./declaration-analyzer";
-import {
-  analyzeReferences,
-} from "./reference-analyzer";
-import {
-  buildScopes,
-} from "./scope-builder";
-import {
-  getScopeById,
-} from "./scope-utils";
+import { analyzeDeclarations } from "./declaration-analyzer";
+import { analyzeReferences } from "./reference-analyzer";
+import { buildScopes } from "./scope-builder";
+import { getScopeById } from "./scope-utils";
 import type {
   IdentifierResolution,
   Scope,
@@ -19,58 +11,39 @@ import type {
   Reference,
 } from "./scope-types";
 
-export function analyzeScopes(
-  ast: TSESTree.Program,
-): ScopeAnalysisResult {
-  const scopeBuild =
-    buildScopes(ast);
+export function analyzeScopes(ast: TSESTree.Program): ScopeAnalysisResult {
+  const scopeBuild = buildScopes(ast);
 
-  const {
+  const { declarations, declarationNodes } = analyzeDeclarations(
+    ast,
+    scopeBuild.rootScope,
+  );
+
+  const { references } = analyzeReferences(
+    ast,
+    scopeBuild,
     declarations,
     declarationNodes,
-  } =
-    analyzeDeclarations(
-      ast,
-      scopeBuild.rootScope,
-    );
+  );
 
-  const {
+  const scopes = materializeScopes(
+    scopeBuild.rootScope,
+    declarations,
     references,
-  } =
-    analyzeReferences(
-      ast,
-      scopeBuild,
-      declarations,
-      declarationNodes,
-    );
+  );
 
-  const scopes =
-    materializeScopes(
-      scopeBuild.rootScope,
-      declarations,
-      references,
-    );
-
-  const rootScope =
-    scopes.find(
-      (scope) =>
-        scope.id ===
-        scopeBuild.rootScope.id,
-    );
+  const rootScope = scopes.find(
+    (scope) => scope.id === scopeBuild.rootScope.id,
+  );
 
   if (rootScope === undefined) {
-    throw new Error(
-      "Scope analysis failed to materialize the root scope.",
-    );
+    throw new Error("Scope analysis failed to materialize the root scope.");
   }
 
   return {
     rootScope,
     scopes,
-    declarations: attachScopeIds(
-      declarations,
-      scopeBuild,
-    ),
+    declarations: attachScopeIds(declarations),
     references,
   };
 }
@@ -80,19 +53,12 @@ export function resolveIdentifier(
   scopeId: number,
   name: string,
 ): IdentifierResolution {
-  let scope =
-    getScopeById(
-      result,
-      scopeId,
-    );
+  let scope = getScopeById(result, scopeId);
 
   while (scope !== undefined) {
-    const declaration =
-      scope.declarations.find(
-        (candidate) =>
-          candidate.name ===
-          name,
-      );
+    const declaration = scope.declarations.find(
+      (candidate) => candidate.name === name,
+    );
 
     if (declaration !== undefined) {
       return {
@@ -102,16 +68,11 @@ export function resolveIdentifier(
       };
     }
 
-    if (
-      scope.parentId === undefined
-    ) {
+    if (scope.parentId === undefined) {
       break;
     }
 
-    scope = getScopeById(
-      result,
-      scope.parentId,
-    );
+    scope = getScopeById(result, scope.parentId);
   }
 
   return {
@@ -121,17 +82,13 @@ export function resolveIdentifier(
 
 function materializeScopes(
   root: ScopeBuilderNode,
-  declarations: readonly DeclarationInputWithScope[],
+  declarations: readonly Declaration[],
   references: readonly Reference[],
 ): Scope[] {
-  const declarationMap =
-    new Map<number, Declaration[]>();
+  const declarationMap = new Map<number, Declaration[]>();
 
   for (const declaration of declarations) {
-    const current =
-      declarationMap.get(
-        declaration.scopeId,
-      );
+    const current = declarationMap.get(declaration.scopeId);
 
     const materialized: Declaration = {
       name: declaration.name,
@@ -142,60 +99,35 @@ function materializeScopes(
     };
 
     if (current === undefined) {
-      declarationMap.set(
-        declaration.scopeId,
-        [materialized],
-      );
+      declarationMap.set(declaration.scopeId, [materialized]);
     } else {
-      current.push(
-        materialized,
-      );
+      current.push(materialized);
     }
   }
 
-  const referenceMap =
-    new Map<number, Reference[]>();
+  const referenceMap = new Map<number, Reference[]>();
 
   for (const reference of references) {
-    const current =
-      referenceMap.get(
-        reference.scopeId,
-      );
+    const current = referenceMap.get(reference.scopeId);
 
     if (current === undefined) {
-      referenceMap.set(
-        reference.scopeId,
-        [reference],
-      );
+      referenceMap.set(reference.scopeId, [reference]);
     } else {
-      current.push(
-        reference,
-      );
+      current.push(reference);
     }
   }
 
   const result: Scope[] = [];
 
-  visitScope(
-    root,
-    declarationMap,
-    referenceMap,
-    result,
-  );
+  visitScope(root, declarationMap, referenceMap, result);
 
   return result;
 }
 
 function visitScope(
   node: ScopeBuilderNode,
-  declarationMap: ReadonlyMap<
-    number,
-    readonly Declaration[]
-  >,
-  referenceMap: ReadonlyMap<
-    number,
-    readonly Reference[]
-  >,
+  declarationMap: ReadonlyMap<number, readonly Declaration[]>,
+  referenceMap: ReadonlyMap<number, readonly Reference[]>,
   output: Scope[],
 ): void {
   const scope: Scope = {
@@ -203,66 +135,26 @@ function visitScope(
     kind: node.kind,
     node: node.node,
     parentId: node.parentId,
-    declarations:
-      declarationMap.get(
-        node.id,
-      ) ?? [],
-    references:
-      referenceMap.get(
-        node.id,
-      ) ?? [],
+    declarations: declarationMap.get(node.id) ?? [],
+    references: referenceMap.get(node.id) ?? [],
     children: [],
   };
 
   output.push(scope);
 
   for (const child of node.children) {
-    visitScope(
-      child,
-      declarationMap,
-      referenceMap,
-      output,
-    );
+    visitScope(child, declarationMap, referenceMap, output);
   }
 }
 
-function attachScopeIds(
-  declarations: readonly DeclarationInputWithScope[],
-  scopeBuild: ScopeBuildResultLike,
-): Declaration[] {
-  return declarations.map(
-    (declaration) => ({
-      name: declaration.name,
-      kind: declaration.kind,
-      node: declaration.node,
-      location: declaration.location,
-      scopeId:
-        getDeclarationScopeId(
-          declaration,
-          scopeBuild,
-        ),
-    }),
-  );
-}
-
-function getDeclarationScopeId(
-  declaration: DeclarationInputWithScope,
-  scopeBuild: ScopeBuildResultLike,
-): number {
-  for (const scope of scopeBuild.scopes) {
-    const match =
-      scope.declarations.find(
-        (candidate) =>
-          candidate.node ===
-          declaration.node,
-      );
-
-    if (match !== undefined) {
-      return scope.id;
-    }
-  }
-
-  return scopeBuild.rootScope.id;
+function attachScopeIds(declarations: readonly Declaration[]): Declaration[] {
+  return declarations.map((declaration) => ({
+    name: declaration.name,
+    kind: declaration.kind,
+    node: declaration.node,
+    location: declaration.location,
+    scopeId: declaration.scopeId,
+  }));
 }
 
 interface ScopeBuilderNode {
@@ -271,21 +163,4 @@ interface ScopeBuilderNode {
   readonly node: TSESTree.Node;
   readonly parentId?: number;
   readonly children: readonly ScopeBuilderNode[];
-}
-
-interface DeclarationInputWithScope {
-  readonly name: string;
-  readonly kind: Declaration["kind"];
-  readonly node: TSESTree.Node;
-  readonly location: Declaration["location"];
-}
-
-interface ScopeBuildResultLike {
-  readonly rootScope: ScopeBuilderNode;
-  readonly scopes: readonly {
-    readonly id: number;
-    readonly declarations: readonly {
-      readonly node: TSESTree.Node;
-    }[];
-  }[];
 }
