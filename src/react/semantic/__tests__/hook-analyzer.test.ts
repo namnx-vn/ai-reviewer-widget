@@ -3,10 +3,10 @@ import {
   expect,
   it,
 } from "vitest";
-import { parseSource } from "../../../src/analyzer/ast/parser";
+import { parseSource } from "../../../analyzer/ast/parser";
 import {
   analyzeHooks,
-} from "../../../src/react/semantic/hook-analyzer";
+} from "../hook-analyzer";
 
 function analyze(
   source: string,

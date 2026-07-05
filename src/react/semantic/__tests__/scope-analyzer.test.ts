@@ -4,11 +4,11 @@ import {
   it,
 } from "vitest";
 
-import { parseSource } from "../../../src/analyzer/ast/parser";
+import { parseSource } from "../../../analyzer/ast/parser";
 import {
   analyzeScopes,
   resolveIdentifier,
-} from "../../../src/react/semantic/scope";
+} from "../scope";
 
 function analyze(
   source: string,

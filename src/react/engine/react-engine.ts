@@ -7,13 +7,7 @@ import {
 import type { ReactPlugin } from "./react-plugin";
 import type { ReactRule } from "./react-rule";
 
-const NON_AST_KEYS = new Set([
-  "parent",
-  "loc",
-  "range",
-  "tokens",
-  "comments",
-]);
+const NON_AST_KEYS = new Set(["parent", "loc", "range", "tokens", "comments"]);
 
 export interface ReactEngineInput {
   readonly source: string;
@@ -28,6 +22,7 @@ export class ReactEngine {
     const context = createReactAnalysisContext(
       input.source,
       input.file,
+      ast,
       input.plugins,
     );
 
@@ -48,11 +43,7 @@ export class ReactEngine {
     }
 
     for (const rule of context.rules) {
-      const ruleFindings = this.runRule(
-        rule,
-        node,
-        context,
-      );
+      const ruleFindings = this.runRule(rule, node, context);
 
       findings.push(...ruleFindings);
     }
@@ -85,18 +76,15 @@ export class ReactEngine {
       return rule.check(node, {
         source: context.source,
         file: context.file,
+        ast: context.ast,
+        hooks: context.hooks,
       });
     } catch {
       return [];
     }
   }
 
-  private isObject(
-    value: unknown,
-  ): value is Record<string, unknown> {
-    return (
-      typeof value === "object" &&
-      value !== null
-    );
+  private isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
   }
 }
