@@ -10,6 +10,7 @@ export interface MutableScope {
   readonly kind: ScopeKind;
   readonly node: TSESTree.Node;
   readonly parentId?: number;
+  readonly parent?: MutableScope;
   readonly declarations: DeclarationInput[];
   readonly references: ReferenceInput[];
   readonly children: MutableScope[];
@@ -110,6 +111,7 @@ export function createScope(
     kind,
     node,
     parentId: parent?.id,
+    parent,
     declarations: [],
     references: [],
     children: [],

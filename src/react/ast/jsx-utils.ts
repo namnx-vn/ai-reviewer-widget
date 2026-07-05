@@ -209,6 +209,16 @@ export function getJSXChildren(
   return element.children;
 }
 
+export function getMeaningfulJSXChildren(
+  children: readonly TSESTree.JSXChild[],
+): readonly TSESTree.JSXChild[] {
+  return children.filter(
+    (child) =>
+      child.type !== "JSXText" ||
+      child.value.trim().length > 0,
+  );
+}
+
 export function getJSXExpression(
   attribute: TSESTree.JSXAttribute,
 ): TSESTree.Expression | null | undefined {

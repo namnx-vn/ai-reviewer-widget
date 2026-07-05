@@ -31,7 +31,7 @@ export function analyzeScopes(
   } =
     analyzeDeclarations(
       ast,
-      scopeBuild,
+      scopeBuild.rootScope,
     );
 
   const {

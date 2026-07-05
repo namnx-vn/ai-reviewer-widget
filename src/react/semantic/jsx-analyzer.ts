@@ -5,6 +5,7 @@ import {
   getJSXElementName,
   getJSXEventHandlerNames,
   getJSXKeyAttribute,
+  getMeaningfulJSXChildren,
   isJSXElement,
   isJSXFragment,
   isJSXSpreadAttribute,
@@ -120,7 +121,8 @@ function createElementMetadata(
 function createFragmentMetadata(
   node: TSESTree.JSXFragment,
 ): JSXFragmentMetadata {
-  const childCount = node.children.length;
+    const children = getMeaningfulJSXChildren(node.children);
+  const childCount = children.length;
 
   return {
     node,
