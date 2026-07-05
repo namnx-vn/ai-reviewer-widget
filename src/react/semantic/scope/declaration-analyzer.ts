@@ -1,16 +1,13 @@
 import type { TSESTree } from "@typescript-eslint/typescript-estree";
 import {
-    DeclarationInput,
+  DeclarationInput,
   findInnermostScope,
   findNearestFunctionScope,
   getLocation,
   visit,
   type MutableScope,
 } from "./scope-utils";
-import type {
-  BindingKind,
-  Declaration,
-} from "./scope-types";
+import type { BindingKind, Declaration } from "./scope-types";
 
 export interface DeclarationAnalysisResult {
   readonly declarations: readonly Declaration[];
@@ -22,8 +19,7 @@ export function analyzeDeclarations(
   rootScope: MutableScope,
 ): DeclarationAnalysisResult {
   const declarations: Declaration[] = [];
-  const declarationNodes =
-    new Set<TSESTree.Identifier>();
+  const declarationNodes = new Set<TSESTree.Identifier>();
 
   visit(ast, (node) => {
     switch (node.type) {
@@ -74,12 +70,7 @@ export function analyzeDeclarations(
         break;
 
       case "CatchClause":
-        analyzeCatchClause(
-          node,
-          rootScope,
-          declarations,
-          declarationNodes,
-        );
+        analyzeCatchClause(node, rootScope, declarations, declarationNodes);
         break;
 
       default:
@@ -100,25 +91,13 @@ function analyzeVariableDeclaration(
   declarationNodes: Set<TSESTree.Identifier>,
 ): void {
   const kind: BindingKind =
-    node.kind === "var"
-      ? "var"
-      : node.kind === "let"
-        ? "let"
-        : "const";
+    node.kind === "var" ? "var" : node.kind === "let" ? "let" : "const";
 
   for (const declarator of node.declarations) {
-    const scope =
-      findInnermostScope(
-        rootScope,
-        declarator,
-      );
+    const scope = findInnermostScope(rootScope, declarator);
 
     const targetScope =
-      kind === "var"
-        ? findNearestFunctionScope(
-            scope,
-          )
-        : scope;
+      kind === "var" ? findNearestFunctionScope(scope) : scope;
 
     collectPatternDeclarations(
       declarator.id,
@@ -140,11 +119,7 @@ function analyzeFunctionDeclaration(
     return;
   }
 
-  const scope =
-    findInnermostScope(
-      rootScope,
-      node,
-    );
+  const scope = findInnermostScope(rootScope, node);
 
   addDeclaration(
     node.id,
@@ -155,12 +130,7 @@ function analyzeFunctionDeclaration(
     declarationNodes,
   );
 
-  analyzeFunctionParameters(
-    node,
-    rootScope,
-    declarations,
-    declarationNodes,
-  );
+  analyzeFunctionParameters(node, rootScope, declarations, declarationNodes);
 }
 
 function analyzeClassDeclaration(
@@ -173,20 +143,9 @@ function analyzeClassDeclaration(
     return;
   }
 
-  const scope =
-    findInnermostScope(
-      rootScope,
-      node,
-    );
+  const scope = findInnermostScope(rootScope, node);
 
-  addDeclaration(
-    node.id,
-    "class",
-    node,
-    scope,
-    declarations,
-    declarationNodes,
-  );
+  addDeclaration(node.id, "class", node, scope, declarations, declarationNodes);
 }
 
 function analyzeImportDeclaration(
@@ -195,11 +154,7 @@ function analyzeImportDeclaration(
   declarations: Declaration[],
   declarationNodes: Set<TSESTree.Identifier>,
 ): void {
-  const scope =
-    findInnermostScope(
-      rootScope,
-      node,
-    );
+  const scope = findInnermostScope(rootScope, node);
 
   for (const specifier of node.specifiers) {
     addDeclaration(
@@ -222,11 +177,7 @@ function analyzeFunctionParameters(
   declarations: Declaration[],
   declarationNodes: Set<TSESTree.Identifier>,
 ): void {
-  const functionScope =
-    findInnermostScope(
-      rootScope,
-      node,
-    );
+  const functionScope = findInnermostScope(rootScope, node);
 
   for (const parameter of node.params) {
     collectPatternDeclarations(
@@ -249,11 +200,7 @@ function analyzeCatchClause(
     return;
   }
 
-  const scope =
-    findInnermostScope(
-      rootScope,
-      node,
-    );
+  const scope = findInnermostScope(rootScope, node);
 
   collectPatternDeclarations(
     node.param,
@@ -278,14 +225,7 @@ function collectPatternDeclarations(
 ): void {
   switch (node.type) {
     case "Identifier":
-      addDeclaration(
-        node,
-        kind,
-        node,
-        scope,
-        declarations,
-        declarationNodes,
-      );
+      addDeclaration(node, kind, node, scope, declarations, declarationNodes);
       return;
 
     case "AssignmentPattern":
@@ -324,10 +264,7 @@ function collectPatternDeclarations(
 
     case "ObjectPattern":
       for (const property of node.properties) {
-        if (
-          property.type ===
-          "RestElement"
-        ) {
+        if (property.type === "RestElement") {
           collectPatternDeclarations(
             property.argument,
             kind,
@@ -366,13 +303,9 @@ function addDeclaration(
     scopeId: scope.id,
   };
 
-  declarations.push(
-    declaration,
-  );
+  declarations.push(declaration);
 
   declarationNodes.add(node);
 
-  scope.declarations.push(
-    declaration,
-  );
+  scope.declarations.push(declaration);
 }
