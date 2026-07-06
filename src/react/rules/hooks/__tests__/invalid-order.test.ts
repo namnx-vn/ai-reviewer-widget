@@ -137,7 +137,7 @@ describe("react.hooks.invalid-order", () => {
           return null;
         }
       `),
-    ).toHaveLength(0);
+    ).toHaveLength(1);
   });
 
   it("allows Hook in custom Hook", () => {

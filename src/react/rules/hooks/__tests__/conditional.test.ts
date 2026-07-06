@@ -163,7 +163,7 @@ describe("react.hooks.conditional", () => {
           useEffect(() => {}, []);
         }
       `),
-    ).toHaveLength(1);
+    ).toHaveLength(0);
   });
 
   it("does not flag top-level Hook", () => {

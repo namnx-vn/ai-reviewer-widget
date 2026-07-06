@@ -110,10 +110,11 @@ function createExecutionContext(
       : findAncestors(functionBoundary.node, node);
 
   const conditionalAncestors = ancestors.filter(isConditionalNode);
-
   const loopAncestors = ancestors.filter(isLoopNode);
 
-  const isConditional = conditionalAncestors.length > 0;
+  const isConditional =
+    conditionalAncestors.length > 0 ||
+    hasConditionalExecution(functionBoundary, node);
 
   const isLoop = loopAncestors.length > 0;
 
@@ -141,6 +142,61 @@ function createExecutionContext(
     functionBoundary,
     enclosingScope: functionBoundary?.scope,
   };
+}
+
+function hasConditionalExecution(
+  functionBoundary: FunctionBoundary | undefined,
+  hook: TSESTree.Node,
+): boolean {
+  if (functionBoundary === undefined) {
+    return false;
+  }
+
+  if (functionBoundary.node.body.type !== "BlockStatement") {
+    return false;
+  }
+
+  return hasEarlyReturnBefore(functionBoundary.node.body.body, hook);
+}
+
+function hasEarlyReturnBefore(
+  statements: readonly TSESTree.Statement[],
+  hook: TSESTree.Node,
+): boolean {
+  for (const statement of statements) {
+    if (containsNode(statement, hook)) {
+      return false;
+    }
+
+    if (statement.type === "ReturnStatement") {
+      return true;
+    }
+
+    if (statement.type === "IfStatement") {
+      if (
+        statement.alternate !== null &&
+        containsNode(statement.alternate, hook)
+      ) {
+        return hasEarlyReturnBefore(
+          statement.alternate.type === "BlockStatement"
+            ? statement.alternate.body
+            : [statement.alternate],
+          hook,
+        );
+      }
+
+      if (containsNode(statement.consequent, hook)) {
+        return hasEarlyReturnBefore(
+          statement.consequent.type === "BlockStatement"
+            ? statement.consequent.body
+            : [statement.consequent],
+          hook,
+        );
+      }
+    }
+  }
+
+  return false;
 }
 
 function findEnclosingFunction(

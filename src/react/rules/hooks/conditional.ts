@@ -21,14 +21,7 @@ export const reactHooksConditionalRule: ReactRule = {
       return [];
     }
 
-    if (
-      hook.execution.isConditional ||
-      hook.execution.isLoop ||
-      hasEarlierReturnOnPath(
-        node,
-        hook.execution.functionBoundary,
-      )
-    ) {
+    if (hook.execution.isConditional || hook.execution.isLoop) {
       return [createFinding(hook, context.file)];
     }
 
@@ -41,28 +34,6 @@ function findHook(
   hooks: readonly SemanticHookMetadata[],
 ): SemanticHookMetadata | undefined {
   return hooks.find((item) => item.hook.node === node);
-}
-
-function hasEarlierReturnOnPath(
-  hook: TSESTree.CallExpression,
-  boundary: SemanticHookMetadata["execution"]["functionBoundary"],
-): boolean {
-  if (boundary === undefined) {
-    return false;
-  }
-
-  return containsReturnBeforeHook(boundary.node.body, hook);
-}
-
-function containsReturnBeforeHook(
-  body: TSESTree.BlockStatement | TSESTree.Expression,
-  hook: TSESTree.CallExpression,
-): boolean {
-  if (body.type !== "BlockStatement") {
-    return false;
-  }
-
-  return inspectStatements(body.body, hook);
 }
 
 function inspectStatements(
@@ -145,10 +116,7 @@ function containsReturnInPathBeforeHook(
       return containsReturnInPathBeforeHook(node.consequent, hook);
     }
 
-    if (
-      node.alternate !== null &&
-      containsNode(node.alternate, hook)
-    ) {
+    if (node.alternate !== null && containsNode(node.alternate, hook)) {
       return containsReturnInPathBeforeHook(node.alternate, hook);
     }
   }
@@ -196,10 +164,7 @@ function createFinding(
   };
 }
 
-function containsNode(
-  parent: TSESTree.Node,
-  child: TSESTree.Node,
-): boolean {
+function containsNode(parent: TSESTree.Node, child: TSESTree.Node): boolean {
   const parentStart = parent.range?.[0];
   const parentEnd = parent.range?.[1];
   const childStart = child.range?.[0];
