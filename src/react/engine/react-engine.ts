@@ -1,3 +1,4 @@
+import { TSESTree } from "@typescript-eslint/typescript-estree";
 import { parseSource } from "../../analyzer/ast/parser";
 import type { ReviewFinding } from "../../review/types";
 import {
@@ -69,11 +70,11 @@ export class ReactEngine {
 
   private runRule(
     rule: ReactRule,
-    node: unknown,
+    node: TSESTree.Node | unknown,
     context: ReactAnalysisContext,
   ): ReviewFinding[] {
     try {
-      return rule.check(node, {
+      return rule.check(node as TSESTree.Node, {
         source: context.source,
         file: context.file,
         ast: context.ast,

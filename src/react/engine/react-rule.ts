@@ -14,7 +14,7 @@ export interface ReactRule {
   readonly description: string;
 
   check(
-    node: unknown,
+    node: TSESTree.Node,
     context: ReactRuleContext,
   ): ReviewFinding[];
 }
