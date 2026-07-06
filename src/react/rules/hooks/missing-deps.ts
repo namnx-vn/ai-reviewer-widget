@@ -293,24 +293,6 @@ function isNode(value: unknown): value is TSESTree.Node {
   );
 }
 
-/**
- * The parser currently does not expose parent links.
- *
- * Build a lightweight parent lookup on demand.
- */
-function getParent(target: TSESTree.Node): TSESTree.Node | undefined {
-  /*
-   * Parent-aware checks are handled by the traversal
-   * context in the production path below.
-   *
-   * Returning undefined here makes a standalone node
-   * conservative: an Identifier is treated as a reference.
-   */
-  void target;
-
-  return undefined;
-}
-
 function collectCapturedDependencies(
   callback: TSESTree.ArrowFunctionExpression | TSESTree.FunctionExpression,
 ): string[] {
