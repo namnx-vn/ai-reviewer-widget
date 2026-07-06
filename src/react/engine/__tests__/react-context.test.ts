@@ -4,6 +4,8 @@ import {
   it,
 } from "vitest";
 
+import { parseSource } from "../../../analyzer/ast/parser";
+
 import {
   createReactAnalysisContext,
 } from "../react-context";
@@ -41,39 +43,46 @@ const plugins: ReactPlugin[] = [
 
 describe("createReactAnalysisContext", () => {
   it("creates analysis context", () => {
-    const context =
-      createReactAnalysisContext(
-        "const value = 1;",
-        "example.ts",
-        plugins,
-      );
+    const source = "const value = 1;";
+    const ast = parseSource(source);
 
-    expect(context.source).toBe(
-      "const value = 1;",
+    const context = createReactAnalysisContext(
+      source,
+      "example.ts",
+      ast,
+      plugins,
     );
+
+    expect(context.source).toBe(source);
 
     expect(context.file).toBe(
       "example.ts",
     );
 
+    expect(context.ast).toBe(ast);
+
     expect(context.rules).toHaveLength(2);
   });
 
   it("supports plugins without rules", () => {
-    const context =
-      createReactAnalysisContext(
-        "",
-        "example.ts",
-        [
-          {
-            id: "empty",
-            name: "Empty",
-            version: "1.0.0",
-            rules: [],
-          },
-        ],
-      );
+    const source = "";
+    const ast = parseSource(source);
+
+    const context = createReactAnalysisContext(
+      source,
+      "example.ts",
+      ast,
+      [
+        {
+          id: "empty",
+          name: "Empty",
+          version: "1.0.0",
+          rules: [],
+        },
+      ],
+    );
 
     expect(context.rules).toHaveLength(0);
+    expect(context.ast).toBe(ast);
   });
 });

@@ -18,7 +18,7 @@ export function createReactAnalysisContext(
   source: string,
   file: string,
   ast: TSESTree.Program,
-  plugins: readonly ReactPlugin[],
+  plugins: readonly ReactPlugin[] = [],
 ): ReactAnalysisContext {
   const rules = plugins.flatMap(
     (plugin) => plugin.rules,

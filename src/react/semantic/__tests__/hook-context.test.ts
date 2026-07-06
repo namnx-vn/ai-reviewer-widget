@@ -15,7 +15,8 @@ describe("createHookContext", () => {
 
     expect(context.hooks).toHaveLength(1);
     expect(
-      context.hooks[0]?.functionBoundary?.isComponent,
+      context.hooks[0]?.execution
+        .functionBoundary?.isComponent,
     ).toBe(true);
   });
 
@@ -30,11 +31,12 @@ describe("createHookContext", () => {
     const context = createHookContext(ast);
 
     expect(
-      context.hooks[0]?.functionBoundary?.isCustomHook,
+      context.hooks[0]?.execution
+        .functionBoundary?.isCustomHook,
     ).toBe(true);
   });
 
-  it("marks conditional hook execution", () => {
+  it("marks if execution as conditional", () => {
     const ast = parseSource(`
       function Counter({ enabled }) {
         if (enabled) {
@@ -56,7 +58,40 @@ describe("createHookContext", () => {
     ).toBe("conditional");
   });
 
-  it("marks loop hook execution", () => {
+  it("marks ternary execution as conditional", () => {
+    const ast = parseSource(`
+      function Counter({ enabled }) {
+        enabled
+          ? useEffect(() => {}, [])
+          : null;
+
+        return null;
+      }
+    `);
+
+    const context = createHookContext(ast);
+
+    expect(
+      context.hooks[0]?.execution.isConditional,
+    ).toBe(true);
+  });
+
+  it("marks logical execution as conditional", () => {
+    const ast = parseSource(`
+      function Counter({ enabled }) {
+        enabled && useEffect(() => {}, []);
+        return null;
+      }
+    `);
+
+    const context = createHookContext(ast);
+
+    expect(
+      context.hooks[0]?.execution.isConditional,
+    ).toBe(true);
+  });
+
+  it("marks loop execution", () => {
     const ast = parseSource(`
       function Counter() {
         for (let i = 0; i < 3; i++) {
@@ -72,5 +107,50 @@ describe("createHookContext", () => {
     expect(
       context.hooks[0]?.execution.isLoop,
     ).toBe(true);
+
+    expect(
+      context.hooks[0]?.execution.kind,
+    ).toBe("loop");
+  });
+
+  it("marks nested function execution", () => {
+    const ast = parseSource(`
+      function Counter() {
+        function renderItem() {
+          useEffect(() => {}, []);
+        }
+
+        return null;
+      }
+    `);
+
+    const context = createHookContext(ast);
+
+    expect(
+      context.hooks[0]?.execution.isNestedFunction,
+    ).toBe(true);
+  });
+
+  it("marks normal hook execution", () => {
+    const ast = parseSource(`
+      function Counter() {
+        useEffect(() => {}, []);
+        return null;
+      }
+    `);
+
+    const context = createHookContext(ast);
+
+    expect(
+      context.hooks[0]?.execution.isConditional,
+    ).toBe(false);
+
+    expect(
+      context.hooks[0]?.execution.isLoop,
+    ).toBe(false);
+
+    expect(
+      context.hooks[0]?.execution.kind,
+    ).toBe("normal");
   });
 });
