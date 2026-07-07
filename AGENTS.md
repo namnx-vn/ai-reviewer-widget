@@ -115,8 +115,8 @@ Detailed plans are maintained in `/plans`.
 | 3.1    | ✅ Complete    | [3.1](./plans/phase-3/3.1-ai-review-core.md)                                           |
 | 3.2    | ✅ Complete    | [3.2](./plans/phase-3/3.2-architecture-intelligence.md)                                |
 | 3.3    | ✅ Complete    | [3.3](./plans/phase-3/3.3-ai-review-engine.md)                                         |
-| 3.4.1  | 🚧 In Progress | [React Rule Framework](./plans/phase-3/3.4-react-intelligence/3.4.1-rule-framework.md) |
-| 3.4.2  | 📌 Next        | [Hooks](./plans/phase-3/3.4-react-intelligence/3.4.2-hooks.md)                         |
+| 3.4.1  | ✅ Complete    | [React Rule Framework](./plans/phase-3/3.4-react-intelligence/3.4.1-rule-framework.md) |
+| 3.4.2  | ✅ Complete    | [Hooks](./plans/phase-3/3.4-react-intelligence/3.4.2-hooks.md)                         |
 | 3.4.3  | ⏳ Planned     | [Rendering](./plans/phase-3/3.4-react-intelligence/3.4.3-rendering.md)                 |
 | 3.4.4  | ⏳ Planned     | [Performance](./plans/phase-3/3.4-react-intelligence/3.4.4-performance.md)             |
 | 3.4.5  | ⏳ Planned     | [State](./plans/phase-3/3.4-react-intelligence/3.4.5-state.md)                         |

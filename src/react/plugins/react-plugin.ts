@@ -1,0 +1,21 @@
+import type { ReactPlugin } from "../engine/react-plugin";
+import { reactHooksAsyncEffectRule } from "../rules/hooks/async-effect";
+import { reactHooksConditionalRule } from "../rules/hooks/conditional";
+import { reactHooksInvalidOrderRule } from "../rules/hooks/invalid-order";
+import { reactHooksMissingDepsRule } from "../rules/hooks/missing-deps";
+import { reactHooksStaleClosureRule } from "../rules/hooks/stale-closure";
+import { reactHooksUnnecessaryEffectRule } from "../rules/hooks/unnecessary-effect";
+
+export const reactPlugin: ReactPlugin = {
+  id: "react",
+  name: "React",
+  version: "3.4.3",
+  rules: [
+    reactHooksMissingDepsRule,
+    reactHooksStaleClosureRule,
+    reactHooksConditionalRule,
+    reactHooksInvalidOrderRule,
+    reactHooksUnnecessaryEffectRule,
+    reactHooksAsyncEffectRule,
+  ],
+};
