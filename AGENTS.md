@@ -116,16 +116,17 @@ Detailed plans are maintained in `/plans`.
 | 3.2    | ✅ Complete    | [3.2](./plans/phase-3/3.2-architecture-intelligence.md)                                |
 | 3.3    | ✅ Complete    | [3.3](./plans/phase-3/3.3-ai-review-engine.md)                                         |
 | 3.4.1  | ✅ Complete    | [React Rule Framework](./plans/phase-3/3.4-react-intelligence/3.4.1-rule-framework.md) |
-| 3.4.2  | ✅ Complete    | [Hooks](./plans/phase-3/3.4-react-intelligence/3.4.2-hooks.md)                         |
-| 3.4.3  | ⏳ Planned     | [Rendering](./plans/phase-3/3.4-react-intelligence/3.4.3-rendering.md)                 |
-| 3.4.4  | ⏳ Planned     | [Performance](./plans/phase-3/3.4-react-intelligence/3.4.4-performance.md)             |
+| 3.4.2  | ✅ Complete    | [Semantic analysis](./plans/phase-3/3.4-react-intelligence/3.4.2-semantic-analysis.md) |
+| 3.4.3  | ✅ Complete    | [hooks](./plans/phase-3/3.4-react-intelligence/3.4.3-hooks.md)                         |
+| 3.4.4  | ⏳ Planned     | [rendering](./plans/phase-3/3.4-react-intelligence/3.4.4-rendering.md)                 |
 | 3.4.5  | ⏳ Planned     | [State](./plans/phase-3/3.4-react-intelligence/3.4.5-state.md)                         |
-| 3.4.6  | ⏳ Planned     | [Context](./plans/phase-3/3.4-react-intelligence/3.4.6-context.md)                     |
-| 3.4.7  | ⏳ Planned     | [Accessibility](./plans/phase-3/3.4-react-intelligence/3.4.7-accessibility.md)         |
-| 3.4.8  | ⏳ Conditional | [React Query](./plans/phase-3/3.4-react-intelligence/3.4.8-react-query.md)             |
-| 3.4.9  | ⏳ Planned     | [Suspense](./plans/phase-3/3.4-react-intelligence/3.4.9-suspense.md)                   |
-| 3.4.10 | ⏳ Conditional | [Next.js](./plans/phase-3/3.4-react-intelligence/3.4.10-nextjs.md)                     |
-| 3.4.11 | ⏳ Planned     | [Testing](./plans/phase-3/3.4-react-intelligence/3.4.11-testing.md)                    |
+| 3.4.6  | ⏳ Planned     | [performance](./plans/phase-3/3.4-react-intelligence/3.4.6-performance.md)             |
+| 3.4.7  | ⏳ Planned     | [context](./plans/phase-3/3.4-react-intelligence/3.4.7-context.md)                     |
+| 3.4.8  | ⏳ Conditional | [patterns](./plans/phase-3/3.4-react-intelligence/3.4.8-patterns.md)                   |
+| 3.4.9  | ⏳ Planned     | [next.js](./plans/phase-3/3.4-react-intelligence/3.4.9-nextjs.md)                      |
+| 3.4.10 | ⏳ Conditional | [rsc](./plans/phase-3/3.4-react-intelligence/3.4.10-rsc.md)                            |
+| 3.4.11 | ⏳ Planned     | [intelligence](./plans/phase-3/3.4-react-intelligence/3.4.11-intelligence.md)          |
+| 3.4.12 | ⏳ Planned     | [hardening](./plans/phase-3/3.4-react-intelligence/3.4.12-hardening.md)                |
 | 3.5    | ⏳ Planned     | [Micro Frontend](./plans/phase-3/3.5-micro-frontend-intelligence.md)                   |
 | 3.6    | ⏳ Planned     | [Security](./plans/phase-3/3.6-security-intelligence.md)                               |
 | 3.7    | ⏳ Planned     | [Performance](./plans/phase-3/3.7-performance-intelligence.md)                         |
