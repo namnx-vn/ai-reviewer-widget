@@ -2,10 +2,6 @@ import type { TSESTree } from "@typescript-eslint/typescript-estree";
 
 import type { ReviewFinding } from "../../../review/types";
 import type { ReactRule } from "../../engine/react-rule";
-import {
-    isIdentifier,
-    visit,
-} from "../../ast/component-utils";
 
 const RULE_ID = "react.rendering.unstable-props";
 
