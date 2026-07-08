@@ -3,9 +3,14 @@ import { describe, expect, it } from "vitest";
 import { parseSource } from "../../../../analyzer/ast/parser";
 import { createHookContext } from "../../../semantic/hook-context";
 import { reactHooksMissingDepsRule } from "../missing-deps";
+import type { DependencyHookConfiguration } from "../../../semantic/dependency-hooks";
+import { missingDependencyRegression } from "../../__tests__/fixtures";
 import { TSESTree } from "@typescript-eslint/typescript-estree";
 
-function check(source: string) {
+function check(
+  source: string,
+  dependencyHooks: readonly DependencyHookConfiguration[] = [],
+) {
   const ast = parseSource(source);
   const hooks = createHookContext(ast);
 
@@ -16,6 +21,7 @@ function check(source: string) {
       file: "example.tsx",
       ast,
       hooks,
+      dependencyHooks,
     },
   );
 }
@@ -101,13 +107,7 @@ function isNode(
 
 describe("react.hooks.missing-deps", () => {
   it("detects missing useEffect dependency", () => {
-    const findings = check(`
-      function Counter({ count }) {
-        useEffect(() => {
-          console.log(count);
-        }, []);
-      }
-    `);
+    const findings = check(missingDependencyRegression);
 
     expect(findings).toHaveLength(1);
     expect(findings[0]?.ruleId).toBe(
@@ -209,6 +209,30 @@ describe("react.hooks.missing-deps", () => {
         useEffect(() => {
           console.log(value);
         });
+      }
+    `);
+
+    expect(findings).toHaveLength(0);
+  });
+
+  it("supports explicitly configured custom hooks with dependency arrays", () => {
+    const findings = check(
+      `
+        function Component({ value }) {
+          useTrackedEffect(() => console.log(value), []);
+        }
+      `,
+      [{ name: "useTrackedEffect" }],
+    );
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.message).toContain("value");
+  });
+
+  it("does not assume arbitrary custom hooks use dependency arrays", () => {
+    const findings = check(`
+      function Component({ value }) {
+        useTrackedEffect(() => console.log(value), []);
       }
     `);
 

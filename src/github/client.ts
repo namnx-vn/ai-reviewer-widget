@@ -1,6 +1,9 @@
 import { Octokit } from "@octokit/rest";
 
+import { createCheckRun } from "./check-run";
+import { createPullRequestReview } from "./comments";
 import type { PullRequestContext, PullRequestFile } from "./pull-request";
+import type { ReviewFinding, ReviewResult } from "../review/types";
 
 export class GitHubClient {
   private readonly octokit: Octokit;
@@ -56,7 +59,7 @@ export class GitHubClient {
     return response.map((file) => ({
       filename: file.filename,
 
-      status: file.status as PullRequestFile["status"],
+      status: toPullRequestFileStatus(file.status),
 
       additions: file.additions,
 
@@ -66,6 +69,20 @@ export class GitHubClient {
 
       patch: file.patch,
     }));
+  }
+
+  async createCheckRun(owner: string, repo: string, sha: string, result: ReviewResult): Promise<void> {
+    await createCheckRun(this.octokit, owner, repo, sha, result);
+  }
+
+  async createPullRequestReview(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    commitId: string,
+    findings: readonly ReviewFinding[],
+  ): Promise<void> {
+    await createPullRequestReview(this.octokit, owner, repo, pullNumber, commitId, findings);
   }
 
   async getFileContent(
@@ -92,17 +109,11 @@ export class GitHubClient {
     return Buffer.from(data.content, "base64").toString("utf8");
   }
 
-  async createIssueComment(
-    owner: string,
-    repo: string,
-    issueNumber: number,
-    body: string,
-  ): Promise<void> {
-    await this.octokit.issues.createComment({
-      owner,
-      repo,
-      issue_number: issueNumber,
-      body,
-    });
+}
+
+function toPullRequestFileStatus(status: string): PullRequestFile["status"] {
+  if (status === "added" || status === "modified" || status === "deleted" || status === "renamed") {
+    return status;
   }
+  throw new Error(`Unsupported pull request file status: ${status}`);
 }

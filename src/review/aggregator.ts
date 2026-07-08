@@ -1,6 +1,7 @@
 import type {
   ReviewFinding,
   ReviewResult,
+  ReviewWarning,
 } from "./types";
 
 import {
@@ -15,6 +16,7 @@ import {
 export function aggregateReview(
   findings: ReviewFinding[],
   durationMs: number,
+  warnings: ReviewWarning[] = [],
 ): ReviewResult {
   const score =
     calculateScore(findings);
@@ -29,6 +31,8 @@ export function aggregateReview(
 
     stats:
       calculateStats(findings),
+
+    warnings,
 
     durationMs,
   };

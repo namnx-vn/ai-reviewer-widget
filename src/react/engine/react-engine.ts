@@ -79,6 +79,7 @@ export class ReactEngine {
         file: context.file,
         ast: context.ast,
         hooks: context.hooks,
+        dependencyHooks: context.dependencyHooks,
       });
     } catch {
       return [];

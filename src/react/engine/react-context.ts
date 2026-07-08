@@ -5,6 +5,7 @@ import {
   createHookContext,
   type HookContext,
 } from "../semantic/hook-context";
+import type { DependencyHookConfiguration } from "../semantic/dependency-hooks";
 
 export interface ReactAnalysisContext {
   readonly source: string;
@@ -12,6 +13,7 @@ export interface ReactAnalysisContext {
   readonly ast: TSESTree.Program;
   readonly hooks: HookContext;
   readonly rules: readonly ReactRule[];
+  readonly dependencyHooks: readonly DependencyHookConfiguration[];
 }
 
 export function createReactAnalysisContext(
@@ -23,6 +25,9 @@ export function createReactAnalysisContext(
   const rules = plugins.flatMap(
     (plugin) => plugin.rules,
   );
+  const dependencyHooks = plugins.flatMap(
+    (plugin) => plugin.dependencyHooks ?? [],
+  );
 
   return {
     source,
@@ -30,5 +35,6 @@ export function createReactAnalysisContext(
     ast,
     hooks: createHookContext(ast),
     rules,
+    dependencyHooks,
   };
 }

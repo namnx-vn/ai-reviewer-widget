@@ -5,8 +5,10 @@ import {
 } from "vitest";
 
 import {
+  getChangedLines,
   parsePatch,
 } from "../../src/github/diff";
+import { filterFindingsForChangedLines } from "../../src/github/comments";
 
 describe("parsePatch", () => {
   it("parses git hunk metadata", () => {
@@ -34,5 +36,24 @@ describe("parsePatch", () => {
     expect(
       result[0].newLines,
     ).toBe(6);
+  });
+
+  it("tracks only added new-file lines", () => {
+    const changedLines = getChangedLines(`@@ -2,2 +2,3 @@
+ unchanged
+-removed
++added
+ retained`);
+
+    expect([...changedLines]).toEqual([3]);
+  });
+
+  it("keeps inline findings only when they point at changed lines", () => {
+    const findings = filterFindingsForChangedLines([
+      { id: "changed", ruleId: "test", title: "Changed", message: "", severity: "low", source: "ast", confidence: 1, location: { file: "src/App.tsx", line: 3 } },
+      { id: "old", ruleId: "test", title: "Old", message: "", severity: "low", source: "ast", confidence: 1, location: { file: "src/App.tsx", line: 2 } },
+    ], new Map([["src/App.tsx", new Set([3])]]));
+
+    expect(findings.map((finding) => finding.id)).toEqual(["changed"]);
   });
 });

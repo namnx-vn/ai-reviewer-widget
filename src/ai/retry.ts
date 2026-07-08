@@ -2,6 +2,8 @@ export interface RetryOptions {
   retries: number;
 
   baseDelayMs: number;
+
+  shouldRetry?: (error: unknown) => boolean;
 }
 
 export async function withRetry<T>(
@@ -26,7 +28,9 @@ export async function withRetry<T>(
 
       if (
         attempt ===
-        options.retries
+          options.retries ||
+        (options.shouldRetry !== undefined &&
+          !options.shouldRetry(error))
       ) {
         break;
       }

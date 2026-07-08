@@ -6,17 +6,14 @@ export const noEvalRule: ASTRule = {
 
   description: "Detect unsafe eval usage.",
 
-  check(node: any, file: string): ReviewFinding[] {
-    if (
-      node?.type !== "CallExpression" ||
-      node.callee?.type !== "Identifier" ||
-      node.callee.name !== "eval"
-    ) {
+  check(node: unknown, file: string): ReviewFinding[] {
+    if (!isEvalCall(node)) {
       return [];
     }
 
-    const item = {
-      id: `security.no-eval:${file}:${node.loc.start.line}`,
+    const location = node.loc.start;
+    return [{
+      id: `security.no-eval:${file}:${location.line}`,
 
       ruleId: "security.no-eval",
 
@@ -31,14 +28,40 @@ export const noEvalRule: ASTRule = {
 
       location: {
         file,
-        line: node.loc.start.line,
-        column: node.loc.start.column,
+        line: location.line,
+        column: location.column,
       },
 
       suggestion:
         "Replace eval() with explicit parsing or a data-driven implementation.",
-    };
-
-    return [item as unknown as ReviewFinding];
+      confidence: 1,
+    }];
   },
 };
+
+function isEvalCall(node: unknown): node is {
+  callee: { name: string };
+  loc: { start: { line: number; column: number } };
+} {
+  if (!node || typeof node !== "object") {
+    return false;
+  }
+
+  const candidate = node as Record<string, unknown>;
+  const callee = candidate.callee;
+  const location = candidate.loc;
+  if (!callee || typeof callee !== "object" || !location || typeof location !== "object") {
+    return false;
+  }
+
+  const start = (location as Record<string, unknown>).start;
+  return Boolean(
+    candidate.type === "CallExpression" &&
+      (callee as Record<string, unknown>).type === "Identifier" &&
+      (callee as Record<string, unknown>).name === "eval" &&
+      start &&
+      typeof start === "object" &&
+      typeof (start as Record<string, unknown>).line === "number" &&
+      typeof (start as Record<string, unknown>).column === "number",
+  );
+}

@@ -1,5 +1,5 @@
 import { analyzeAST } from "./ast/analyzer";
-import { analyzeArchitecture } from "./architecture/analyzer";
+import { analyzeArchitecture, analyzeArchitectureGraph, buildDependencyGraph } from "./architecture/analyzer";
 import { noConsoleRule } from "./ast/rules/no-console";
 import { noEvalRule } from "./ast/rules/no-eval";
 import { noRemoteToRemoteImport } from "./architecture/rules";
@@ -9,7 +9,7 @@ export function analyzeFile(
   file: string,
   source: string,
 ): ReviewFinding[] {
-  if (!/\.(ts|tsx|mts|cts)$/.test(file)) {
+  if (!/\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(file)) {
     return [];
   }
 
@@ -30,5 +30,17 @@ export function analyzeFile(
         noRemoteToRemoteImport,
       ],
     ),
+  ];
+}
+
+export function analyzeFiles(files: readonly { path: string; content: string }[]): ReviewFinding[] {
+  const astFindings = files.flatMap(({ path, content }) =>
+    /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(path)
+      ? analyzeAST(content, path, [noConsoleRule, noEvalRule])
+      : [],
+  );
+  return [
+    ...astFindings,
+    ...analyzeArchitectureGraph(buildDependencyGraph(files), [noRemoteToRemoteImport]),
   ];
 }

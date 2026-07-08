@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { TSESTree } from "@typescript-eslint/typescript-estree";
 import { parseSource } from "../../../../analyzer/ast/parser";
 import { createHookContext } from "../../../semantic/hook-context";
+import { memoWithoutPropsRegression } from "../../__tests__/fixtures";
 import { reactRenderingMemoMisuseRule } from "../memo-misuse";
 
 function check(source: string) {
@@ -100,11 +101,7 @@ function isNode(
 
 describe("react.rendering.memo-misuse", () => {
     it("detects memo without props", () => {
-        const findings = check(`
-      const A = memo(() => {
-        return <div />;
-      });
-    `);
+        const findings = check(memoWithoutPropsRegression);
 
         expect(findings).toHaveLength(1);
     });

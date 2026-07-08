@@ -1,12 +1,14 @@
 import type { TSESTree } from "@typescript-eslint/typescript-estree";
 import type { ReviewFinding } from "../../review/types";
 import type { HookContext } from "../semantic/hook-context";
+import type { DependencyHookConfiguration } from "../semantic/dependency-hooks";
 
 export interface ReactRuleContext {
   readonly source: string;
   readonly file: string;
   readonly ast: TSESTree.Program;
   readonly hooks: HookContext;
+  readonly dependencyHooks?: readonly DependencyHookConfiguration[];
 }
 
 export interface ReactRule {

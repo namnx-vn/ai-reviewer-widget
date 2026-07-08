@@ -69,6 +69,28 @@ export function parsePatch(
   return hunks;
 }
 
+/** Returns new-file line numbers that GitHub accepts for inline review comments. */
+export function getChangedLines(patch?: string): ReadonlySet<number> {
+  const changedLines = new Set<number>();
+  if (!patch) return changedLines;
+
+  let newLine = 0;
+  for (const line of patch.split("\n")) {
+    const match = line.match(HUNK_PATTERN);
+    if (match) {
+      newLine = Number(match[3]);
+      continue;
+    }
+    if (line.startsWith("+")) {
+      if (!line.startsWith("+++")) changedLines.add(newLine);
+      newLine += 1;
+      continue;
+    }
+    if (!line.startsWith("-")) newLine += 1;
+  }
+  return changedLines;
+}
+
 
 export function buildPullRequestDiff(
   files: PullRequestFile[],

@@ -3,8 +3,10 @@ import type { TSESTree } from "@typescript-eslint/typescript-estree";
 import type { ReviewFinding } from "../../../review/types";
 import type { ReactRule } from "../../engine/react-rule";
 import type { HookMetadata } from "../../semantic/hook-analyzer";
-
-const TARGET_HOOKS = new Set(["useEffect", "useMemo", "useCallback"]);
+import {
+  analyzeDependencyHookCall,
+  getDependencyHookConfiguration,
+} from "../../semantic/dependency-hooks";
 
 const GLOBAL_OBJECTS = new Set([
   "console",
@@ -46,25 +48,29 @@ export const reactHooksMissingDepsRule: ReactRule = {
 
     const hook = findHook(node, context.hooks.hooks);
 
-    if (hook === undefined || !TARGET_HOOKS.has(hook.hook.name)) {
+    const hookName = hook?.hook.name ?? getCalleeName(node);
+    if (hookName === undefined) {
       return [];
     }
 
-    const callback = getCallback(node);
+    const configuration = getDependencyHookConfiguration(
+      hookName,
+      context.dependencyHooks ?? [],
+    );
 
-    if (callback === undefined) {
+    if (configuration === undefined) {
       return [];
     }
 
-    const dependencyArray = getDependencyArray(node);
+    const dependencyCall = analyzeDependencyHookCall(node, configuration);
 
-    if (dependencyArray === undefined) {
+    if (dependencyCall === undefined) {
       return [];
     }
 
-    const captured = collectCapturedDependencies(callback);
+    const captured = collectCapturedDependencies(dependencyCall.callback);
 
-    const declared = collectDeclaredDependencies(dependencyArray);
+    const declared = collectDeclaredDependencies(dependencyCall.dependencyArray);
 
     const missing = captured.filter((dependency) => !declared.has(dependency));
 
@@ -77,20 +83,20 @@ export const reactHooksMissingDepsRule: ReactRule = {
         id: [
           "react.hooks.missing-deps",
           context.file,
-          hook.hook.location.line,
-          hook.hook.location.column,
+          node.loc?.start.line ?? 1,
+          node.loc?.start.column ?? 0,
         ].join(":"),
         ruleId: "react.hooks.missing-deps",
         title: "Missing hook dependencies",
         message:
-          `${hook.hook.name} is missing dependencies: ` +
+          `${configuration.name} is missing dependencies: ` +
           `${missing.join(", ")}.`,
         severity: "medium",
         source: "ast",
         location: {
           file: context.file,
-          line: hook.hook.location.line,
-          column: hook.hook.location.column,
+          line: node.loc?.start.line ?? 1,
+          column: node.loc?.start.column ?? 0,
         },
         suggestion: `Add ${missing.join(", ")} to the dependency array.`,
         confidence: 1,
@@ -112,35 +118,8 @@ function findHook(
   return hooks.find((item) => item.hook.node === node);
 }
 
-function getCallback(
-  node: TSESTree.CallExpression,
-): TSESTree.ArrowFunctionExpression | TSESTree.FunctionExpression | undefined {
-  const argument = node.arguments[0];
-
-  if (argument === undefined) {
-    return undefined;
-  }
-
-  if (
-    argument.type === "ArrowFunctionExpression" ||
-    argument.type === "FunctionExpression"
-  ) {
-    return argument;
-  }
-
-  return undefined;
-}
-
-function getDependencyArray(
-  node: TSESTree.CallExpression,
-): TSESTree.ArrayExpression | undefined {
-  const argument = node.arguments[1];
-
-  if (argument === undefined || argument.type !== "ArrayExpression") {
-    return undefined;
-  }
-
-  return argument;
+function getCalleeName(node: TSESTree.CallExpression): string | undefined {
+  return node.callee.type === "Identifier" ? node.callee.name : undefined;
 }
 
 /**

@@ -5,6 +5,7 @@ import type {
 import type {
   ReviewFinding,
   ReviewResult,
+  ReviewWarning,
 } from "../review/types";
 
 import {
@@ -51,20 +52,29 @@ export class ReviewEngine {
 
     let aiFindings:
       ReviewFinding[] = [];
+    const warnings: ReviewWarning[] = [];
 
     if (
       input.aiProvider &&
       input.aiInput
     ) {
-      const aiResult =
-        await input.aiProvider.review(
-          input.aiInput,
-        );
+      try {
+        const aiResult =
+          await input.aiProvider.review(
+            input.aiInput,
+          );
 
-      aiFindings =
-        normalizeAIFindings(
-          aiResult,
-        );
+        aiFindings =
+          normalizeAIFindings(
+            aiResult,
+          );
+      } catch {
+        warnings.push({
+          code: "AI_REVIEW_FAILED",
+          message:
+            "AI review was unavailable; deterministic results were returned.",
+        });
+      }
     }
 
     const merged =
@@ -92,6 +102,7 @@ export class ReviewEngine {
       adjusted,
       performance.now() -
         startedAt,
+      warnings,
     );
   }
 }

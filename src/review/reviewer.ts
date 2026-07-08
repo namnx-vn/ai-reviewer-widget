@@ -1,8 +1,11 @@
-import { analyzeFile } from "../analyzer";
+import { analyzeFiles } from "../analyzer";
 import { aggregateReview } from "./aggregator";
 import type { ReviewResult } from "./types";
 import type { ReviewFinding } from "./types";
 import type { AIProvider, AIReviewResult } from "../ai/types";
+import { ReviewEngine } from "../engine/review-engine";
+import { ReactEngine } from "../react/engine";
+import { reactPlugin } from "../react";
 
 export function convertAIFindings(result: AIReviewResult): ReviewFinding[] {
   return result.findings.map((finding, index) => ({
@@ -24,9 +27,7 @@ export interface ReviewFile {
 export function reviewFiles(files: ReviewFile[]): ReviewResult {
   const startedAt = performance.now();
 
-  const findings = files.flatMap(({ path, content }) =>
-    analyzeFile(path, content),
-  );
+  const findings = analyzeFiles(files);
 
   return aggregateReview(findings, performance.now() - startedAt);
 }
@@ -40,31 +41,38 @@ export async function reviewPullRequest(
   input: PRReviewInput,
   aiProvider?: AIProvider,
 ): Promise<ReviewResult> {
-  const startedAt = performance.now();
+  const deterministicFindings = [
+    ...analyzeFiles(input.files),
+    ...input.files.flatMap(({ path, content }) =>
+      analyzeReactFile(path, content),
+    ),
+  ];
+  const diff = input.files
+    .map((file) => `FILE: ${file.path}\n${file.content}`)
+    .join("\n\n");
 
-  const deterministicFindings = input.files.flatMap(({ path, content }) =>
-    analyzeFile(path, content),
-  );
+  return new ReviewEngine().execute({
+    deterministicFindings,
+    aiProvider,
+    aiInput: aiProvider
+      ? {
+          pullRequestTitle: input.title,
+          pullRequestDescription: input.description,
+          diff,
+          deterministicFindings: JSON.stringify(deterministicFindings),
+        }
+      : undefined,
+  });
+}
 
-  let findings = deterministicFindings;
-
-  if (aiProvider) {
-    const diff = input.files
-      .map((file) => `FILE: ${file.path}\n${file.content}`)
-      .join("\n\n");
-
-    const aiResult = await aiProvider.review({
-      pullRequestTitle: input.title,
-
-      pullRequestDescription: input.description,
-
-      diff,
-
-      deterministicFindings: JSON.stringify(deterministicFindings),
-    });
-
-    findings = [...findings, ...convertAIFindings(aiResult)];
+function analyzeReactFile(path: string, content: string): ReviewFinding[] {
+  if (!/\.(tsx|jsx)$/.test(path)) {
+    return [];
   }
 
-  return aggregateReview(findings, performance.now() - startedAt);
+  return new ReactEngine().analyze({
+    source: content,
+    file: path,
+    plugins: [reactPlugin],
+  });
 }

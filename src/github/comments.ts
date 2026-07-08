@@ -10,6 +10,20 @@ export interface InlineComment {
   body: string;
 }
 
+export function filterFindingsForChangedLines(
+  findings: readonly ReviewFinding[],
+  changedLinesByFile: ReadonlyMap<string, ReadonlySet<number>>,
+): ReviewFinding[] {
+  return findings.filter((finding) => {
+    const location = finding.location;
+    return Boolean(
+      location?.file &&
+        location.line !== undefined &&
+        changedLinesByFile.get(location.file)?.has(location.line),
+    );
+  });
+}
+
 export function findingToComment(
   finding: ReviewFinding,
 ): InlineComment | null {
@@ -70,7 +84,7 @@ export async function createPullRequestReview(
   repo: string,
   pullNumber: number,
   commitId: string,
-  findings: ReviewFinding[],
+  findings: readonly ReviewFinding[],
 ): Promise<void> {
   const comments = findings
     .map(findingToComment)
@@ -93,9 +107,6 @@ export async function createPullRequestReview(
     pull_number: pullNumber,
 
     commit_id: commitId,
-
-    body:
-      "🤖 AI Reviewer detected actionable findings. See inline comments below.",
 
     event: "COMMENT",
 

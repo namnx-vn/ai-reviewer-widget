@@ -49,6 +49,14 @@ export interface ReviewStats {
   info: number;
 }
 
+export type ReviewWarningCode = "AI_REVIEW_FAILED";
+
+/** A non-fatal condition encountered while producing a review. */
+export interface ReviewWarning {
+  code: ReviewWarningCode;
+  message: string;
+}
+
 export interface ReviewResult {
   score: number;
 
@@ -57,6 +65,9 @@ export interface ReviewResult {
   findings: ReviewFinding[];
 
   stats: ReviewStats;
+
+  /** Non-fatal provider failures; deterministic findings are still valid. */
+  warnings: ReviewWarning[];
 
   durationMs: number;
 }

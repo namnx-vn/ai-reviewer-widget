@@ -45,6 +45,11 @@ export async function createCheckRun(
 function buildSummary(
   result: ReviewResult,
 ): string {
+  const warnings = getWarnings(result);
+  const warningSummary = warnings.length === 0
+    ? ""
+    : `\n## Warnings\n\n${warnings.map((warning) => `- ${warning}`).join("\n")}\n`;
+
   return `
 ## 🤖 AI Reviewer
 
@@ -63,5 +68,9 @@ function buildSummary(
 **Findings:** ${result.findings.length}
 
 **Duration:** ${Math.round(result.durationMs)}ms
-`;
+${warningSummary}`;
+}
+
+function getWarnings(result: ReviewResult): string[] {
+  return result.warnings.map((warning) => `${warning.code}: ${warning.message}`);
 }

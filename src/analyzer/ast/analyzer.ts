@@ -11,7 +11,7 @@ export function analyzeAST(
 
   const findings: ReviewFinding[] = [];
 
-  function visit(node: any) {
+  function visit(node: unknown): void {
     if (!node || typeof node !== "object") {
       return;
     }
@@ -31,7 +31,7 @@ export function analyzeAST(
         continue;
       }
 
-      const value = node[key];
+      const value = (node as Record<string, unknown>)[key];
 
       if (Array.isArray(value)) {
         value.forEach(visit);

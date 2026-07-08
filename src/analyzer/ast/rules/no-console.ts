@@ -6,39 +6,78 @@ export const noConsoleRule: ASTRule = {
 
   description: "Detect console logging.",
 
-  check(node: any, file: string): ReviewFinding[] {
-    if (
-      node?.type !== "CallExpression" ||
-      node.callee?.type !== "MemberExpression"
-    ) {
+  check(node: unknown, file: string): ReviewFinding[] {
+    if (!isConsoleLogCall(node)) {
       return [];
     }
 
-    if (
-      node.callee.object?.name !== "console" ||
-      node.callee.property?.name !== "log"
-    ) {
-      return [];
-    }
+    const location = node.loc.start;
 
-    const item = {
-      id: `quality.no-console:${file}:${node.loc.start.line}`,
+    return [{
+      id: `quality.no-console:${file}:${location.line}`,
       ruleId: "quality.no-console",
       title: "Console logging detected",
       message:
         "Production code should use the application's structured logging mechanism.",
       severity: "low",
-      confidence: "high",
+      confidence: 1,
       source: "ast",
       location: {
         file,
-        line: node.loc.start.line,
-        column: node.loc.start.column,
+        line: location.line,
+        column: location.column,
       },
       suggestion:
         "Replace console.log() with the project's logging abstraction.",
-    };
-
-    return [item as unknown as ReviewFinding];
+    }];
   },
 };
+
+function isConsoleLogCall(node: unknown): node is {
+  callee: {
+    object: { name: string };
+    property: { name: string };
+  };
+  loc: { start: { line: number; column: number } };
+} {
+  if (!node || typeof node !== "object") {
+    return false;
+  }
+
+  const candidate = node as Record<string, unknown>;
+  const callee = candidate.callee;
+  if (!callee || typeof callee !== "object") {
+    return false;
+  }
+
+  const calleeRecord = callee as Record<string, unknown>;
+  const object = calleeRecord.object;
+  const property = calleeRecord.property;
+  const location = candidate.loc;
+
+  return (
+    candidate.type === "CallExpression" &&
+    calleeRecord.type === "MemberExpression" &&
+    isNamedNode(object, "console") &&
+    isNamedNode(property, "log") &&
+    hasStartLocation(location)
+  );
+}
+
+function isNamedNode(value: unknown, name: string): value is { name: string } {
+  return Boolean(value && typeof value === "object" && (value as Record<string, unknown>).name === name);
+}
+
+function hasStartLocation(value: unknown): value is { start: { line: number; column: number } } {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const start = (value as Record<string, unknown>).start;
+  return Boolean(
+    start &&
+      typeof start === "object" &&
+      typeof (start as Record<string, unknown>).line === "number" &&
+      typeof (start as Record<string, unknown>).column === "number",
+  );
+}
