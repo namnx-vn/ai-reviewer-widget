@@ -2,8 +2,9 @@ import type { TSESTree } from "@typescript-eslint/typescript-estree";
 import { describe, expect, it } from "vitest";
 
 import { parseSource } from "../../../../analyzer/ast/parser";
-import { createHookContext } from "../../../semantic";
+import type { ReviewFinding } from "../../../../review/types";
 import type { ReactRule } from "../../../engine/react-rule";
+import { createHookContext } from "../../../semantic";
 import {
   reactStateDerivedStateRule,
   reactStateMutationRule,
@@ -11,10 +12,10 @@ import {
   reactStateSynchronizationRule,
 } from "..";
 
-function check(source: string, rule: ReactRule) {
+function check(source: string, rule: ReactRule): ReviewFinding[] {
   const ast = parseSource(source);
   const hooks = createHookContext(ast);
-  const findings = [];
+  const findings: ReviewFinding[] = [];
 
   visit(ast, (node) => {
     findings.push(
