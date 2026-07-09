@@ -40,7 +40,19 @@ export const reactStateSynchronizationRule: ReactRule = {
     let unsupported = false;
 
     visit(callback.body, (child) => {
-      if (child === callback.body || child.type !== "CallExpression") {
+      if (child === callback.body) {
+        return;
+      }
+
+      if (
+        child.type === "AssignmentExpression" ||
+        child.type === "UpdateExpression"
+      ) {
+        unsupported = true;
+        return;
+      }
+
+      if (child.type !== "CallExpression") {
         return;
       }
 
