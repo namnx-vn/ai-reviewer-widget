@@ -119,9 +119,9 @@ Detailed plans are maintained in `/plans`.
 | 3.4.2  | ✅ Complete    | [Semantic analysis](./plans/phase-3/3.4-react-intelligence/3.4.2-semantic-analysis.md) |
 | 3.4.3  | ✅ Complete    | [hooks](./plans/phase-3/3.4-react-intelligence/3.4.3-hooks.md)                         |
 | 3.4.4  | ✅ Complete    | [rendering](./plans/phase-3/3.4-react-intelligence/3.4.4-rendering.md)                 |
-| 3.4.5  | ✅ Complete     | [State](./plans/phase-3/3.4-react-intelligence/3.4.5-state.md)                         |
-| 3.4.6  | ⏳ Planned     | [performance](./plans/phase-3/3.4-react-intelligence/3.4.6-performance.md)             |
-| 3.4.7  | ⏳ Planned     | [context](./plans/phase-3/3.4-react-intelligence/3.4.7-context.md)                     |
+| 3.4.5  | ✅ Complete    | [State](./plans/phase-3/3.4-react-intelligence/3.4.5-state.md)                         |
+| 3.4.6  | ✅ Complete    | [performance](./plans/phase-3/3.4-react-intelligence/3.4.6-performance.md)             |
+| 3.4.7  | ✅ Complete    | [context](./plans/phase-3/3.4-react-intelligence/3.4.7-context.md)                     |
 | 3.4.8  | ⏳ Conditional | [patterns](./plans/phase-3/3.4-react-intelligence/3.4.8-patterns.md)                   |
 | 3.4.9  | ⏳ Planned     | [next.js](./plans/phase-3/3.4-react-intelligence/3.4.9-nextjs.md)                      |
 | 3.4.10 | ⏳ Conditional | [rsc](./plans/phase-3/3.4-react-intelligence/3.4.10-rsc.md)                            |
