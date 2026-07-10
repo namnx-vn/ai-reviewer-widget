@@ -4,7 +4,7 @@ import { reactPlugin } from "../react-plugin";
 import { ReactEngine } from "../../engine/react-engine";
 
 describe("reactPlugin", () => {
-  it("registers hooks, rendering, state, and performance intelligence rules", () => {
+  it("registers hooks, rendering, state, performance, and context intelligence rules", () => {
     const ruleIds = reactPlugin.rules.map((rule) => rule.id);
 
     expect(ruleIds).toEqual(
@@ -30,6 +30,9 @@ describe("reactPlugin", () => {
         "react.performance.trivial-use-memo",
         "react.performance.repeated-derived-computation",
         "react.performance.render-time-construction",
+        "react.context.unstable-value",
+        "react.context.consumer-invalidation",
+        "react.context.provider-nesting",
       ]),
     );
   });
@@ -66,6 +69,23 @@ describe("reactPlugin", () => {
 
     expect(findings.map((finding) => finding.ruleId)).toContain(
       "react.performance.trivial-use-memo",
+    );
+  });
+
+  it("runs context rules through the default plugin", () => {
+    const findings = new ReactEngine().analyze({
+      source: `
+        const ThemeContext = createContext(null);
+        function App({ theme }) {
+          return <ThemeContext.Provider value={{ theme }}><Page /></ThemeContext.Provider>;
+        }
+      `,
+      file: "App.tsx",
+      plugins: [reactPlugin],
+    });
+
+    expect(findings.map((finding) => finding.ruleId)).toContain(
+      "react.context.unstable-value",
     );
   });
 });
