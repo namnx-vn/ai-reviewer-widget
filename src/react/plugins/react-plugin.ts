@@ -1,4 +1,9 @@
 import type { ReactPlugin } from "../engine/react-plugin";
+import {
+  reactContextConsumerInvalidationRule,
+  reactContextProviderNestingRule,
+  reactContextUnstableValueRule,
+} from "../rules/context";
 import { reactHooksAsyncEffectRule } from "../rules/hooks/async-effect";
 import { reactHooksConditionalRule } from "../rules/hooks/conditional";
 import { reactHooksInvalidOrderRule } from "../rules/hooks/invalid-order";
@@ -30,7 +35,7 @@ import {
 export const reactPlugin: ReactPlugin = {
   id: "react",
   name: "React",
-  version: "3.4.6",
+  version: "3.4.7",
   rules: [
     reactHooksMissingDepsRule,
     reactHooksStaleClosureRule,
@@ -53,5 +58,8 @@ export const reactPlugin: ReactPlugin = {
     reactPerformanceTrivialUseMemoRule,
     reactPerformanceRepeatedDerivedComputationRule,
     reactPerformanceRenderTimeConstructionRule,
+    reactContextUnstableValueRule,
+    reactContextConsumerInvalidationRule,
+    reactContextProviderNestingRule,
   ],
 };
