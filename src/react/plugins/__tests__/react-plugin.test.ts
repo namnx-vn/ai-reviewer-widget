@@ -4,7 +4,7 @@ import { reactPlugin } from "../react-plugin";
 import { ReactEngine } from "../../engine/react-engine";
 
 describe("reactPlugin", () => {
-  it("registers hooks, rendering, state, performance, and context intelligence rules", () => {
+  it("registers hooks, rendering, state, performance, context, and patterns intelligence rules", () => {
     const ruleIds = reactPlugin.rules.map((rule) => rule.id);
 
     expect(ruleIds).toEqual(
@@ -33,6 +33,13 @@ describe("reactPlugin", () => {
         "react.context.unstable-value",
         "react.context.consumer-invalidation",
         "react.context.provider-nesting",
+        "react.patterns.query-key-stability",
+        "react.patterns.query-effect-sync",
+        "react.patterns.query-cache-invalidation-render",
+        "react.patterns.mutation-in-render",
+        "react.patterns.suspense-fallback",
+        "react.patterns.ineffective-error-boundary",
+        "react.patterns.nested-component-definition",
       ]),
     );
   });
@@ -86,6 +93,25 @@ describe("reactPlugin", () => {
 
     expect(findings.map((finding) => finding.ruleId)).toContain(
       "react.context.unstable-value",
+    );
+  });
+
+  it("runs patterns rules through the default plugin", () => {
+    const findings = new ReactEngine().analyze({
+      source: `
+        function List({ items }) {
+          function Row({ item }) {
+            return <span>{item.name}</span>;
+          }
+          return <div>{items.map((item) => <Row key={item.id} item={item} />)}</div>;
+        }
+      `,
+      file: "List.tsx",
+      plugins: [reactPlugin],
+    });
+
+    expect(findings.map((finding) => finding.ruleId)).toContain(
+      "react.patterns.nested-component-definition",
     );
   });
 });
