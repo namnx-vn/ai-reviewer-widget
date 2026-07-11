@@ -53,7 +53,7 @@ ReviewFinding[]
 | **3.4.5**  | ✅ Complete | React State Intelligence       | [3.4.5](./3.4.5-state.md)             |
 | **3.4.6**  | ✅ Complete | React Performance Intelligence | [3.4.6](./3.4.6-performance.md)       |
 | **3.4.7**  | ✅ Complete | React Context Intelligence     | [3.4.7](./3.4.7-context.md)           |
-| **3.4.8**  | ⏳ Planned  | React Patterns Intelligence    | [3.4.8](./3.4.8-patterns.md)          |
+| **3.4.8**  | ✅ Complete | React Patterns Intelligence    | [3.4.8](./3.4.8-patterns.md)          |
 | **3.4.9**  | ⏳ Planned  | React Suspense Intelligence    | [3.4.9](./3.4.9-suspense.md)          |
 | **3.4.10** | ⏳ Planned  | React Server Components / RSC  | [3.4.10](./3.4.10-rsc.md)             |
 | **3.4.11** | ⏳ Planned  | React Integration              | [3.4.11](./3.4.11-integration.md)     |
@@ -305,34 +305,32 @@ Analyze common React ecosystem patterns and anti-patterns.
 
 Conditional analysis when React Query is detected.
 
-* query key stability
-* invalidation misuse
-* mutation/query misuse
-* unnecessary effects around query state
-* stale query configuration
+* deterministic query key validation
+* render-time cache invalidation misuse
+* render-time mutation misuse
+* unnecessary effects that mirror query data into local state
+* import/API activation guards
 
 ### Suspense
 
-* ineffective Suspense boundaries
-* incorrect fallback patterns
-* loading-state assumptions
+* lazy components in Suspense fallbacks
+* statically ineffective fallback patterns
 
 ### Error Boundaries
 
-* missing error boundaries
-* ineffective error boundaries
+* ineffective error boundaries with no visible recovery state transition
 
 ### Common React Patterns
 
-Detect high-confidence React anti-patterns that do not belong to another specialized module.
+* nested component definitions that recreate component identity during parent render
 
 ### Activation rule
 
-Framework/library-specific rules must activate only when the relevant dependency or API can be identified.
+Framework/library-specific rules activate only when the relevant dependency or API can be identified. React Query is not introduced as a project runtime dependency.
 
 ### Status
 
-⏳ Planned
+✅ Complete
 
 ---
 

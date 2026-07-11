@@ -122,7 +122,7 @@ Detailed plans are maintained in `/plans`.
 | 3.4.5  | ✅ Complete    | [State](./plans/phase-3/3.4-react-intelligence/3.4.5-state.md)                         |
 | 3.4.6  | ✅ Complete    | [performance](./plans/phase-3/3.4-react-intelligence/3.4.6-performance.md)             |
 | 3.4.7  | ✅ Complete    | [context](./plans/phase-3/3.4-react-intelligence/3.4.7-context.md)                     |
-| 3.4.8  | ⏳ Conditional | [patterns](./plans/phase-3/3.4-react-intelligence/3.4.8-patterns.md)                   |
+| 3.4.8  | ✅ Complete    | [patterns](./plans/phase-3/3.4-react-intelligence/3.4.8-patterns.md)                   |
 | 3.4.9  | ⏳ Planned     | [next.js](./plans/phase-3/3.4-react-intelligence/3.4.9-nextjs.md)                      |
 | 3.4.10 | ⏳ Conditional | [rsc](./plans/phase-3/3.4-react-intelligence/3.4.10-rsc.md)                            |
 | 3.4.11 | ⏳ Planned     | [intelligence](./plans/phase-3/3.4-react-intelligence/3.4.11-intelligence.md)          |
