@@ -23,7 +23,7 @@ export const reactPatternsQueryKeyStabilityRule: ReactRule = {
       return [];
     }
 
-    const queryKey = getQueryKeyExpression(node);
+    const queryKey = getQueryKeyNode(node);
 
     if (
       queryKey === undefined ||
@@ -36,9 +36,9 @@ export const reactPatternsQueryKeyStabilityRule: ReactRule = {
   },
 };
 
-function getQueryKeyExpression(
+function getQueryKeyNode(
   node: TSESTree.CallExpression,
-): TSESTree.Expression | undefined {
+): TSESTree.Node | undefined {
   const firstArgument = node.arguments[0];
 
   if (
@@ -56,8 +56,7 @@ function getQueryKeyExpression(
     if (
       property.type !== "Property" ||
       property.computed ||
-      getPropertyName(property.key) !== "queryKey" ||
-      property.value.type === "AssignmentPattern"
+      getPropertyName(property.key) !== "queryKey"
     ) {
       continue;
     }
@@ -69,7 +68,7 @@ function getQueryKeyExpression(
 }
 
 function containsNonDeterministicValue(
-  expression: TSESTree.Expression,
+  expression: TSESTree.Node,
 ): boolean {
   let found = false;
 

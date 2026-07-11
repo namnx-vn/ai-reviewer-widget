@@ -50,7 +50,8 @@ function hasRecoveryTransition(
   );
 
   if (
-    derivedState !== undefined &&
+    derivedState?.value.body !== null &&
+    derivedState?.value.body !== undefined &&
     hasNonNullReturn(derivedState.value.body)
   ) {
     return true;
@@ -63,7 +64,8 @@ function hasRecoveryTransition(
   );
 
   return (
-    didCatch !== undefined &&
+    didCatch?.value.body !== null &&
+    didCatch?.value.body !== undefined &&
     containsThisSetState(didCatch.value.body)
   );
 }
