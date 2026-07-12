@@ -1,1 +1,1 @@
-export { reactPlugin } from "./plugins";
+export { nextjsPlugin, reactPlugin } from "./plugins";

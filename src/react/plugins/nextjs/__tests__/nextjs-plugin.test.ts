@@ -21,6 +21,22 @@ describe("nextjsPlugin", () => {
     expect(nextjsPlugin.id).toBe("nextjs");
   });
 
+  it("only analyzes files that establish App Router usage", () => {
+    const findings = new ReactEngine().analyze({
+      source: `
+        import { useState } from "react";
+        export function Button() {
+          const [open] = useState(false);
+          return <button onClick={() => undefined}>{String(open)}</button>;
+        }
+      `,
+      file: "src/components/Button.tsx",
+      plugins: [nextjsPlugin],
+    });
+
+    expect(findings).toHaveLength(0);
+  });
+
   it("detects React client hooks in a Server Component", () => {
     const findings = analyze(`
       import { useState } from "react";
@@ -28,6 +44,20 @@ describe("nextjsPlugin", () => {
       export default function Page() {
         const [open, setOpen] = useState(false);
         return <button onClick={() => setOpen(true)}>{String(open)}</button>;
+      }
+    `);
+
+    expect(findings.map((finding) => finding.ruleId)).toContain(
+      "nextjs.app-router.client-hook-in-server-component",
+    );
+  });
+
+  it("detects next/navigation hooks in a Server Component", () => {
+    const findings = analyze(`
+      import { useSearchParams } from "next/navigation";
+
+      export default function Page() {
+        return <div>{useSearchParams().toString()}</div>;
       }
     `);
 
@@ -77,11 +107,38 @@ describe("nextjsPlugin", () => {
     );
   });
 
+  it("allows erased type imports from a server-only module", () => {
+    const findings = analyze(`
+      "use client";
+      import type { ReadonlyRequestCookies } from "next/headers";
+
+      export default function Page({ value }: { value: ReadonlyRequestCookies }) {
+        return <div>{String(value)}</div>;
+      }
+    `);
+
+    expect(findings).toHaveLength(0);
+  });
+
   it("detects async Client Components", () => {
     const findings = analyze(`
       "use client";
 
       export default async function Page() {
+        return <div />;
+      }
+    `);
+
+    expect(findings.map((finding) => finding.ruleId)).toContain(
+      "nextjs.app-router.async-client-component",
+    );
+  });
+
+  it("detects anonymous default async Client Components", () => {
+    const findings = analyze(`
+      "use client";
+
+      export default async function () {
         return <div />;
       }
     `);
