@@ -4,7 +4,7 @@ import { reactPlugin } from "../react-plugin";
 import { ReactEngine } from "../../engine/react-engine";
 
 describe("reactPlugin", () => {
-  it("registers hooks, rendering, state, performance, context, and patterns intelligence rules", () => {
+  it("registers hooks, rendering, state, performance, context, patterns, and RSC intelligence rules", () => {
     const ruleIds = reactPlugin.rules.map((rule) => rule.id);
 
     expect(ruleIds).toEqual(
@@ -40,6 +40,14 @@ describe("reactPlugin", () => {
         "react.patterns.suspense-fallback",
         "react.patterns.ineffective-error-boundary",
         "react.patterns.nested-component-definition",
+        "react.rsc.conflicting-boundary",
+        "react.rsc.incompatible-boundary-import",
+        "react.rsc.client-hook-in-server",
+        "react.rsc.browser-api-in-server",
+        "react.rsc.event-handler-in-server",
+        "react.rsc.server-function-async",
+        "react.rsc.server-function-in-client",
+        "react.rsc.non-serializable-server-return",
       ]),
     );
   });
@@ -112,6 +120,25 @@ describe("reactPlugin", () => {
 
     expect(findings.map((finding) => finding.ruleId)).toContain(
       "react.patterns.nested-component-definition",
+    );
+  });
+
+  it("runs RSC rules through the default plugin", () => {
+    const findings = new ReactEngine().analyze({
+      source: `
+        import "server-only";
+        import { useState } from "react";
+        export function Page() {
+          const [count] = useState(0);
+          return <div>{count}</div>;
+        }
+      `,
+      file: "Page.tsx",
+      plugins: [reactPlugin],
+    });
+
+    expect(findings.map((finding) => finding.ruleId)).toContain(
+      "react.rsc.client-hook-in-server",
     );
   });
 });
