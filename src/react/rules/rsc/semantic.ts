@@ -30,11 +30,11 @@ export function analyzeRscModule(
   let serverDirective: TSESTree.ExpressionStatement | undefined;
 
   for (const statement of context.ast.body) {
-    const directive = getDirective(statement);
-
-    if (directive === undefined) {
+    if (!isDirectiveStatement(statement)) {
       break;
     }
+
+    const directive = getDirectiveValue(statement);
 
     if (directive === "use client") {
       clientDirective = statement;
@@ -160,13 +160,11 @@ export function getFunctionUseServerDirective(
   }
 
   for (const statement of node.body.body) {
-    const directive = getDirective(statement);
-
-    if (directive === undefined) {
+    if (!isDirectiveStatement(statement)) {
       break;
     }
 
-    if (directive === "use server") {
+    if (getDirectiveValue(statement) === "use server") {
       return statement;
     }
   }
@@ -264,16 +262,21 @@ export function visitFunctionBody(
   }
 }
 
-function getDirective(node: TSESTree.Node): string | undefined {
-  if (
-    node.type !== "ExpressionStatement" ||
-    node.expression.type !== "Literal" ||
-    typeof node.expression.value !== "string"
-  ) {
-    return undefined;
-  }
+function isDirectiveStatement(
+  node: TSESTree.Node,
+): node is TSESTree.ExpressionStatement {
+  return (
+    node.type === "ExpressionStatement" &&
+    node.expression.type === "Literal" &&
+    typeof node.expression.value === "string"
+  );
+}
 
-  return node.expression.value;
+function getDirectiveValue(node: TSESTree.ExpressionStatement): string {
+  return node.expression.type === "Literal" &&
+    typeof node.expression.value === "string"
+    ? node.expression.value
+    : "";
 }
 
 function getImportedName(node: TSESTree.Node): string | undefined {

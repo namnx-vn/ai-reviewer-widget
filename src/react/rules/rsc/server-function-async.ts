@@ -32,7 +32,7 @@ export const reactRscServerFunctionAsyncRule: ReactRule = {
         ruleId: RULE_ID,
         title: "Server Function must be async",
         message:
-          `${functionName} contains a function-level \"use server\" directive but is not async. React Server Functions cross an asynchronous server boundary and must use an async function contract.`,
+          `${functionName} contains a function-level "use server" directive but is not async. React Server Functions cross an asynchronous server boundary and must use an async function contract.`,
         severity: "high",
         source: "ast",
         location: { file: context.file, line, column },

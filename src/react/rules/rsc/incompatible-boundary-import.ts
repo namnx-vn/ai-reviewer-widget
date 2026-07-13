@@ -49,7 +49,7 @@ function createFinding(
     ruleId: RULE_ID,
     title: "Incompatible RSC boundary import",
     message:
-      `This ${moduleBoundary} module imports \"${importedBoundary}\", which declares the opposite React Server Component execution boundary.`,
+      `This ${moduleBoundary} module imports "${importedBoundary}", which declares the opposite React Server Component execution boundary.`,
     severity: "high",
     source: "ast",
     location: { file, line, column },

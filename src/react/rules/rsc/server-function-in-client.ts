@@ -33,7 +33,7 @@ export const reactRscServerFunctionInClientRule: ReactRule = {
         ruleId: RULE_ID,
         title: "Server Function declared inside client module",
         message:
-          `${functionName} declares \"use server\" inside a module with an explicit client boundary. Server Functions must be defined on the server side and imported into client code rather than created inside the client module.`,
+          `${functionName} declares "use server" inside a module with an explicit client boundary. Server Functions must be defined on the server side and imported into client code rather than created inside the client module.`,
         severity: "high",
         source: "ast",
         location: { file: context.file, line, column },
