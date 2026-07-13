@@ -35,6 +35,16 @@ import {
   reactRenderingUnstablePropsRule,
 } from "../rules/rendering";
 import {
+  reactRscBrowserApiInServerRule,
+  reactRscClientHookInServerRule,
+  reactRscConflictingBoundaryRule,
+  reactRscEventHandlerInServerRule,
+  reactRscIncompatibleBoundaryImportRule,
+  reactRscNonSerializableServerReturnRule,
+  reactRscServerFunctionAsyncRule,
+  reactRscServerFunctionInClientRule,
+} from "../rules/rsc";
+import {
   reactStateDerivedStateRule,
   reactStateMutationRule,
   reactStateRedundantStateRule,
@@ -44,7 +54,7 @@ import {
 export const reactPlugin: ReactPlugin = {
   id: "react",
   name: "React",
-  version: "3.4.8",
+  version: "3.4.10",
   rules: [
     reactHooksMissingDepsRule,
     reactHooksStaleClosureRule,
@@ -77,5 +87,13 @@ export const reactPlugin: ReactPlugin = {
     reactPatternsSuspenseFallbackRule,
     reactPatternsIneffectiveErrorBoundaryRule,
     reactPatternsNestedComponentDefinitionRule,
+    reactRscConflictingBoundaryRule,
+    reactRscIncompatibleBoundaryImportRule,
+    reactRscClientHookInServerRule,
+    reactRscBrowserApiInServerRule,
+    reactRscEventHandlerInServerRule,
+    reactRscServerFunctionAsyncRule,
+    reactRscServerFunctionInClientRule,
+    reactRscNonSerializableServerReturnRule,
   ],
 };
