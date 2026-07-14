@@ -35,6 +35,65 @@ describe("reviewer orchestration", () => {
     expect(result.warnings).toEqual([]);
   });
 
+  it("includes React intelligence in synchronous deterministic reviews", () => {
+    const result = reviewFiles([
+      {
+        path: "src/components/Counter.tsx",
+        content: `
+          import { useState } from "react";
+
+          export function Counter({ enabled }: { enabled: boolean }) {
+            if (enabled) {
+              const [count] = useState(0);
+              return <span>{count}</span>;
+            }
+
+            return <span>Disabled</span>;
+          }
+        `,
+      },
+    ]);
+
+    expect(result.findings).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        ruleId: "react.hooks.conditional",
+        source: "ast",
+        confidence: 1,
+      }),
+    ]));
+  });
+
+  it("integrates optional Next.js intelligence for App Router files", async () => {
+    const result = await reviewPullRequest({
+      title: "Add interactive page",
+      files: [{
+        path: "app/dashboard/page.tsx",
+        content: `
+          import { useState } from "react";
+
+          export default function Page() {
+            const [open] = useState(false);
+            return <button onClick={() => undefined}>{String(open)}</button>;
+          }
+        `,
+      }],
+    });
+
+    expect(result.findings).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        ruleId: "nextjs.app-router.client-hook-in-server-component",
+        source: "ast",
+        confidence: 1,
+      }),
+      expect.objectContaining({
+        ruleId: "nextjs.app-router.event-handler-in-server-component",
+        source: "ast",
+        confidence: 1,
+      }),
+    ]));
+    expect(result.warnings).toEqual([]);
+  });
+
   it("passes deterministic and AI findings through the unified review engine", async () => {
     const provider: AIProvider = {
       name: "test",
