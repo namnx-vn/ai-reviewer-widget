@@ -5,7 +5,8 @@ import type { ReviewFinding } from "./types";
 import type { AIProvider, AIReviewResult } from "../ai/types";
 import { ReviewEngine } from "../engine/review-engine";
 import { ReactEngine } from "../react/engine";
-import { reactPlugin } from "../react";
+import { nextjsPlugin, reactPlugin } from "../react";
+import type { ReactPlugin } from "../react/engine";
 
 export function convertAIFindings(result: AIReviewResult): ReviewFinding[] {
   return result.findings.map((finding, index) => ({
@@ -27,7 +28,7 @@ export interface ReviewFile {
 export function reviewFiles(files: ReviewFile[]): ReviewResult {
   const startedAt = performance.now();
 
-  const findings = analyzeFiles(files);
+  const findings = analyzeDeterministicFiles(files);
 
   return aggregateReview(findings, performance.now() - startedAt);
 }
@@ -41,12 +42,7 @@ export async function reviewPullRequest(
   input: PRReviewInput,
   aiProvider?: AIProvider,
 ): Promise<ReviewResult> {
-  const deterministicFindings = [
-    ...analyzeFiles(input.files),
-    ...input.files.flatMap(({ path, content }) =>
-      analyzeReactFile(path, content),
-    ),
-  ];
+  const deterministicFindings = analyzeDeterministicFiles(input.files);
   const diff = input.files
     .map((file) => `FILE: ${file.path}\n${file.content}`)
     .join("\n\n");
@@ -65,6 +61,15 @@ export async function reviewPullRequest(
   });
 }
 
+function analyzeDeterministicFiles(
+  files: readonly ReviewFile[],
+): ReviewFinding[] {
+  return [
+    ...analyzeFiles(files),
+    ...files.flatMap(({ path, content }) => analyzeReactFile(path, content)),
+  ];
+}
+
 function analyzeReactFile(path: string, content: string): ReviewFinding[] {
   if (!/\.(tsx|jsx)$/.test(path)) {
     return [];
@@ -73,6 +78,18 @@ function analyzeReactFile(path: string, content: string): ReviewFinding[] {
   return new ReactEngine().analyze({
     source: content,
     file: path,
-    plugins: [reactPlugin],
+    plugins: getReactPlugins(path),
   });
+}
+
+function getReactPlugins(path: string): readonly ReactPlugin[] {
+  return isAppRouterFile(path)
+    ? [reactPlugin, nextjsPlugin]
+    : [reactPlugin];
+}
+
+function isAppRouterFile(path: string): boolean {
+  return /(^|\/)app(?:\/[^/]+)*\/(?:page|layout|template|loading|error|not-found|route)\.(?:tsx|jsx)$/.test(
+    path.replace(/\\/g, "/"),
+  );
 }

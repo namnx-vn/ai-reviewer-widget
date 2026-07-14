@@ -94,6 +94,30 @@ describe("reviewer orchestration", () => {
     expect(result.warnings).toEqual([]);
   });
 
+  it("does not treat a generic app directory as a Next.js App Router", async () => {
+    const result = await reviewPullRequest({
+      title: "Add application component",
+      files: [{
+        path: "src/app/App.tsx",
+        content: `
+          import { useState } from "react";
+
+          export function App() {
+            const [open] = useState(false);
+            return <button onClick={() => undefined}>{String(open)}</button>;
+          }
+        `,
+      }],
+    });
+
+    expect(result.findings.map((finding) => finding.ruleId)).not.toContain(
+      "nextjs.app-router.client-hook-in-server-component",
+    );
+    expect(result.findings.map((finding) => finding.ruleId)).not.toContain(
+      "nextjs.app-router.event-handler-in-server-component",
+    );
+  });
+
   it("passes deterministic and AI findings through the unified review engine", async () => {
     const provider: AIProvider = {
       name: "test",
