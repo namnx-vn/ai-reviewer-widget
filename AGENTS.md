@@ -125,7 +125,7 @@ Detailed plans are maintained in `/plans`.
 | 3.4.8  | ✅ Complete    | [patterns](./plans/phase-3/3.4-react-intelligence/3.4.8-patterns.md)                   |
 | 3.4.9  | ⏳ Planned     | [next.js](./plans/phase-3/3.4-react-intelligence/3.4.9-nextjs.md)                      |
 | 3.4.10 | ⏳ Conditional | [rsc](./plans/phase-3/3.4-react-intelligence/3.4.10-rsc.md)                            |
-| 3.4.11 | ⏳ Planned     | [intelligence](./plans/phase-3/3.4-react-intelligence/3.4.11-intelligence.md)          |
+| 3.4.11 | ✅ Complete    | [integration](./plans/phase-3/3.4-react-intelligence/3.4.11-integration.md)             |
 | 3.4.12 | ⏳ Planned     | [hardening](./plans/phase-3/3.4-react-intelligence/3.4.12-hardening.md)                |
 | 3.5    | ⏳ Planned     | [Micro Frontend](./plans/phase-3/3.5-micro-frontend-intelligence.md)                   |
 | 3.6    | ⏳ Planned     | [Security](./plans/phase-3/3.6-security-intelligence.md)                               |
