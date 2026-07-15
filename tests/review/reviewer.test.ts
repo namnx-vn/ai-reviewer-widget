@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { AIProvider } from "../../src/ai/types";
 import {
@@ -116,6 +116,46 @@ describe("reviewer orchestration", () => {
     expect(result.findings.map((finding) => finding.ruleId)).not.toContain(
       "nextjs.app-router.event-handler-in-server-component",
     );
+  });
+
+  it("keeps valid findings when another source file cannot be parsed", () => {
+    const result = reviewFiles([
+      { path: "src/valid.ts", content: "eval('input');" },
+      {
+        path: "src/Broken.tsx",
+        content: "export function Broken() { return <div>; }",
+      },
+    ]);
+
+    expect(result.findings).toEqual(expect.arrayContaining([
+      expect.objectContaining({ ruleId: "security.no-eval" }),
+    ]));
+    expect(result.warnings).toEqual([{
+      code: "SOURCE_PARSE_FAILED",
+      message: "Skipped deterministic analysis for src/Broken.tsx because it could not be parsed.",
+    }]);
+  });
+
+  it("continues the AI review when deterministic analysis skips malformed source", async () => {
+    const review = vi.fn(async () => ({ findings: [] }));
+    const provider: AIProvider = { name: "test", review };
+
+    const result = await reviewPullRequest({
+      title: "Partially valid pull request",
+      files: [
+        { path: "src/valid.ts", content: "eval('input');" },
+        {
+          path: "src/Broken.tsx",
+          content: "export function Broken() { return <div>; }",
+        },
+      ],
+    }, provider);
+
+    expect(review).toHaveBeenCalledOnce();
+    expect(result.warnings).toEqual([{
+      code: "SOURCE_PARSE_FAILED",
+      message: "Skipped deterministic analysis for src/Broken.tsx because it could not be parsed.",
+    }]);
   });
 
   it("passes deterministic and AI findings through the unified review engine", async () => {
