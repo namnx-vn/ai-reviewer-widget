@@ -57,7 +57,7 @@ ReviewFinding[]
 | **3.4.9**  | ⏳ Planned  | React Suspense Intelligence    | [3.4.9](./3.4.9-suspense.md)          |
 | **3.4.10** | ⏳ Planned  | React Server Components / RSC  | [3.4.10](./3.4.10-rsc.md)             |
 | **3.4.11** | ✅ Complete | React Integration              | [3.4.11](./3.4.11-integration.md)     |
-| **3.4.12** | ⏳ Planned  | React Hardening                | [3.4.12](./3.4.12-hardening.md)       |
+| **3.4.12** | ✅ Complete | React Hardening                | [3.4.12](./3.4.12-hardening.md)       |
 
 ---
 
