@@ -49,7 +49,9 @@ export interface ReviewStats {
   info: number;
 }
 
-export type ReviewWarningCode = "AI_REVIEW_FAILED";
+export type ReviewWarningCode =
+  | "AI_REVIEW_FAILED"
+  | "SOURCE_PARSE_FAILED";
 
 /** A non-fatal condition encountered while producing a review. */
 export interface ReviewWarning {

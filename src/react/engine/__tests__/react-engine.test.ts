@@ -236,6 +236,48 @@ describe("ReactEngine", () => {
     expect(findings[0]?.id).toBe("react.duplicate:example.tsx:1:0");
   });
 
+  it("ignores malformed plugin output without dropping healthy findings", () => {
+    const malformedCheck = vi.fn();
+    malformedCheck.mockReturnValue(undefined);
+
+    const plugin: ReactPlugin = {
+      id: "mixed-output",
+      name: "Mixed output",
+      version: "1.0.0",
+      rules: [
+        {
+          id: "react.healthy",
+          description: "Produces a valid finding.",
+          check: (_node, context) => [{
+            id: "react.healthy:example.tsx:1:0",
+            ruleId: "react.healthy",
+            title: "Healthy finding",
+            message: "This result must be preserved.",
+            severity: "low",
+            source: "ast",
+            confidence: 1,
+            location: { file: context.file, line: 1, column: 0 },
+          }],
+        },
+        {
+          id: "react.malformed",
+          description: "Produces malformed runtime output.",
+          check: malformedCheck,
+        },
+      ],
+    };
+
+    const findings = new ReactEngine().analyze({
+      source: "export function Component() { return <div />; }",
+      file: "example.tsx",
+      plugins: [plugin],
+    });
+
+    expect(findings.map((finding) => finding.ruleId)).toEqual([
+      "react.healthy",
+    ]);
+  });
+
   it("does not mutate the input plugins", () => {
     const plugins: ReactPlugin[] = [
       {

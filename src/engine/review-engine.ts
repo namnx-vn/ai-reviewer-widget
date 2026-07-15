@@ -41,6 +41,8 @@ export interface ReviewEngineInput {
   aiInput?: Parameters<
     AIProvider["review"]
   >[0];
+
+  warnings?: readonly ReviewWarning[];
 }
 
 export class ReviewEngine {
@@ -52,7 +54,7 @@ export class ReviewEngine {
 
     let aiFindings:
       ReviewFinding[] = [];
-    const warnings: ReviewWarning[] = [];
+    const warnings: ReviewWarning[] = [...(input.warnings ?? [])];
 
     if (
       input.aiProvider &&

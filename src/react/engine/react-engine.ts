@@ -18,7 +18,13 @@ export interface ReactEngineInput {
 
 export class ReactEngine {
   analyze(input: ReactEngineInput): ReviewFinding[] {
-    const ast = parseSource(input.source);
+    let ast: TSESTree.Program;
+
+    try {
+      ast = parseSource(input.source);
+    } catch {
+      return [];
+    }
 
     const context = createReactAnalysisContext(
       input.source,
@@ -31,7 +37,7 @@ export class ReactEngine {
 
     this.visit(ast, context, findings);
 
-    return findings;
+    return this.deduplicateFindings(findings);
   }
 
   private visit(
@@ -74,13 +80,19 @@ export class ReactEngine {
     context: ReactAnalysisContext,
   ): ReviewFinding[] {
     try {
-      return rule.check(node as TSESTree.Node, {
+      const result: unknown = rule.check(node as TSESTree.Node, {
         source: context.source,
         file: context.file,
         ast: context.ast,
         hooks: context.hooks,
         dependencyHooks: context.dependencyHooks,
       });
+
+      return Array.isArray(result)
+        ? result.filter((finding): finding is ReviewFinding =>
+          this.isReviewFinding(finding),
+        )
+        : [];
     } catch {
       return [];
     }
@@ -88,5 +100,51 @@ export class ReactEngine {
 
   private isObject(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null;
+  }
+
+  private isReviewFinding(value: unknown): value is ReviewFinding {
+    if (!this.isObject(value)) {
+      return false;
+    }
+
+    return (
+      typeof value.id === "string" &&
+      typeof value.ruleId === "string" &&
+      typeof value.title === "string" &&
+      typeof value.message === "string" &&
+      this.isSeverity(value.severity) &&
+      this.isFindingSource(value.source) &&
+      typeof value.confidence === "number" &&
+      Number.isFinite(value.confidence)
+    );
+  }
+
+  private isSeverity(value: unknown): boolean {
+    return (
+      value === "critical" ||
+      value === "high" ||
+      value === "medium" ||
+      value === "low" ||
+      value === "info"
+    );
+  }
+
+  private isFindingSource(value: unknown): boolean {
+    return value === "ast" || value === "architecture" || value === "ai";
+  }
+
+  private deduplicateFindings(
+    findings: readonly ReviewFinding[],
+  ): ReviewFinding[] {
+    const findingIds = new Set<string>();
+
+    return findings.filter((finding) => {
+      if (findingIds.has(finding.id)) {
+        return false;
+      }
+
+      findingIds.add(finding.id);
+      return true;
+    });
   }
 }

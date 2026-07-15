@@ -22,9 +22,7 @@ export function createReactAnalysisContext(
   ast: TSESTree.Program,
   plugins: readonly ReactPlugin[] = [],
 ): ReactAnalysisContext {
-  const rules = plugins.flatMap(
-    (plugin) => plugin.rules,
-  );
+  const rules = getUniqueRules(plugins);
   const dependencyHooks = plugins.flatMap(
     (plugin) => plugin.dependencyHooks ?? [],
   );
@@ -37,4 +35,24 @@ export function createReactAnalysisContext(
     rules,
     dependencyHooks,
   };
+}
+
+function getUniqueRules(
+  plugins: readonly ReactPlugin[],
+): readonly ReactRule[] {
+  const ruleIds = new Set<string>();
+  const rules: ReactRule[] = [];
+
+  for (const plugin of plugins) {
+    for (const rule of plugin.rules) {
+      if (ruleIds.has(rule.id)) {
+        continue;
+      }
+
+      ruleIds.add(rule.id);
+      rules.push(rule);
+    }
+  }
+
+  return rules;
 }
