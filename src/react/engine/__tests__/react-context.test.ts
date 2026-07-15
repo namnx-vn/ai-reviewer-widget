@@ -85,4 +85,31 @@ describe("createReactAnalysisContext", () => {
     expect(context.rules).toHaveLength(0);
     expect(context.ast).toBe(ast);
   });
+
+  it("keeps the first rule when plugins declare the same rule id", () => {
+    const source = "const value = 1;";
+    const ast = parseSource(source);
+    const duplicateRule = {
+      id: "react.first",
+      description: "Duplicate first rule",
+      check: () => [],
+    };
+
+    const context = createReactAnalysisContext(
+      source,
+      "example.ts",
+      ast,
+      [
+        ...plugins,
+        {
+          id: "duplicate-plugin",
+          name: "Duplicate plugin",
+          version: "1.0.0",
+          rules: [duplicateRule],
+        },
+      ],
+    );
+
+    expect(context.rules).toEqual([firstRule, secondRule]);
+  });
 });

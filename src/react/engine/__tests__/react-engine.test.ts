@@ -189,6 +189,53 @@ describe("ReactEngine", () => {
     ).not.toThrow();
   });
 
+  it("returns no React findings when the source cannot be parsed", () => {
+    const engine = new ReactEngine();
+
+    expect(() => engine.analyze({
+      source: "export function Broken() { return <div>; }",
+      file: "Broken.tsx",
+      plugins: [],
+    })).not.toThrow();
+
+    expect(engine.analyze({
+      source: "export function Broken() { return <div>; }",
+      file: "Broken.tsx",
+      plugins: [],
+    })).toEqual([]);
+  });
+
+  it("deduplicates repeated findings by their stable id", () => {
+    const plugin: ReactPlugin = {
+      id: "duplicate-findings",
+      name: "Duplicate findings",
+      version: "1.0.0",
+      rules: [{
+        id: "react.duplicate",
+        description: "Emits the same finding for each node.",
+        check: () => [{
+          id: "react.duplicate:example.tsx:1:0",
+          ruleId: "react.duplicate",
+          title: "Duplicate finding",
+          message: "This finding must appear once.",
+          severity: "low",
+          source: "ast",
+          confidence: 1,
+          location: { file: "example.tsx", line: 1, column: 0 },
+        }],
+      }],
+    };
+
+    const findings = new ReactEngine().analyze({
+      source: "export function Component() { return <div />; }",
+      file: "example.tsx",
+      plugins: [plugin],
+    });
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.id).toBe("react.duplicate:example.tsx:1:0");
+  });
+
   it("does not mutate the input plugins", () => {
     const plugins: ReactPlugin[] = [
       {
