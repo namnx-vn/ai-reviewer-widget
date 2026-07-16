@@ -4,6 +4,7 @@ import { noConsoleRule } from "./ast/rules/no-console";
 import { noEvalRule } from "./ast/rules/no-eval";
 import { noRemoteToRemoteImport } from "./architecture/rules";
 import type { ReviewFinding } from "../review/types";
+import { analyzeMicroFrontends } from "../mfe";
 
 export function analyzeFile(
   file: string,
@@ -42,5 +43,6 @@ export function analyzeFiles(files: readonly { path: string; content: string }[]
   return [
     ...astFindings,
     ...analyzeArchitectureGraph(buildDependencyGraph(files), [noRemoteToRemoteImport]),
+    ...analyzeMicroFrontends(files).findings,
   ];
 }

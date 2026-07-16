@@ -136,6 +136,21 @@ describe("reviewer orchestration", () => {
     }]);
   });
 
+  it("includes Micro Frontend architecture findings in deterministic reviews", () => {
+    const result = reviewFiles([{
+      path: "apps/host/shell/App.tsx",
+      content: 'import ProductRow from "@remote/catalog/internal/ProductRow";',
+    }]);
+
+    expect(result.findings).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        ruleId: "mfe.remote-deep-import",
+        source: "architecture",
+        confidence: 1,
+      }),
+    ]));
+  });
+
   it("continues the AI review when deterministic analysis skips malformed source", async () => {
     const review = vi.fn(async () => ({ findings: [] }));
     const provider: AIProvider = { name: "test", review };
