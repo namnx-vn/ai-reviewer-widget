@@ -123,11 +123,11 @@ Detailed plans are maintained in `/plans`.
 | 3.4.6  | ✅ Complete    | [performance](./plans/phase-3/3.4-react-intelligence/3.4.6-performance.md)             |
 | 3.4.7  | ✅ Complete    | [context](./plans/phase-3/3.4-react-intelligence/3.4.7-context.md)                     |
 | 3.4.8  | ✅ Complete    | [patterns](./plans/phase-3/3.4-react-intelligence/3.4.8-patterns.md)                   |
-| 3.4.9  | ⏳ Planned     | [next.js](./plans/phase-3/3.4-react-intelligence/3.4.9-nextjs.md)                      |
-| 3.4.10 | ⏳ Conditional | [rsc](./plans/phase-3/3.4-react-intelligence/3.4.10-rsc.md)                            |
+| 3.4.9  | ✅ Complete     | [next.js](./plans/phase-3/3.4-react-intelligence/3.4.9-nextjs.md)                      |
+| 3.4.10 | ✅ Complete | [rsc](./plans/phase-3/3.4-react-intelligence/3.4.10-rsc.md)                            |
 | 3.4.11 | ✅ Complete    | [integration](./plans/phase-3/3.4-react-intelligence/3.4.11-integration.md)             |
 | 3.4.12 | ✅ Complete    | [hardening](./plans/phase-3/3.4-react-intelligence/3.4.12-hardening.md)                |
-| 3.5    | ⏳ Planned     | [Micro Frontend](./plans/phase-3/3.5-micro-frontend-intelligence.md)                   |
+| 3.5    | ✅ Complete    | [Micro Frontend](./plans/phase-3/3.5-micro-frontend-intelligence.md)                   |
 | 3.6    | ⏳ Planned     | [Security](./plans/phase-3/3.6-security-intelligence.md)                               |
 | 3.7    | ⏳ Planned     | [Performance](./plans/phase-3/3.7-performance-intelligence.md)                         |
 | 3.8    | ⏳ Planned     | [Plugin SDK](./plans/phase-3/3.8-plugin-sdk.md)                                        |
