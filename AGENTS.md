@@ -128,7 +128,7 @@ Detailed plans are maintained in `/plans`.
 | 3.4.11 | ✅ Complete    | [integration](./plans/phase-3/3.4-react-intelligence/3.4.11-integration.md)             |
 | 3.4.12 | ✅ Complete    | [hardening](./plans/phase-3/3.4-react-intelligence/3.4.12-hardening.md)                |
 | 3.5    | ✅ Complete    | [Micro Frontend](./plans/phase-3/3.5-micro-frontend-intelligence.md)                   |
-| 3.6    | ⏳ Planned     | [Security](./plans/phase-3/3.6-security-intelligence.md)                               |
+| 3.6    | ⏳ Planned     | [Security](./plans/phase-3/3.6-security-intelligence/README.md)                        |
 | 3.7    | ⏳ Planned     | [Performance](./plans/phase-3/3.7-performance-intelligence.md)                         |
 | 3.8    | ⏳ Planned     | [Plugin SDK](./plans/phase-3/3.8-plugin-sdk.md)                                        |
 
