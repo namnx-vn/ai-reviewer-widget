@@ -285,7 +285,7 @@ function collectDeclarations(node: TSESTree.Node, declared: Map<string, number>)
   }
   if (node.type === "CatchClause" && node.param !== null) collectPatternNames(node.param, declared);
   if (node.type === "FunctionDeclaration" || node.type === "FunctionExpression" || node.type === "ArrowFunctionExpression") {
-    for (const parameter of node.params) collectPatternNames(parameter, declared);
+    for (const parameter of node.params) collectPatternNames(parameter as TSESTree.BindingName | TSESTree.RestElement | TSESTree.AssignmentPattern, declared);
   }
 }
 
@@ -295,21 +295,21 @@ function collectPatternNames(pattern: TSESTree.BindingName | TSESTree.RestElemen
     return;
   }
   if (pattern.type === "RestElement") {
-    collectPatternNames(pattern.argument, declared);
+    collectPatternNames(pattern.argument as TSESTree.BindingName | TSESTree.RestElement | TSESTree.AssignmentPattern, declared);
     return;
   }
   if (pattern.type === "AssignmentPattern") {
-    collectPatternNames(pattern.left, declared);
+    collectPatternNames(pattern.left as TSESTree.BindingName | TSESTree.RestElement | TSESTree.AssignmentPattern, declared);
     return;
   }
   if (pattern.type === "ArrayPattern") {
-    for (const element of pattern.elements) if (element !== null) collectPatternNames(element, declared);
+    for (const element of pattern.elements) if (element !== null) collectPatternNames(element as TSESTree.BindingName | TSESTree.RestElement | TSESTree.AssignmentPattern, declared);
     return;
   }
   if (pattern.type === "ObjectPattern") {
     for (const property of pattern.properties) {
-      if (property.type === "RestElement") collectPatternNames(property.argument, declared);
-      else collectPatternNames(property.value, declared);
+      if (property.type === "RestElement") collectPatternNames(property.argument as TSESTree.BindingName | TSESTree.RestElement | TSESTree.AssignmentPattern, declared);
+      else collectPatternNames(property.value as TSESTree.BindingName | TSESTree.RestElement | TSESTree.AssignmentPattern, declared);
     }
   }
 }
