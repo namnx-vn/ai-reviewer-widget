@@ -88,7 +88,7 @@ The order below is normative unless repository architecture requires a documente
 
 | Phase | Status | Plan |
 | --- | --- | --- |
-| 3.6.0 | ⏳ Planned | [Security Architecture Foundation](./3.6.0-security-foundation.md) |
+| 3.6.0 | ✅ Complete | [Security Architecture Foundation](./3.6.0-security-foundation.md) |
 | 3.6.1 | ⏳ Planned | [Dangerous Execution](./3.6.1-dangerous-execution.md) |
 | 3.6.2 | ⏳ Planned | [Injection Intelligence](./3.6.2-injection.md) |
 | 3.6.3 | ⏳ Planned | [XSS & Browser Security](./3.6.3-xss-browser.md) |
