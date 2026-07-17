@@ -59,8 +59,15 @@ export type SecuritySourceKind =
 export type SecuritySinkKind =
   | "code-execution"
   | "sql-query"
+  | "nosql-query"
   | "html-render"
+  | "template-render"
+  | "expression-evaluation"
   | "shell-command"
+  | "response-header"
+  | "ldap-query"
+  | "xpath-query"
+  | "graphql-query"
   | "filesystem-path"
   | "network-request"
   | "secret-output"
@@ -69,7 +76,11 @@ export type SecuritySinkKind =
 
 export type SecuritySanitizerKind =
   | "parameterized-query"
+  | "command-escape"
   | "html-escape"
+  | "crlf-rejection"
+  | "ldap-escape"
+  | "xpath-escape"
   | "url-allowlist"
   | "path-normalization"
   | "schema-validation"
