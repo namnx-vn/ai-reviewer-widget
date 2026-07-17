@@ -58,12 +58,12 @@ describe("phase 3.6.2 injection intelligence", () => {
     ],
     [
       "template",
-      `import * as ejs from "ejs";\nejs.render(req.body.template, { user: "alice" });`,
+      `import ejs from "ejs";\nejs.render(req.body.template, { user: "alice" });`,
       "security.injection.template",
     ],
     [
       "expression",
-      `import * as jexl from "jexl";\njexl.eval(req.query.expression);`,
+      `import jexl from "jexl";\njexl.eval(req.query.expression);`,
       "security.injection.expression",
     ],
     [
