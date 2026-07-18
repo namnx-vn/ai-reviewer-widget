@@ -23,6 +23,10 @@ const TAINT_KIND_ORDER: readonly TaintKind[] = [
   "ldap",
   "xpath",
   "graphql",
+  "html",
+  "url",
+  "navigation",
+  "window-open",
 ];
 
 type Environment = Map<string, TaintState>;
@@ -188,6 +192,8 @@ function inspectExpression(
   adapter: TaintFlowAdapter,
   matches: TaintFlowMatch[],
 ): void {
+  recordSinks(node, environment, file, adapter, matches);
+
   if (node.type === "AssignmentExpression") {
     inspectExpression(node.right, environment, file, adapter, matches);
     const state = evaluateNode(node.right, environment, file, adapter);
@@ -197,10 +203,6 @@ function inspectExpression(
 
   if (node.type === "UpdateExpression") {
     return;
-  }
-
-  if (node.type === "CallExpression") {
-    recordSinks(node, environment, file, adapter, matches);
   }
 
   if (
@@ -217,7 +219,7 @@ function inspectExpression(
 }
 
 function recordSinks(
-  node: TSESTree.CallExpression,
+  node: TSESTree.Node,
   environment: Environment,
   file: string,
   adapter: TaintFlowAdapter,
@@ -363,12 +365,25 @@ function evaluateNode(
         };
       }
 
-      return mergeStates(node.arguments.map((argument) => (
-        argument.type === "SpreadElement"
-          ? evaluateNode(argument.argument, environment, file, adapter)
-          : evaluateNode(argument, environment, file, adapter)
-      )));
+      return mergeStates([
+        evaluateNode(node.callee, environment, file, adapter),
+        ...node.arguments.map((argument) => (
+          argument.type === "SpreadElement"
+            ? evaluateNode(argument.argument, environment, file, adapter)
+            : evaluateNode(argument, environment, file, adapter)
+        )),
+      ]);
     }
+
+    case "NewExpression":
+      return mergeStates([
+        evaluateNode(node.callee, environment, file, adapter),
+        ...node.arguments.map((argument) => (
+          argument.type === "SpreadElement"
+            ? evaluateNode(argument.argument, environment, file, adapter)
+            : evaluateNode(argument, environment, file, adapter)
+        )),
+      ]);
   }
 
   return mergeStates(getChildNodes(node).map((child) => (
