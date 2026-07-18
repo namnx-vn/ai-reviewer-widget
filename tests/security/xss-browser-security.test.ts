@@ -186,7 +186,7 @@ describe("phase 3.6.3 xss and browser security", () => {
   it("emits exact source and sink evidence with a deterministic flow", () => {
     const source = `
       const fragment = location.hash;
-      const markup = `<div>${fragment}</div>`;
+      const markup = \`<div>\${fragment}</div>\`;
       element.innerHTML = markup;
     `;
 
