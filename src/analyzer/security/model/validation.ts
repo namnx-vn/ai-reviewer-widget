@@ -27,6 +27,7 @@ const SECURITY_CATEGORIES: readonly SecurityCategory[] = [
   "execution",
   "injection",
   "xss",
+  "browser",
   "secrets",
   "crypto",
   "authentication",
