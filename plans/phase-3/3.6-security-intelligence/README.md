@@ -91,7 +91,7 @@ The order below is normative unless repository architecture requires a documente
 | 3.6.0 | ✅ Complete | [Security Architecture Foundation](./3.6.0-security-foundation.md) |
 | 3.6.1 | 🚧 Implemented — validation pending | [Dangerous Execution](./3.6.1-dangerous-execution.md) |
 | 3.6.2 | ✅ Complete | [Injection Intelligence](./3.6.2-injection.md) |
-| 3.6.3 | ⏳ Planned | [XSS & Browser Security](./3.6.3-xss-browser.md) |
+| 3.6.3 | ✅ Complete | [XSS & Browser Security](./3.6.3-xss-browser.md) |
 | 3.6.4 | ⏳ Planned | [Secrets & Credential Exposure](./3.6.4-secrets.md) |
 | 3.6.5 | ⏳ Planned | [Cryptography Intelligence](./3.6.5-cryptography.md) |
 | 3.6.6 | ⏳ Planned | [Authentication Intelligence](./3.6.6-authentication.md) |
