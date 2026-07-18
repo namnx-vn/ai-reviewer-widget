@@ -94,7 +94,9 @@ export function createInjectionFlowAdapter(
   return {
     matchSource: (node) => matchSource(node),
     matchSanitizer: (node) => matchSanitizer(node, state),
-    matchSinks: (node) => matchSinks(node, state),
+    matchSinks: (node) => node.type === "CallExpression"
+      ? matchSinks(node, state)
+      : [],
   };
 }
 
