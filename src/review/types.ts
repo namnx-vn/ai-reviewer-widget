@@ -8,6 +8,7 @@ export type Severity =
 export type FindingSource =
   | "ast"
   | "architecture"
+  | "security"
   | "ai";
 
 export type ReviewDecision =
