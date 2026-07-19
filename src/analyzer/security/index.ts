@@ -4,8 +4,17 @@ export { analyzeIntraproceduralTaint } from "./flow";
 export { SecurityRuleRegistry } from "./registry/security-rule-registry";
 export { dangerousExecutionRules } from "./rules/dangerous-execution";
 export { browserSecurityRules } from "./rules/browser";
+export { createCryptoRules, cryptoRules } from "./rules/crypto";
 export { injectionRules } from "./rules/injection";
 export { secretsRules } from "./rules/secrets";
+export {
+  DEFAULT_CRYPTO_POLICY,
+  isEcbMode,
+  isWeakCipher,
+  isWeakHash,
+  normalizeCryptoAlgorithm,
+  type CryptoPolicy,
+} from "./policies/crypto-policy";
 export type {
   TaintFlowAdapter,
   TaintFlowMatch,
