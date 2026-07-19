@@ -93,7 +93,7 @@ The order below is normative unless repository architecture requires a documente
 | 3.6.2 | ✅ Complete | [Injection Intelligence](./3.6.2-injection.md) |
 | 3.6.3 | ✅ Complete | [XSS & Browser Security](./3.6.3-xss-browser.md) |
 | 3.6.4 | ✅ Complete | [Secrets & Credential Exposure](./3.6.4-secrets.md) |
-| 3.6.5 | ⏳ Planned | [Cryptography Intelligence](./3.6.5-cryptography.md) |
+| 3.6.5 | ✅ Complete | [Cryptography Intelligence](./3.6.5-cryptography.md) |
 | 3.6.6 | ⏳ Planned | [Authentication Intelligence](./3.6.6-authentication.md) |
 | 3.6.7 | ⏳ Planned | [Authorization Intelligence](./3.6.7-authorization.md) |
 | 3.6.8 | ⏳ Planned | [Session & Token Security](./3.6.8-session-token.md) |
