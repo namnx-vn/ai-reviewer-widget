@@ -39,7 +39,7 @@ export const DEFAULT_CRYPTO_POLICY: CryptoPolicy = {
 };
 
 export function normalizeCryptoAlgorithm(value: string): string {
-  return value.trim().toLowerCase().replaceAll("_", "-");
+  return value.trim().toLowerCase().replace(/_/g, "-");
 }
 
 export function isWeakHash(policy: CryptoPolicy, algorithm: string): boolean {
