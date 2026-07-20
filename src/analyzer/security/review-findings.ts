@@ -5,10 +5,12 @@ import { SecurityAnalysisEngine } from "./engine/security-analysis-engine";
 import type { SecurityConfidence, SecurityFinding } from "./model/types";
 import { SecurityRuleRegistry } from "./registry/security-rule-registry";
 import { secretsRules } from "./rules/secrets";
+import { authenticationRules } from "./rules/auth";
 
-export function analyzeSecretFindings(file: string, source: string): readonly ReviewFinding[] {
+export function analyzeSecurityFindings(file: string, source: string): readonly ReviewFinding[] {
   const registry = new SecurityRuleRegistry();
   for (const rule of secretsRules) registry.register(rule);
+  for (const rule of authenticationRules) registry.register(rule);
 
   return new SecurityAnalysisEngine().analyze({ file, source, ast: parseSource(source) }, registry)
     .map(toReviewFinding);
