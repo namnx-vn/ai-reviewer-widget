@@ -2,7 +2,7 @@
 
 > Engineering contract: [`../../../AGENTS.md`](../../../AGENTS.md)
 
-Status: 🚧 In Progress
+Status: ✅ Complete
 
 ---
 
@@ -90,24 +90,24 @@ The order below is normative unless repository architecture requires a documente
 | Phase | Status | Plan |
 | --- | --- | --- |
 | 3.6.0 | ✅ Complete | [Security Architecture Foundation](./3.6.0-security-foundation.md) |
-| 3.6.1 | 🚧 Implemented — validation pending | [Dangerous Execution](./3.6.1-dangerous-execution.md) |
+| 3.6.1 | ✅ Complete | [Dangerous Execution](./3.6.1-dangerous-execution.md) |
 | 3.6.2 | ✅ Complete | [Injection Intelligence](./3.6.2-injection.md) |
 | 3.6.3 | ✅ Complete | [XSS & Browser Security](./3.6.3-xss-browser.md) |
 | 3.6.4 | ✅ Complete | [Secrets & Credential Exposure](./3.6.4-secrets.md) |
 | 3.6.5 | ✅ Complete | [Cryptography Intelligence](./3.6.5-cryptography.md) |
 | 3.6.6 | ✅ Complete | [Authentication Intelligence](./3.6.6-authentication.md) |
-| 3.6.7 | 🚧 Implemented — validation pending | [Authorization Intelligence](./3.6.7-authorization.md) |
+| 3.6.7 | ✅ Complete | [Authorization Intelligence](./3.6.7-authorization.md) |
 | 3.6.8 | ✅ Complete | [Session & Token Security](./3.6.8-session-token.md) |
 | 3.6.9 | ✅ Complete | [Sensitive Data Protection](./3.6.9-sensitive-data.md) |
 | 3.6.10 | ✅ Complete | [Network & Transport Security](./3.6.10-network-transport.md) |
 | 3.6.11 | ✅ Complete | [Filesystem & Resource Security](./3.6.11-filesystem.md) |
 | 3.6.12 | ✅ Complete | [SSRF Intelligence](./3.6.12-ssrf.md) |
 | 3.6.13 | ✅ Complete | [Security Configuration](./3.6.13-security-configuration.md) |
-| 3.6.14 | 🚧 Implemented — validation pending | [Logging & Error Security](./3.6.14-logging-errors.md) |
+| 3.6.14 | ✅ Complete | [Logging & Error Security](./3.6.14-logging-errors.md) |
 | 3.6.15 | ✅ Complete | [Supply Chain Security](./3.6.15-supply-chain.md) |
 | 3.6.16 | ✅ Complete | [JavaScript Object Security](./3.6.16-object-security.md) |
-| 3.6.17 | 🚧 Implemented — validation pending | [Business Logic Security](./3.6.17-business-logic.md) |
-| 3.6.18 | 🚧 Implemented — validation pending | [React / Browser Banking Security](./3.6.18-react-banking.md) |
+| 3.6.17 | ✅ Complete | [Business Logic Security](./3.6.17-business-logic.md) |
+| 3.6.18 | ✅ Complete | [React / Browser Banking Security](./3.6.18-react-banking.md) |
 | 3.6.19 | ✅ Complete | [Security Taint Engine](./3.6.19-taint-engine.md) |
 | 3.6.20 | ✅ Complete | [Interprocedural Security Analysis](./3.6.20-interprocedural.md) |
 | 3.6.21 | ✅ Complete | [Compliance Mapping](./3.6.21-compliance.md) |
