@@ -7,12 +7,14 @@ import { SecurityRuleRegistry } from "./registry/security-rule-registry";
 import { secretsRules } from "./rules/secrets";
 import { authenticationRules } from "./rules/auth";
 import { sessionTokenRules } from "./rules/session";
+import { networkTransportRules } from "./rules/network";
 
 export function analyzeSecurityFindings(file: string, source: string): readonly ReviewFinding[] {
   const registry = new SecurityRuleRegistry();
   for (const rule of secretsRules) registry.register(rule);
   for (const rule of authenticationRules) registry.register(rule);
   for (const rule of sessionTokenRules) registry.register(rule);
+  for (const rule of networkTransportRules) registry.register(rule);
 
   return new SecurityAnalysisEngine().analyze({ file, source, ast: parseSource(source) }, registry)
     .map(toReviewFinding);

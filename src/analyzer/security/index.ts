@@ -7,6 +7,7 @@ export { authenticationRules } from "./rules/auth";
 export { browserSecurityRules } from "./rules/browser";
 export { createCryptoRules, cryptoRules } from "./rules/crypto";
 export { injectionRules } from "./rules/injection";
+export { networkTransportRules } from "./rules/network";
 export { secretsRules } from "./rules/secrets";
 export { sessionTokenRules } from "./rules/session";
 export {
