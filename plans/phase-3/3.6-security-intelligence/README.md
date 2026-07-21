@@ -96,7 +96,7 @@ The order below is normative unless repository architecture requires a documente
 | 3.6.5 | ✅ Complete | [Cryptography Intelligence](./3.6.5-cryptography.md) |
 | 3.6.6 | ✅ Complete | [Authentication Intelligence](./3.6.6-authentication.md) |
 | 3.6.7 | ⏳ Planned | [Authorization Intelligence](./3.6.7-authorization.md) |
-| 3.6.8 | ⏳ Planned | [Session & Token Security](./3.6.8-session-token.md) |
+| 3.6.8 | ✅ Complete | [Session & Token Security](./3.6.8-session-token.md) |
 | 3.6.9 | ⏳ Planned | [Sensitive Data Protection](./3.6.9-sensitive-data.md) |
 | 3.6.10 | ⏳ Planned | [Network & Transport Security](./3.6.10-network-transport.md) |
 | 3.6.11 | ⏳ Planned | [Filesystem & Resource Security](./3.6.11-filesystem.md) |
