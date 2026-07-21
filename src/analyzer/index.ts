@@ -5,7 +5,7 @@ import { noEvalRule } from "./ast/rules/no-eval";
 import { noRemoteToRemoteImport } from "./architecture/rules";
 import type { ReviewFinding } from "../review/types";
 import { analyzeMicroFrontends } from "../mfe";
-import { analyzeSecurityFindings } from "./security/review-findings";
+import { analyzeSecurityFindings, analyzeSupplyChainFindings } from "./security/review-findings";
 
 export function analyzeFile(
   file: string,
@@ -52,5 +52,6 @@ export function analyzeFiles(files: readonly { path: string; content: string }[]
     ...securityFindings,
     ...analyzeArchitectureGraph(buildDependencyGraph(files), [noRemoteToRemoteImport]),
     ...analyzeMicroFrontends(files).findings,
+    ...analyzeSupplyChainFindings(files),
   ];
 }

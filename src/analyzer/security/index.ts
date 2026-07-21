@@ -2,6 +2,7 @@ export { createSecurityFindingId } from "./engine/finding-id";
 export { SecurityAnalysisEngine } from "./engine/security-analysis-engine";
 export { analyzeIntraproceduralTaint } from "./flow";
 export { SecurityRuleRegistry } from "./registry/security-rule-registry";
+export { analyzeSupplyChain } from "./supply-chain";
 export { dangerousExecutionRules } from "./rules/dangerous-execution";
 export { authenticationRules } from "./rules/auth";
 export { browserSecurityRules } from "./rules/browser";
@@ -48,3 +49,9 @@ export type {
   SecurityStandard,
   SecurityStandardMapping,
 } from "./model/types";
+export type {
+  SupplyChainLockfile,
+  SupplyChainManifest,
+  SupplyChainRepository,
+  SupplyChainSourceFile,
+} from "./supply-chain";

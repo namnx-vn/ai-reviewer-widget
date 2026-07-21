@@ -141,7 +141,8 @@ function addCorsOptions(matches: NetworkMatch[], value: TSESTree.Node | undefine
   const origin = stringValue(objectValue(value, "origin"));
   if (origin !== "*") return;
   matches.push({ kind: "permissive-cors", node: objectValue(value, "origin") ?? value, evidence: "CORS origin is explicitly configured as '*'." });
-  if (objectValue(value, "credentials")?.type === "Literal" && objectValue(value, "credentials")?.value === true) matches.push({ kind: "credentials-wildcard-origin", node: value, evidence: "CORS enables credentials while allowing every origin." });
+  const credentials = objectValue(value, "credentials");
+  if (credentials?.type === "Literal" && credentials.value === true) matches.push({ kind: "credentials-wildcard-origin", node: value, evidence: "CORS enables credentials while allowing every origin." });
 }
 
 function addProxySetting(matches: NetworkMatch[], node: TSESTree.CallExpression): void {
@@ -167,7 +168,7 @@ function optionsArgument(node: TSESTree.CallExpression | TSESTree.NewExpression)
 function argumentAt(node: TSESTree.CallExpression | TSESTree.NewExpression, index: number): TSESTree.Node | undefined { const argument = node.arguments[index]; return argument?.type === "SpreadElement" ? undefined : argument; }
 function calleeName(node: TSESTree.Node): string | undefined { return node.type === "Identifier" ? node.name : undefined; }
 function memberPath(node: TSESTree.Node): readonly string[] | undefined { if (node.type === "Identifier") return [node.name]; if (node.type !== "MemberExpression" || node.computed) return undefined; const base = memberPath(node.object); const property = propertyName(node.property); return base === undefined || property === undefined ? undefined : [...base, property]; }
-function importedName(specifier: TSESTree.ImportClause["specifiers"][number]): string { return specifier.type === "ImportSpecifier" ? (specifier.imported.type === "Identifier" ? specifier.imported.name : String(specifier.imported.value)) : "default"; }
+function importedName(specifier: TSESTree.ImportDeclaration["specifiers"][number]): string { return specifier.type === "ImportSpecifier" ? (specifier.imported.type === "Identifier" ? specifier.imported.name : String(specifier.imported.value)) : "default"; }
 function propertyName(node: TSESTree.Node): string | undefined { return node.type === "Identifier" ? node.name : stringValue(node); }
 function objectValue(node: TSESTree.ObjectExpression, name: string): TSESTree.Node | undefined { const property = node.properties.find((entry) => entry.type === "Property" && !entry.computed && propertyName(entry.key) === name); return property?.type === "Property" ? property.value : undefined; }
 function stringValue(node: TSESTree.Node | undefined): string | undefined { if (node?.type === "Literal" && typeof node.value === "string") return node.value; if (node?.type === "TemplateLiteral" && node.expressions.length === 0) return node.quasis[0]?.value.cooked ?? undefined; return undefined; }

@@ -8,6 +8,7 @@ import { secretsRules } from "./rules/secrets";
 import { authenticationRules } from "./rules/auth";
 import { sessionTokenRules } from "./rules/session";
 import { networkTransportRules } from "./rules/network";
+import { analyzeSupplyChain, type SupplyChainManifest } from "./supply-chain";
 
 export function analyzeSecurityFindings(file: string, source: string): readonly ReviewFinding[] {
   const registry = new SecurityRuleRegistry();
@@ -18,6 +19,16 @@ export function analyzeSecurityFindings(file: string, source: string): readonly 
 
   return new SecurityAnalysisEngine().analyze({ file, source, ast: parseSource(source) }, registry)
     .map(toReviewFinding);
+}
+
+export function analyzeSupplyChainFindings(
+  files: readonly { readonly path: string; readonly content: string }[],
+): readonly ReviewFinding[] {
+  const manifests = files.flatMap(toSupplyChainManifest);
+  const lockfiles = files.flatMap((file) => toSupplyChainLockfile(file.path));
+  const sourceFiles = files.map((file) => ({ path: file.path, source: file.content }));
+
+  return analyzeSupplyChain({ manifests, lockfiles, sourceFiles }).map(toReviewFinding);
 }
 
 function toReviewFinding(finding: SecurityFinding): ReviewFinding {
@@ -38,4 +49,50 @@ function confidenceScore(confidence: SecurityConfidence): number {
   if (confidence === "high") return 1;
   if (confidence === "medium") return 0.75;
   return 0.5;
+}
+
+function toSupplyChainManifest(file: { readonly path: string; readonly content: string }): readonly SupplyChainManifest[] {
+  if (!/(?:^|\/)package\.json$/.test(file.path)) return [];
+
+  const parsed = parseManifest(file.content);
+  return parsed === undefined ? [] : [{ path: file.path, ...parsed }];
+}
+
+function parseManifest(source: string): Omit<SupplyChainManifest, "path"> | undefined {
+  try {
+    const value: unknown = JSON.parse(source);
+    if (!isRecord(value)) return undefined;
+    return {
+      dependencies: stringRecord(value.dependencies),
+      devDependencies: stringRecord(value.devDependencies),
+      optionalDependencies: stringRecord(value.optionalDependencies),
+      peerDependencies: stringRecord(value.peerDependencies),
+      scripts: stringRecord(value.scripts),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function toSupplyChainLockfile(path: string): readonly { readonly path: string; readonly format: "npm" | "yarn" | "pnpm" | "bun" }[] {
+  if (/(?:^|\/)package-lock\.json$/.test(path)) return [{ path, format: "npm" }];
+  if (/(?:^|\/)yarn\.lock$/.test(path)) return [{ path, format: "yarn" }];
+  if (/(?:^|\/)pnpm-lock\.yaml$/.test(path)) return [{ path, format: "pnpm" }];
+  if (/(?:^|\/)bun\.lockb?$/.test(path)) return [{ path, format: "bun" }];
+  return [];
+}
+
+function stringRecord(value: unknown): Readonly<Record<string, string>> | undefined {
+  if (!isRecord(value)) return undefined;
+  const entries = Object.entries(value);
+  const result: Record<string, string> = {};
+  for (const [key, item] of entries) {
+    if (typeof item !== "string") return undefined;
+    result[key] = item;
+  }
+  return result;
+}
+
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null;
 }
