@@ -141,7 +141,11 @@ function matchSource(
       property !== undefined &&
       new Set(["href", "search", "hash", "pathname"]).has(property)
     ) {
-      return source(node, `Browser location input: location.${property}`, "browser-location");
+      return source(
+        node,
+        `Browser location input: location.${property}`,
+        "browser-location",
+      );
     }
 
     if (
@@ -149,7 +153,11 @@ function matchSource(
       property !== undefined &&
       new Set(["URL", "documentURI", "referrer"]).has(property)
     ) {
-      return source(node, `Document URL input: document.${property}`, "browser-location");
+      return source(
+        node,
+        `Document URL input: document.${property}`,
+        "browser-location",
+      );
     }
 
     if (owner === "document" && property === "cookie") {
@@ -165,11 +173,18 @@ function matchSource(
       node.object.type === "Identifier" &&
       state.messageBindings.has(node.object.name)
     ) {
-      return source(node, `Message event data: ${node.object.name}.data`, "message-data");
+      return source(
+        node,
+        `Message event data: ${node.object.name}.data`,
+        "message-data",
+      );
     }
   }
 
-  if (node.type !== "CallExpression" || node.callee.type !== "MemberExpression") {
+  if (
+    node.type !== "CallExpression" ||
+    node.callee.type !== "MemberExpression"
+  ) {
     return undefined;
   }
 
@@ -242,9 +257,19 @@ function matchTargetSink(
 ): readonly TaintSink[] {
   switch (target) {
     case "inner-html":
-      return assignmentPropertySink(node, "innerHTML", "html", "DOM innerHTML assignment");
+      return assignmentPropertySink(
+        node,
+        "innerHTML",
+        "html",
+        "DOM innerHTML assignment",
+      );
     case "outer-html":
-      return assignmentPropertySink(node, "outerHTML", "html", "DOM outerHTML assignment");
+      return assignmentPropertySink(
+        node,
+        "outerHTML",
+        "html",
+        "DOM outerHTML assignment",
+      );
     case "document-write":
       return documentWriteSink(node, state);
     case "insert-adjacent-html":
@@ -274,13 +299,15 @@ function assignmentPropertySink(
     return [];
   }
 
-  return [{
-    family,
-    node,
-    value: node.right,
-    label,
-    sinkKind: "dom-html",
-  }];
+  return [
+    {
+      family,
+      node,
+      value: node.right,
+      label,
+      sinkKind: "dom-html",
+    },
+  ];
 }
 
 function documentWriteSink(
@@ -307,12 +334,19 @@ function insertAdjacentHtmlSink(node: TSESTree.Node): readonly TaintSink[] {
   if (
     node.type !== "CallExpression" ||
     node.callee.type !== "MemberExpression" ||
-    propertyName(node.callee.property, node.callee.computed) !== "insertAdjacentHTML"
+    propertyName(node.callee.property, node.callee.computed) !==
+      "insertAdjacentHTML"
   ) {
     return [];
   }
 
-  return argumentSink(node, 1, "html", "insertAdjacentHTML HTML sink", "dom-html");
+  return argumentSink(
+    node,
+    1,
+    "html",
+    "insertAdjacentHTML HTML sink",
+    "dom-html",
+  );
 }
 
 function untrustedUrlSink(
@@ -329,13 +363,15 @@ function untrustedUrlSink(
       URL_PROPERTIES.has(property) &&
       resolveGlobal(node.left.object, state) !== "location"
     ) {
-      return [{
-        family: "url",
-        node,
-        value: node.right,
-        label: `DOM URL property assignment: ${property}`,
-        sinkKind: "browser-navigation",
-      }];
+      return [
+        {
+          family: "url",
+          node,
+          value: node.right,
+          label: `DOM URL property assignment: ${property}`,
+          sinkKind: "browser-navigation",
+        },
+      ];
     }
   }
 
@@ -349,7 +385,8 @@ function untrustedUrlSink(
 
   const attribute = argumentAt(node, 0);
   const value = argumentAt(node, 1);
-  const attributeName = attribute === undefined ? undefined : staticString(attribute);
+  const attributeName =
+    attribute === undefined ? undefined : staticString(attribute);
   if (
     value === undefined ||
     attributeName === undefined ||
@@ -358,13 +395,15 @@ function untrustedUrlSink(
     return [];
   }
 
-  return [{
-    family: "url",
-    node,
-    value,
-    label: `DOM URL attribute assignment: ${attributeName}`,
-    sinkKind: "browser-navigation",
-  }];
+  return [
+    {
+      family: "url",
+      node,
+      value,
+      label: `DOM URL attribute assignment: ${attributeName}`,
+      sinkKind: "browser-navigation",
+    },
+  ];
 }
 
 function openRedirectSink(
@@ -373,13 +412,15 @@ function openRedirectSink(
 ): readonly TaintSink[] {
   if (node.type === "AssignmentExpression") {
     if (isLocationAssignmentTarget(node.left, state)) {
-      return [{
-        family: "navigation",
-        node,
-        value: node.right,
-        label: "Browser location navigation",
-        sinkKind: "browser-navigation",
-      }];
+      return [
+        {
+          family: "navigation",
+          node,
+          value: node.right,
+          label: "Browser location navigation",
+          sinkKind: "browser-navigation",
+        },
+      ];
     }
     return [];
   }
@@ -419,13 +460,15 @@ function postMessageOriginSink(
     return [];
   }
 
-  return [{
-    family: "origin",
-    node,
-    value: targetOrigin,
-    label: "Dynamic postMessage target origin",
-    sinkKind: "post-message",
-  }];
+  return [
+    {
+      family: "origin",
+      node,
+      value: targetOrigin,
+      label: "Dynamic postMessage target origin",
+      sinkKind: "post-message",
+    },
+  ];
 }
 
 function windowOpenSink(
@@ -483,12 +526,14 @@ function javascriptUrlSink(
 
   if (isWindowOpenCall(node, state)) {
     const value = argumentAt(node, 0);
-    return value === undefined ? undefined : {
-      node,
-      value,
-      label: "javascript: URL passed to window.open",
-      sinkKind: "window-open",
-    };
+    return value === undefined
+      ? undefined
+      : {
+          node,
+          value,
+          label: "javascript: URL passed to window.open",
+          sinkKind: "window-open",
+        };
   }
 
   if (
@@ -498,12 +543,14 @@ function javascriptUrlSink(
     const method = propertyName(node.callee.property, node.callee.computed);
     if (method === "assign" || method === "replace") {
       const value = argumentAt(node, 0);
-      return value === undefined ? undefined : {
-        node,
-        value,
-        label: `javascript: URL passed to location.${method}`,
-        sinkKind: "browser-navigation",
-      };
+      return value === undefined
+        ? undefined
+        : {
+            node,
+            value,
+            label: `javascript: URL passed to location.${method}`,
+            sinkKind: "browser-navigation",
+          };
     }
   }
 
@@ -639,12 +686,16 @@ function isMessageListenerCallee(
   state: BrowserModelState,
 ): boolean {
   if (node.type === "Identifier") {
-    return node.name === "addEventListener" && !state.shadowedGlobals.has(node.name);
+    return (
+      node.name === "addEventListener" && !state.shadowedGlobals.has(node.name)
+    );
   }
 
-  return node.type === "MemberExpression" &&
+  return (
+    node.type === "MemberExpression" &&
     propertyName(node.property, node.computed) === "addEventListener" &&
-    isWindowLike(node.object, state);
+    isWindowLike(node.object, state)
+  );
 }
 
 function isPostMessageCall(
@@ -652,13 +703,18 @@ function isPostMessageCall(
   state: BrowserModelState,
 ): boolean {
   if (node.callee.type === "Identifier") {
-    return node.callee.name === "postMessage" &&
-      !state.shadowedGlobals.has("postMessage");
+    return (
+      node.callee.name === "postMessage" &&
+      !state.shadowedGlobals.has("postMessage")
+    );
   }
 
-  return node.callee.type === "MemberExpression" &&
-    propertyName(node.callee.property, node.callee.computed) === "postMessage" &&
-    isWindowLike(node.callee.object, state);
+  return (
+    node.callee.type === "MemberExpression" &&
+    propertyName(node.callee.property, node.callee.computed) ===
+      "postMessage" &&
+    isWindowLike(node.callee.object, state)
+  );
 }
 
 function postMessageTargetOrigin(
@@ -693,9 +749,11 @@ function isWindowOpenCall(
     return node.callee.name === "open" && !state.shadowedGlobals.has("open");
   }
 
-  return node.callee.type === "MemberExpression" &&
+  return (
+    node.callee.type === "MemberExpression" &&
     propertyName(node.callee.property, node.callee.computed) === "open" &&
-    isWindowLike(node.callee.object, state);
+    isWindowLike(node.callee.object, state)
+  );
 }
 
 function hasNoopener(node: TSESTree.CallExpression): boolean {
@@ -705,12 +763,15 @@ function hasNoopener(node: TSESTree.CallExpression): boolean {
     return false;
   }
 
-  return value.split(",").some((feature) => feature.trim().toLowerCase() === "noopener");
+  return value
+    .split(",")
+    .some((feature) => feature.trim().toLowerCase() === "noopener");
 }
 
 function targetsCurrentContext(node: TSESTree.CallExpression): boolean {
   const target = argumentAt(node, 1);
-  const value = target === undefined ? undefined : staticString(target)?.toLowerCase();
+  const value =
+    target === undefined ? undefined : staticString(target)?.toLowerCase();
   return value === "_self" || value === "_top" || value === "_parent";
 }
 
@@ -731,8 +792,13 @@ function isLocationAssignmentTarget(
     return true;
   }
 
-  return resolveGlobal(node.object, state) === "location" &&
-    (property === "href" || property === "pathname" || property === "search" || property === "hash");
+  return (
+    resolveGlobal(node.object, state) === "location" &&
+    (property === "href" ||
+      property === "pathname" ||
+      property === "search" ||
+      property === "hash")
+  );
 }
 
 function isWindowLike(node: TSESTree.Node, state: BrowserModelState): boolean {
@@ -741,9 +807,11 @@ function isWindowLike(node: TSESTree.Node, state: BrowserModelState): boolean {
     return true;
   }
 
-  return expression.type === "Identifier" &&
+  return (
+    expression.type === "Identifier" &&
     new Set(["parent", "top", "opener"]).has(expression.name) &&
-    !state.shadowedGlobals.has(expression.name);
+    !state.shadowedGlobals.has(expression.name)
+  );
 }
 
 function resolveGlobal(
@@ -762,13 +830,21 @@ function resolveGlobal(
       return undefined;
     }
 
-    if (expression.name === "window" || expression.name === "document" ||
-      expression.name === "location" || expression.name === "localStorage" ||
-      expression.name === "sessionStorage") {
+    if (
+      expression.name === "window" ||
+      expression.name === "document" ||
+      expression.name === "location" ||
+      expression.name === "localStorage" ||
+      expression.name === "sessionStorage"
+    ) {
       return expression.name;
     }
 
-    if (expression.name === "parent" || expression.name === "top" || expression.name === "opener") {
+    if (
+      expression.name === "parent" ||
+      expression.name === "top" ||
+      expression.name === "opener"
+    ) {
       return "window";
     }
 
@@ -785,8 +861,12 @@ function resolveGlobal(
     return undefined;
   }
 
-  if (property === "document" || property === "location" ||
-    property === "localStorage" || property === "sessionStorage") {
+  if (
+    property === "document" ||
+    property === "location" ||
+    property === "localStorage" ||
+    property === "sessionStorage"
+  ) {
     return property;
   }
 
@@ -822,13 +902,17 @@ function isDomPurifySanitizer(
   return state.namespaces.get(root) === "dompurify";
 }
 
-function isHtmlSanitizerIdentity(identity: ImportedCallable | undefined): boolean {
+function isHtmlSanitizerIdentity(
+  identity: ImportedCallable | undefined,
+): boolean {
   if (identity === undefined || !HTML_MODULES.has(identity.module)) {
     return false;
   }
 
   if (identity.module === "sanitize-html") {
-    return identity.imported === "default" || identity.imported === "sanitizeHtml";
+    return (
+      identity.imported === "default" || identity.imported === "sanitizeHtml"
+    );
   }
 
   if (identity.module === "xss") {
@@ -893,7 +977,10 @@ function normalizeAttributeName(value: string): string {
 
 function isJavascriptUrl(node: TSESTree.Node): boolean {
   const value = staticString(node);
-  return value !== undefined && value.trimStart().toLowerCase().startsWith("javascript:");
+  return (
+    value !== undefined &&
+    value.trimStart().toLowerCase().startsWith("javascript:")
+  );
 }
 
 function staticString(node: TSESTree.Node): string | undefined {
@@ -902,14 +989,16 @@ function staticString(node: TSESTree.Node): string | undefined {
     return typeof expression.value === "string" ? expression.value : undefined;
   }
 
-  if (expression.type === "TemplateLiteral" && expression.expressions.length === 0) {
-    return expression.quasis.map((quasi) => quasi.value.cooked ?? quasi.value.raw).join("");
+  if (
+    expression.type === "TemplateLiteral" &&
+    expression.expressions.length === 0
+  ) {
+    return expression.quasis
+      .map((quasi) => quasi.value.cooked ?? quasi.value.raw)
+      .join("");
   }
 
-  if (
-    expression.type === "BinaryExpression" &&
-    expression.operator === "+"
-  ) {
+  if (expression.type === "BinaryExpression" && expression.operator === "+") {
     const left = staticString(expression.left);
     const right = staticString(expression.right);
     return left === undefined || right === undefined ? undefined : left + right;
@@ -999,7 +1088,10 @@ function memberPath(node: TSESTree.Node): readonly string[] | undefined {
     : [...object, property];
 }
 
-function propertyName(node: TSESTree.Node, computed: boolean): string | undefined {
+function propertyName(
+  node: TSESTree.Node,
+  computed: boolean,
+): string | undefined {
   if (!computed && node.type === "Identifier") {
     return node.name;
   }
@@ -1022,13 +1114,21 @@ function unwrapChain(node: TSESTree.Node): TSESTree.Node {
 
 function isFunction(
   node: TSESTree.Node,
-): node is TSESTree.FunctionExpression | TSESTree.ArrowFunctionExpression | TSESTree.FunctionDeclaration {
-  return node.type === "FunctionExpression" ||
+): node is
+  | TSESTree.FunctionExpression
+  | TSESTree.ArrowFunctionExpression
+  | TSESTree.FunctionDeclaration {
+  return (
+    node.type === "FunctionExpression" ||
     node.type === "ArrowFunctionExpression" ||
-    node.type === "FunctionDeclaration";
+    node.type === "FunctionDeclaration"
+  );
 }
 
-function visit(node: TSESTree.Node, visitor: (node: TSESTree.Node) => void): void {
+function visit(
+  node: TSESTree.Node,
+  visitor: (node: TSESTree.Node) => void,
+): void {
   visitor(node);
 
   const children: TSESTree.Node[] = [];
@@ -1044,10 +1144,11 @@ function visit(node: TSESTree.Node, visitor: (node: TSESTree.Node) => void): voi
     }
   }
 
-  children.sort((left, right) => (
-    (left.range?.[0] ?? Number.MAX_SAFE_INTEGER) -
-    (right.range?.[0] ?? Number.MAX_SAFE_INTEGER)
-  ));
+  children.sort(
+    (left, right) =>
+      (left.range?.[0] ?? Number.MAX_SAFE_INTEGER) -
+      (right.range?.[0] ?? Number.MAX_SAFE_INTEGER),
+  );
 
   for (const child of children) {
     visit(child, visitor);
@@ -1055,6 +1156,10 @@ function visit(node: TSESTree.Node, visitor: (node: TSESTree.Node) => void): voi
 }
 
 function isNode(value: unknown): value is TSESTree.Node {
-  return typeof value === "object" && value !== null && "type" in value &&
-    typeof value.type === "string";
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    typeof value.type === "string"
+  );
 }

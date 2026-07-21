@@ -115,7 +115,8 @@ const DEFINITIONS: readonly RuleDefinition[] = [
   ),
 ];
 
-export const injectionRules: readonly SecurityRule[] = DEFINITIONS.map(createRule);
+export const injectionRules: readonly SecurityRule[] =
+  DEFINITIONS.map(createRule);
 
 function define(
   family: TaintKind,
@@ -126,10 +127,12 @@ function define(
   message: string,
   suggestion: string,
 ): RuleDefinition {
-  const standards: readonly SecurityStandardMapping[] = [{
-    standard: "cwe",
-    id: cwe,
-  }];
+  const standards: readonly SecurityStandardMapping[] = [
+    {
+      standard: "cwe",
+      id: cwe,
+    },
+  ];
 
   return {
     family,
@@ -208,8 +211,9 @@ function getLocation(
     path: file,
     line: node.loc?.start.line,
     column: node.loc?.start.column,
-    range: node.range === undefined
-      ? undefined
-      : { start: node.range[0], end: node.range[1] },
+    range:
+      node.range === undefined
+        ? undefined
+        : { start: node.range[0], end: node.range[1] },
   };
 }

@@ -32,10 +32,13 @@ export const DEFAULT_CRYPTO_POLICY: CryptoPolicy = {
   ecbModes: [/-ecb$/i, /^aes-ecb$/i],
   minimumPbkdf2Iterations: 210_000,
   minimumRsaBits: 2048,
-  tokenNamePattern: /(?:token|session|csrf|nonce|otp|reset|invite|verification|authcode|securitycode)/i,
-  cryptoMaterialNamePattern: /(?:key|salt|secret|seed|nonce|iv$|initialization.?vector)/i,
+  tokenNamePattern:
+    /(?:token|session|csrf|nonce|otp|reset|invite|verification|authcode|securitycode)/i,
+  cryptoMaterialNamePattern:
+    /(?:key|salt|secret|seed|nonce|iv$|initialization.?vector)/i,
   passwordNamePattern: /(?:password|passwd|passphrase|pwd)/i,
-  customCryptoNamePattern: /(?:encrypt|decrypt|cipher|decipher|hash|digest|derivekey|sign|verify)/i,
+  customCryptoNamePattern:
+    /(?:encrypt|decrypt|cipher|decipher|hash|digest|derivekey|sign|verify)/i,
 };
 
 export function normalizeCryptoAlgorithm(value: string): string {

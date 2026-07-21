@@ -12,9 +12,7 @@ export class SecurityRuleRegistry {
     validateSecurityRuleMeta(rule.meta);
 
     if (this.rulesById.has(rule.meta.id)) {
-      throw new Error(
-        `Security rule "${rule.meta.id}" is already registered.`,
-      );
+      throw new Error(`Security rule "${rule.meta.id}" is already registered.`);
     }
 
     this.rulesById.set(rule.meta.id, rule);
@@ -25,9 +23,7 @@ export class SecurityRuleRegistry {
   }
 
   getByCategory(category: SecurityCategory): readonly SecurityRule[] {
-    return this.getRules().filter(
-      (rule) => rule.meta.category === category,
-    );
+    return this.getRules().filter((rule) => rule.meta.category === category);
   }
 
   getRulesForPolicy(policy: SecurityPolicy): readonly SecurityRule[] {

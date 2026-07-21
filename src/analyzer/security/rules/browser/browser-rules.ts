@@ -1,10 +1,7 @@
 import type { TSESTree } from "@typescript-eslint/typescript-estree";
 
 import { createSecurityFindingId } from "../../engine/finding-id";
-import {
-  analyzeIntraproceduralTaint,
-  type TaintFlowMatch,
-} from "../../flow";
+import { analyzeIntraproceduralTaint, type TaintFlowMatch } from "../../flow";
 import type {
   SecurityFinding,
   SecurityRule,
@@ -122,7 +119,8 @@ const DEFINITIONS: readonly RuleDefinition[] = [
   ),
 ];
 
-export const browserSecurityRules: readonly SecurityRule[] = DEFINITIONS.map(createRule);
+export const browserSecurityRules: readonly SecurityRule[] =
+  DEFINITIONS.map(createRule);
 
 function define(
   kind: BrowserRuleKind,
@@ -134,10 +132,12 @@ function define(
   message: string,
   suggestion: string,
 ): RuleDefinition {
-  const standards: readonly SecurityStandardMapping[] = [{
-    standard: "cwe",
-    id: cwe,
-  }];
+  const standards: readonly SecurityStandardMapping[] = [
+    {
+      standard: "cwe",
+      id: cwe,
+    },
+  ];
 
   return {
     kind,
@@ -160,9 +160,9 @@ function createRule(definition: RuleDefinition): SecurityRule {
     meta: definition.meta,
     check(context) {
       if (definition.kind === "javascript-url") {
-        return findJavascriptUrlRisks(context.ast).map((match) => (
-          createStructuralFinding(context, definition, match)
-        ));
+        return findJavascriptUrlRisks(context.ast).map((match) =>
+          createStructuralFinding(context, definition, match),
+        );
       }
 
       const adapter = createBrowserFlowAdapter(context.ast, definition.kind);
@@ -247,11 +247,13 @@ function createStructuralFinding(
     confidence: definition.meta.defaultConfidence,
     category: definition.meta.category,
     location,
-    evidence: [{
-      message: match.label,
-      location,
-      sinkKind: match.sinkKind,
-    }],
+    evidence: [
+      {
+        message: match.label,
+        location,
+        sinkKind: match.sinkKind,
+      },
+    ],
     standards: definition.meta.standards,
     sinkKind: match.sinkKind,
     suggestion: definition.suggestion,
@@ -266,8 +268,9 @@ function getLocation(
     path: file,
     line: node.loc?.start.line,
     column: node.loc?.start.column,
-    range: node.range === undefined
-      ? undefined
-      : { start: node.range[0], end: node.range[1] },
+    range:
+      node.range === undefined
+        ? undefined
+        : { start: node.range[0], end: node.range[1] },
   };
 }

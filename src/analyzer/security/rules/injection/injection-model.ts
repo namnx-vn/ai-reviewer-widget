@@ -94,9 +94,8 @@ export function createInjectionFlowAdapter(
   return {
     matchSource: (node) => matchSource(node),
     matchSanitizer: (node) => matchSanitizer(node, state),
-    matchSinks: (node) => node.type === "CallExpression"
-      ? matchSinks(node, state)
-      : [],
+    matchSinks: (node) =>
+      node.type === "CallExpression" ? matchSinks(node, state) : [],
   };
 }
 
@@ -255,7 +254,14 @@ function matchSinks(
   const root = calleePath?.[0];
 
   if (isCommandIdentity(identity, calleePath, state)) {
-    addArgumentSink(sinks, node, 0, "command", "shell-command", "Command execution");
+    addArgumentSink(
+      sinks,
+      node,
+      0,
+      "command",
+      "shell-command",
+      "Command execution",
+    );
   }
 
   if (
@@ -363,14 +369,7 @@ function matchSinks(
     XPATH_OBJECTS.has(root) &&
     (method === "select" || method === "evaluate")
   ) {
-    addArgumentSink(
-      sinks,
-      node,
-      0,
-      "xpath",
-      "xpath-query",
-      "XPath expression",
-    );
+    addArgumentSink(sinks, node, 0, "xpath", "xpath-query", "XPath expression");
   }
 
   if (isGraphqlIdentity(identity, calleePath, state)) {
@@ -471,12 +470,18 @@ function buildModelState(ast: TSESTree.Program): ModelState {
 
       if (node.id.type === "ObjectPattern") {
         for (const property of node.id.properties) {
-          if (property.type === "RestElement" || property.value.type !== "Identifier") {
+          if (
+            property.type === "RestElement" ||
+            property.value.type !== "Identifier"
+          ) {
             continue;
           }
           const imported = propertyName(property.key, property.computed);
           if (imported !== undefined) {
-            callables.set(property.value.name, { module: requiredModule, imported });
+            callables.set(property.value.name, {
+              module: requiredModule,
+              imported,
+            });
           }
         }
       }
@@ -563,7 +568,9 @@ function isTemplateIdentity(
   state: ModelState,
 ): boolean {
   if (identity !== undefined && isTemplateModule(identity.module)) {
-    return identity.imported === "default" || TEMPLATE_METHODS.has(identity.imported);
+    return (
+      identity.imported === "default" || TEMPLATE_METHODS.has(identity.imported)
+    );
   }
 
   return namespaceMethodMatches(
@@ -580,7 +587,10 @@ function isExpressionIdentity(
   state: ModelState,
 ): boolean {
   if (identity !== undefined && isExpressionModule(identity.module)) {
-    return identity.imported === "default" || EXPRESSION_METHODS.has(identity.imported);
+    return (
+      identity.imported === "default" ||
+      EXPRESSION_METHODS.has(identity.imported)
+    );
   }
 
   return namespaceMethodMatches(
@@ -634,7 +644,9 @@ function isRequestPath(path: readonly string[]): boolean {
     return false;
   }
 
-  return path.some((segment, index) => index > 0 && REQUEST_SEGMENTS.has(segment));
+  return path.some(
+    (segment, index) => index > 0 && REQUEST_SEGMENTS.has(segment),
+  );
 }
 
 function isNoSqlMethod(method: string): boolean {
@@ -653,7 +665,9 @@ function isChildProcessModule(module: string): boolean {
 }
 
 function isTemplateModule(module: string): boolean {
-  return new Set(["ejs", "pug", "handlebars", "mustache", "nunjucks"]).has(module);
+  return new Set(["ejs", "pug", "handlebars", "mustache", "nunjucks"]).has(
+    module,
+  );
 }
 
 function isExpressionModule(module: string): boolean {
@@ -724,7 +738,10 @@ function memberPath(node: TSESTree.Node): readonly string[] | undefined {
     : [...object, property];
 }
 
-function propertyName(node: TSESTree.Node, computed: boolean): string | undefined {
+function propertyName(
+  node: TSESTree.Node,
+  computed: boolean,
+): string | undefined {
   if (!computed && node.type === "Identifier") {
     return node.name;
   }
@@ -745,7 +762,10 @@ function unwrapChain(node: TSESTree.Node): TSESTree.Node {
   return node.type === "ChainExpression" ? node.expression : node;
 }
 
-function visit(node: TSESTree.Node, visitor: (node: TSESTree.Node) => void): void {
+function visit(
+  node: TSESTree.Node,
+  visitor: (node: TSESTree.Node) => void,
+): void {
   visitor(node);
 
   const children: TSESTree.Node[] = [];
@@ -761,10 +781,11 @@ function visit(node: TSESTree.Node, visitor: (node: TSESTree.Node) => void): voi
     }
   }
 
-  children.sort((left, right) => (
-    (left.range?.[0] ?? Number.MAX_SAFE_INTEGER) -
-    (right.range?.[0] ?? Number.MAX_SAFE_INTEGER)
-  ));
+  children.sort(
+    (left, right) =>
+      (left.range?.[0] ?? Number.MAX_SAFE_INTEGER) -
+      (right.range?.[0] ?? Number.MAX_SAFE_INTEGER),
+  );
 
   for (const child of children) {
     visit(child, visitor);
@@ -772,6 +793,10 @@ function visit(node: TSESTree.Node, visitor: (node: TSESTree.Node) => void): voi
 }
 
 function isNode(value: unknown): value is TSESTree.Node {
-  return typeof value === "object" && value !== null && "type" in value &&
-    typeof value.type === "string";
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    typeof value.type === "string"
+  );
 }

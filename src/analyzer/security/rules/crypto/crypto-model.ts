@@ -97,10 +97,11 @@ export function collectCryptoObservations(
     }
   });
 
-  return observations.sort((left, right) => (
-    (left.node.range?.[0] ?? Number.MAX_SAFE_INTEGER) -
-    (right.node.range?.[0] ?? Number.MAX_SAFE_INTEGER)
-  ));
+  return observations.sort(
+    (left, right) =>
+      (left.node.range?.[0] ?? Number.MAX_SAFE_INTEGER) -
+      (right.node.range?.[0] ?? Number.MAX_SAFE_INTEGER),
+  );
 }
 
 function collectCallObservations(
@@ -120,7 +121,9 @@ function collectCallObservations(
       node,
       algorithm: stringArgument(node, 0),
       contextName,
-      passwordContext: contextName !== undefined && policy.passwordNamePattern.test(contextName),
+      passwordContext:
+        contextName !== undefined &&
+        policy.passwordNamePattern.test(contextName),
     });
   }
 
@@ -130,7 +133,9 @@ function collectCallObservations(
       kind: "cipher",
       node,
       algorithm: stringArgument(node, 0),
-      key: cipherMethod.endsWith("iv") ? expressionArgument(node, 1) : undefined,
+      key: cipherMethod.endsWith("iv")
+        ? expressionArgument(node, 1)
+        : undefined,
       iv: cipherMethod.endsWith("iv") ? expressionArgument(node, 2) : undefined,
     });
   }
@@ -138,7 +143,12 @@ function collectCallObservations(
   if (isNodeCryptoCallable(identity, path, state, "createSecretKey")) {
     const key = expressionArgument(node, 0);
     if (key !== undefined && isHardcodedMaterial(key)) {
-      output.push({ kind: "hardcoded-key", node, key, label: "Hardcoded secret key material" });
+      output.push({
+        kind: "hardcoded-key",
+        node,
+        key,
+        label: "Hardcoded secret key material",
+      });
     }
   }
 
@@ -165,7 +175,9 @@ function collectCallObservations(
       node,
       algorithm: algorithmName(expressionArgument(node, 0)),
       contextName,
-      passwordContext: contextName !== undefined && policy.passwordNamePattern.test(contextName),
+      passwordContext:
+        contextName !== undefined &&
+        policy.passwordNamePattern.test(contextName),
     });
   }
 
@@ -183,7 +195,12 @@ function collectCallObservations(
   if (webCryptoMethod === "importKey") {
     const key = expressionArgument(node, 1);
     if (key !== undefined && isHardcodedMaterial(key)) {
-      output.push({ kind: "hardcoded-key", node, key, label: "Hardcoded imported cryptographic key" });
+      output.push({
+        kind: "hardcoded-key",
+        node,
+        key,
+        label: "Hardcoded imported cryptographic key",
+      });
     }
   }
 
@@ -195,7 +212,9 @@ function collectCallObservations(
         kind: "kdf",
         node,
         algorithm: "pbkdf2",
-        iterations: numericNodeValue(objectPropertyValue(parameters, "iterations")),
+        iterations: numericNodeValue(
+          objectPropertyValue(parameters, "iterations"),
+        ),
       });
     }
   }
@@ -203,7 +222,12 @@ function collectCallObservations(
   if (cipherMethod?.endsWith("iv")) {
     const key = expressionArgument(node, 1);
     if (key !== undefined && isHardcodedMaterial(key)) {
-      output.push({ kind: "hardcoded-key", node, key, label: "Hardcoded cipher key material" });
+      output.push({
+        kind: "hardcoded-key",
+        node,
+        key,
+        label: "Hardcoded cipher key material",
+      });
     }
   }
 }
@@ -221,7 +245,10 @@ function buildModelState(ast: TSESTree.Program): CryptoModelState {
       }
 
       for (const specifier of node.specifiers) {
-        if (specifier.type === "ImportNamespaceSpecifier" || specifier.type === "ImportDefaultSpecifier") {
+        if (
+          specifier.type === "ImportNamespaceSpecifier" ||
+          specifier.type === "ImportDefaultSpecifier"
+        ) {
           namespaces.set(specifier.local.name, module);
           continue;
         }
@@ -250,7 +277,10 @@ function buildModelState(ast: TSESTree.Program): CryptoModelState {
       }
       if (node.id.type === "ObjectPattern") {
         for (const property of node.id.properties) {
-          if (property.type === "RestElement" || property.value.type !== "Identifier") {
+          if (
+            property.type === "RestElement" ||
+            property.value.type !== "Identifier"
+          ) {
             continue;
           }
           const imported = propertyName(property.key, property.computed);
@@ -270,7 +300,11 @@ function buildModelState(ast: TSESTree.Program): CryptoModelState {
       return;
     }
 
-    const identity = callableIdentity(node.init, { namespaces, callables, webCryptoRoots });
+    const identity = callableIdentity(node.init, {
+      namespaces,
+      callables,
+      webCryptoRoots,
+    });
     if (identity !== undefined) {
       callables.set(node.id.name, identity);
     }
@@ -313,7 +347,9 @@ function isNodeCryptoCallable(
   if (identity !== undefined && NODE_CRYPTO_MODULES.has(identity.module)) {
     return identity.imported === method;
   }
-  return nodeCryptoMethod(identity, path, state, new Set([method])) !== undefined;
+  return (
+    nodeCryptoMethod(identity, path, state, new Set([method])) !== undefined
+  );
 }
 
 function nodeCryptoMethod(
@@ -355,13 +391,13 @@ function webCryptoMethodName(
   if (
     path.length >= 3 &&
     path[path.length - 2] === "subtle" &&
-    (
-      path[0] === "crypto" ||
+    (path[0] === "crypto" ||
       path[0] === "window" ||
       path[0] === "globalThis" ||
       (path[0] !== undefined && state.webCryptoRoots.has(path[0])) ||
-      (path[0] !== undefined && state.namespaces.has(path[0]) && path.includes("webcrypto"))
-    )
+      (path[0] !== undefined &&
+        state.namespaces.has(path[0]) &&
+        path.includes("webcrypto")))
   ) {
     return method;
   }
@@ -373,10 +409,15 @@ function isMathRandom(node: TSESTree.CallExpression): boolean {
   return path?.length === 2 && path[0] === "Math" && path[1] === "random";
 }
 
-function nearestContextName(ancestors: readonly TSESTree.Node[]): string | undefined {
+function nearestContextName(
+  ancestors: readonly TSESTree.Node[],
+): string | undefined {
   for (let index = ancestors.length - 1; index >= 0; index -= 1) {
     const ancestor = ancestors[index];
-    if (ancestor?.type === "VariableDeclarator" && ancestor.id.type === "Identifier") {
+    if (
+      ancestor?.type === "VariableDeclarator" &&
+      ancestor.id.type === "Identifier"
+    ) {
       return ancestor.id.name;
     }
     if (ancestor?.type === "AssignmentExpression") {
@@ -409,22 +450,28 @@ function functionName(
     return direct;
   }
   const parent = ancestors[ancestors.length - 1];
-  return parent?.type === "VariableDeclarator" && parent.id.type === "Identifier"
+  return parent?.type === "VariableDeclarator" &&
+    parent.id.type === "Identifier"
     ? parent.id.name
     : undefined;
 }
 
 function functionNodeName(node: TSESTree.Node): string | undefined {
-  if (node.type === "FunctionDeclaration" || node.type === "FunctionExpression") {
+  if (
+    node.type === "FunctionDeclaration" ||
+    node.type === "FunctionExpression"
+  ) {
     return node.id?.name;
   }
   return undefined;
 }
 
 function isFunctionNode(node: TSESTree.Node): boolean {
-  return node.type === "FunctionDeclaration" ||
+  return (
+    node.type === "FunctionDeclaration" ||
     node.type === "FunctionExpression" ||
-    node.type === "ArrowFunctionExpression";
+    node.type === "ArrowFunctionExpression"
+  );
 }
 
 function containsBitwiseOperation(node: TSESTree.Node): boolean {
@@ -471,22 +518,30 @@ export function isHardcodedMaterial(node: TSESTree.Node): boolean {
     return expression.expressions.length === 0;
   }
   if (expression.type === "ArrayExpression") {
-    return expression.elements.length > 0 && expression.elements.every((element) => (
-      element !== null && element.type === "Literal"
-    ));
+    return (
+      expression.elements.length > 0 &&
+      expression.elements.every(
+        (element) => element !== null && element.type === "Literal",
+      )
+    );
   }
   if (expression.type === "NewExpression") {
     const path = memberPath(expression.callee);
     if (path?.[path.length - 1] === "Uint8Array") {
       const first = expression.arguments[0];
-      return first !== undefined && first.type !== "SpreadElement" && isHardcodedMaterial(first);
+      return (
+        first !== undefined &&
+        first.type !== "SpreadElement" &&
+        isHardcodedMaterial(first)
+      );
     }
   }
   if (expression.type === "CallExpression") {
     const path = memberPath(expression.callee);
     const first = expression.arguments[0];
     if (
-      (path?.join(".") === "Buffer.from" || path?.join(".") === "Buffer.alloc") &&
+      (path?.join(".") === "Buffer.from" ||
+        path?.join(".") === "Buffer.alloc") &&
       first !== undefined &&
       first.type !== "SpreadElement"
     ) {
@@ -500,7 +555,10 @@ function algorithmName(node: TSESTree.Node | undefined): string | undefined {
   if (node === undefined) {
     return undefined;
   }
-  return stringLiteralValue(node) ?? stringLiteralValue(objectPropertyValue(node, "name"));
+  return (
+    stringLiteralValue(node) ??
+    stringLiteralValue(objectPropertyValue(node, "name"))
+  );
 }
 
 function objectPropertyValue(
@@ -526,20 +584,30 @@ function expressionArgument(
   index: number,
 ): TSESTree.Node | undefined {
   const argument = node.arguments[index];
-  return argument === undefined || argument.type === "SpreadElement" ? undefined : argument;
+  return argument === undefined || argument.type === "SpreadElement"
+    ? undefined
+    : argument;
 }
 
-function stringArgument(node: TSESTree.CallExpression, index: number): string | undefined {
+function stringArgument(
+  node: TSESTree.CallExpression,
+  index: number,
+): string | undefined {
   const argument = expressionArgument(node, index);
   return argument === undefined ? undefined : stringLiteralValue(argument);
 }
 
-function numericArgument(node: TSESTree.CallExpression, index: number): number | undefined {
+function numericArgument(
+  node: TSESTree.CallExpression,
+  index: number,
+): number | undefined {
   return numericNodeValue(expressionArgument(node, index));
 }
 
 function numericNodeValue(node: TSESTree.Node | undefined): number | undefined {
-  return node?.type === "Literal" && typeof node.value === "number" ? node.value : undefined;
+  return node?.type === "Literal" && typeof node.value === "number"
+    ? node.value
+    : undefined;
 }
 
 function requireModule(node: TSESTree.Node): string | undefined {
@@ -552,7 +620,9 @@ function requireModule(node: TSESTree.Node): string | undefined {
     return undefined;
   }
   const first = expression.arguments[0];
-  return first === undefined || first.type === "SpreadElement" ? undefined : stringLiteralValue(first);
+  return first === undefined || first.type === "SpreadElement"
+    ? undefined
+    : stringLiteralValue(first);
 }
 
 function memberPath(node: TSESTree.Node): readonly string[] | undefined {
@@ -565,10 +635,15 @@ function memberPath(node: TSESTree.Node): readonly string[] | undefined {
   }
   const object = memberPath(expression.object);
   const property = propertyName(expression.property, expression.computed);
-  return object === undefined || property === undefined ? undefined : [...object, property];
+  return object === undefined || property === undefined
+    ? undefined
+    : [...object, property];
 }
 
-function propertyName(node: TSESTree.Node, computed: boolean): string | undefined {
+function propertyName(
+  node: TSESTree.Node,
+  computed: boolean,
+): string | undefined {
   if (!computed && node.type === "Identifier") {
     return node.name;
   }
@@ -579,8 +654,12 @@ function nodeName(node: TSESTree.Node): string | undefined {
   return node.type === "Identifier" ? node.name : stringLiteralValue(node);
 }
 
-function stringLiteralValue(node: TSESTree.Node | undefined): string | undefined {
-  return node?.type === "Literal" && typeof node.value === "string" ? node.value : undefined;
+function stringLiteralValue(
+  node: TSESTree.Node | undefined,
+): string | undefined {
+  return node?.type === "Literal" && typeof node.value === "string"
+    ? node.value
+    : undefined;
 }
 
 function unwrapChain(node: TSESTree.Node): TSESTree.Node {
@@ -611,12 +690,18 @@ function getChildNodes(node: TSESTree.Node): readonly TSESTree.Node[] {
       }
     }
   }
-  return children.sort((left, right) => (
-    (left.range?.[0] ?? Number.MAX_SAFE_INTEGER) -
-    (right.range?.[0] ?? Number.MAX_SAFE_INTEGER)
-  ));
+  return children.sort(
+    (left, right) =>
+      (left.range?.[0] ?? Number.MAX_SAFE_INTEGER) -
+      (right.range?.[0] ?? Number.MAX_SAFE_INTEGER),
+  );
 }
 
 function isNode(value: unknown): value is TSESTree.Node {
-  return typeof value === "object" && value !== null && "type" in value && typeof value.type === "string";
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    typeof value.type === "string"
+  );
 }
