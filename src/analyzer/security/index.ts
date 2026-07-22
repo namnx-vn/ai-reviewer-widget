@@ -24,11 +24,14 @@ export type {
   TaintFlowAdapter,
   TaintFlowMatch,
   TaintKind,
+  TaintPath,
+  TaintProperty,
   TaintSanitizer,
   TaintSink,
   TaintSource,
   TaintState,
   TaintStep,
+  TaintTransform,
 } from "./flow";
 export type {
   SecurityCategory,

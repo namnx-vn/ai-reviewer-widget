@@ -9,6 +9,7 @@ import type {
 } from "../model/types";
 
 export type TaintKind =
+  | "user-input"
   | "command"
   | "sql"
   | "nosql"
@@ -23,7 +24,11 @@ export type TaintKind =
   | "url"
   | "navigation"
   | "window-open"
-  | "origin";
+  | "origin"
+  | "path"
+  | "secret"
+  | "credential"
+  | "payment-data";
 
 export interface TaintStep {
   readonly kind: "source" | "propagation" | "sanitizer";
@@ -33,9 +38,29 @@ export interface TaintStep {
   readonly sanitizerKind?: SecuritySanitizerKind;
 }
 
+/** A named property retained while a tainted object is propagated. */
+export interface TaintProperty {
+  readonly name: string;
+  /** Undefined means the property was statically observed to be clean. */
+  readonly state?: TaintState;
+}
+
 export interface TaintState {
   readonly kinds: readonly TaintKind[];
   readonly steps: readonly TaintStep[];
+  readonly properties?: readonly TaintProperty[];
+}
+
+export interface TaintTransform {
+  readonly node: TSESTree.Node;
+  readonly label: string;
+}
+
+/** Deterministic evidence path from one or more sources to a sink. */
+export interface TaintPath {
+  readonly source: TaintSource;
+  readonly steps: readonly TaintStep[];
+  readonly sink: TaintSink;
 }
 
 export interface TaintSource {

@@ -8,6 +8,7 @@ import type {
   TaintFlowAdapter,
   TaintFlowMatch,
   TaintKind,
+  TaintProperty,
   TaintState,
   TaintStep,
 } from "./types";
@@ -28,9 +29,17 @@ const TAINT_KIND_ORDER: readonly TaintKind[] = [
   "navigation",
   "window-open",
   "origin",
+  "user-input",
+  "path",
+  "secret",
+  "credential",
+  "payment-data",
 ];
 
 type Environment = Map<string, TaintState>;
+type LocalFunction = TSESTree.FunctionDeclaration;
+
+const LOCAL_FUNCTIONS = new WeakMap<TaintFlowAdapter, ReadonlyMap<string, LocalFunction>>();
 
 export function analyzeIntraproceduralTaint(
   ast: TSESTree.Program,
@@ -39,6 +48,8 @@ export function analyzeIntraproceduralTaint(
 ): readonly TaintFlowMatch[] {
   const matches: TaintFlowMatch[] = [];
   const environment: Environment = new Map();
+
+  LOCAL_FUNCTIONS.set(adapter, collectLocalFunctions(ast));
 
   walkNode(ast, environment, file, adapter, matches, true);
 
@@ -195,6 +206,10 @@ function inspectExpression(
 ): void {
   recordSinks(node, environment, file, adapter, matches);
 
+  if (node.type === "CallExpression") {
+    inspectLocalFunctionCall(node, environment, file, adapter, matches);
+  }
+
   if (node.type === "AssignmentExpression") {
     inspectExpression(node.right, environment, file, adapter, matches);
     const state = evaluateNode(node.right, environment, file, adapter);
@@ -217,6 +232,38 @@ function inspectExpression(
   for (const child of getChildNodes(node)) {
     inspectExpression(child, environment, file, adapter, matches);
   }
+}
+
+function inspectLocalFunctionCall(
+  node: TSESTree.CallExpression,
+  environment: Environment,
+  file: string,
+  adapter: TaintFlowAdapter,
+  matches: TaintFlowMatch[],
+): void {
+  if (node.callee.type !== "Identifier") return;
+  const declaration = LOCAL_FUNCTIONS.get(adapter)?.get(node.callee.name);
+  if (declaration === undefined) return;
+
+  const callEnvironment = new Map(environment);
+  declaration.params.forEach((parameter, index) => {
+    const argument = node.arguments[index];
+    const state = argument === undefined || argument.type === "SpreadElement"
+      ? undefined
+      : evaluateNode(argument, environment, file, adapter);
+    bindPattern(parameter, state, callEnvironment, file);
+  });
+  walkNode(declaration.body, callEnvironment, file, adapter, matches, true);
+}
+
+function collectLocalFunctions(ast: TSESTree.Program): ReadonlyMap<string, LocalFunction> {
+  const functions = new Map<string, LocalFunction>();
+  for (const statement of ast.body) {
+    if (statement.type === "FunctionDeclaration" && statement.id !== null) {
+      functions.set(statement.id.name, statement);
+    }
+  }
+  return functions;
 }
 
 function recordSinks(
@@ -324,18 +371,21 @@ function evaluateNode(
       )));
 
     case "ObjectExpression":
-      return mergeStates(node.properties.map((property) => {
-        if (property.type === "SpreadElement") {
-          return evaluateNode(property.argument, environment, file, adapter);
+      return evaluateObjectExpression(node, environment, file, adapter);
+    case "MemberExpression": {
+      const objectState = evaluateNode(node.object, environment, file, adapter);
+      const propertyName = memberPropertyName(node);
+      if (objectState !== undefined && propertyName !== undefined) {
+        const property = objectState.properties?.find(({ name }) => name === propertyName);
+        if (property !== undefined) {
+          return property.state;
         }
-        return evaluateNode(property.value, environment, file, adapter);
-      }));
-
-    case "MemberExpression":
+      }
       return mergeStates([
-        evaluateNode(node.object, environment, file, adapter),
+        objectState,
         node.computed ? evaluateNode(node.property, environment, file, adapter) : undefined,
       ]);
+    }
 
     case "CallExpression": {
       const sanitizer = adapter.matchSanitizer(node);
@@ -363,6 +413,7 @@ function evaluateNode(
         return {
           kinds: orderKinds(remainingKinds),
           steps: dedupeSteps([...input.steps, sanitizerStep]),
+          properties: input.properties,
         };
       }
 
@@ -413,6 +464,7 @@ function bindPattern(
               location: getLocation(pattern, file),
             },
           ]),
+          properties: state.properties,
         });
       }
       return;
@@ -438,7 +490,11 @@ function bindPattern(
         if (property.type === "RestElement") {
           bindPattern(property.argument, state, environment, file);
         } else {
-          bindPattern(property.value, state, environment, file);
+          const trackedProperty = state?.properties?.find(
+            ({ name }) => name === objectPatternPropertyName(property),
+          );
+          const propertyState = trackedProperty?.state ?? (trackedProperty === undefined ? state : undefined);
+          bindPattern(property.value, propertyState, environment, file);
         }
       }
       return;
@@ -502,7 +558,56 @@ function mergeStates(
   const kinds = orderKinds(present.flatMap((state) => state.kinds));
   const steps = dedupeSteps(present.flatMap((state) => state.steps));
 
-  return { kinds, steps };
+  return { kinds, steps, properties: mergeProperties(present) };
+}
+
+function evaluateObjectExpression(
+  node: TSESTree.ObjectExpression,
+  environment: Environment,
+  file: string,
+  adapter: TaintFlowAdapter,
+): TaintState | undefined {
+  const properties = node.properties.flatMap((property) => {
+    if (property.type === "SpreadElement") {
+      return evaluateNode(property.argument, environment, file, adapter)?.properties ?? [];
+    }
+    const name = objectExpressionPropertyName(property);
+    const state = evaluateNode(property.value, environment, file, adapter);
+    return name === undefined ? [] : [{ name, state }];
+  });
+  const merged = mergeStates(properties.map(({ state }) => state));
+  return merged === undefined ? undefined : { ...merged, properties };
+}
+
+function mergeProperties(states: readonly TaintState[]): readonly TaintProperty[] | undefined {
+  const grouped = new Map<string, TaintState[]>();
+  for (const state of states) {
+    for (const property of state.properties ?? []) {
+      const values = grouped.get(property.name) ?? [];
+      if (property.state !== undefined) values.push(property.state);
+      grouped.set(property.name, values);
+    }
+  }
+  const properties = [...grouped.entries()].sort(([left], [right]) => left.localeCompare(right)).flatMap(([name, values]) => {
+    const state = mergeStates(values);
+    return [{ name, state }];
+  });
+  return properties.length === 0 ? undefined : properties;
+}
+
+function memberPropertyName(node: TSESTree.MemberExpression): string | undefined {
+  if (!node.computed && node.property.type === "Identifier") return node.property.name;
+  return node.computed && node.property.type === "Literal" && typeof node.property.value === "string"
+    ? node.property.value : undefined;
+}
+
+function objectExpressionPropertyName(property: TSESTree.Property): string | undefined {
+  if (!property.computed && property.key.type === "Identifier") return property.key.name;
+  return property.key.type === "Literal" && typeof property.key.value === "string" ? property.key.value : undefined;
+}
+
+function objectPatternPropertyName(property: TSESTree.Property): string | undefined {
+  return objectExpressionPropertyName(property);
 }
 
 function orderKinds(kinds: readonly TaintKind[]): readonly TaintKind[] {
