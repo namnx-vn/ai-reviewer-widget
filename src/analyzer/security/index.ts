@@ -9,6 +9,7 @@ export { browserSecurityRules } from "./rules/browser";
 export { createCryptoRules, cryptoRules } from "./rules/crypto";
 export { injectionRules } from "./rules/injection";
 export { networkTransportRules } from "./rules/network";
+export { securityConfigurationRules } from "./rules/configuration";
 export { secretsRules } from "./rules/secrets";
 export { sessionTokenRules } from "./rules/session";
 export {
