@@ -9,6 +9,7 @@ import { authenticationRules } from "./rules/auth";
 import { sessionTokenRules } from "./rules/session";
 import { networkTransportRules } from "./rules/network";
 import { securityConfigurationRules } from "./rules/configuration";
+import { objectSecurityRules } from "./rules/object";
 import { analyzeSupplyChain, type SupplyChainManifest } from "./supply-chain";
 
 export function analyzeSecurityFindings(file: string, source: string): readonly ReviewFinding[] {
@@ -18,6 +19,7 @@ export function analyzeSecurityFindings(file: string, source: string): readonly 
   for (const rule of sessionTokenRules) registry.register(rule);
   for (const rule of networkTransportRules) registry.register(rule);
   for (const rule of securityConfigurationRules) registry.register(rule);
+  for (const rule of objectSecurityRules) registry.register(rule);
 
   return new SecurityAnalysisEngine().analyze({ file, source, ast: parseSource(source) }, registry)
     .map(toReviewFinding);
