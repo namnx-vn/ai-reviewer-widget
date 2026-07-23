@@ -108,7 +108,7 @@ The order below is normative unless repository architecture requires a documente
 | 3.6.17 | ⏳ Planned | [Business Logic Security](./3.6.17-business-logic.md) |
 | 3.6.18 | ⏳ Planned | [React / Browser Banking Security](./3.6.18-react-banking.md) |
 | 3.6.19 | ✅ Complete | [Security Taint Engine](./3.6.19-taint-engine.md) |
-| 3.6.20 | ⏳ Planned | [Interprocedural Security Analysis](./3.6.20-interprocedural.md) |
+| 3.6.20 | ✅ Complete | [Interprocedural Security Analysis](./3.6.20-interprocedural.md) |
 | 3.6.21 | ⏳ Planned | [Compliance Mapping](./3.6.21-compliance.md) |
 | 3.6.22 | ⏳ Planned | [Banking Security Profile](./3.6.22-banking-profile.md) |
 | 3.6.23 | ⏳ Planned | [Security Quality Gates](./3.6.23-quality-gates.md) |

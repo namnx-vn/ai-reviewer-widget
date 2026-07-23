@@ -2,7 +2,7 @@ import type { TSESTree } from "@typescript-eslint/typescript-estree";
 
 import { createSecurityFindingId } from "../../engine/finding-id";
 import {
-  analyzeIntraproceduralTaint,
+  analyzeInterproceduralTaint,
   type TaintFlowMatch,
   type TaintKind,
 } from "../../flow";
@@ -155,7 +155,7 @@ function createRule(definition: RuleDefinition): SecurityRule {
     meta: definition.meta,
     check(context) {
       const adapter = createInjectionFlowAdapter(context.ast);
-      return analyzeIntraproceduralTaint(context.ast, context.file, adapter)
+      return analyzeInterproceduralTaint(context.ast, context.file, adapter)
         .filter((match) => match.family === definition.family)
         .map((match) => createFinding(context, definition, match));
     },

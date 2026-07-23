@@ -98,3 +98,9 @@ export interface TaintFlowMatch {
   readonly state: TaintState;
   readonly flow: readonly SecurityFlowStep[];
 }
+
+/** Limits the bounded same-file call graph traversal. */
+export interface InterproceduralTaintOptions {
+  /** Maximum active direct-call depth; defaults to eight. */
+  readonly maxCallDepth?: number;
+}

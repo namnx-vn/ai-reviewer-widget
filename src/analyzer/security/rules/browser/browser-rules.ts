@@ -1,7 +1,7 @@
 import type { TSESTree } from "@typescript-eslint/typescript-estree";
 
 import { createSecurityFindingId } from "../../engine/finding-id";
-import { analyzeIntraproceduralTaint, type TaintFlowMatch } from "../../flow";
+import { analyzeInterproceduralTaint, type TaintFlowMatch } from "../../flow";
 import type {
   SecurityFinding,
   SecurityRule,
@@ -166,7 +166,7 @@ function createRule(definition: RuleDefinition): SecurityRule {
       }
 
       const adapter = createBrowserFlowAdapter(context.ast, definition.kind);
-      const flowFindings = analyzeIntraproceduralTaint(
+      const flowFindings = analyzeInterproceduralTaint(
         context.ast,
         context.file,
         adapter,

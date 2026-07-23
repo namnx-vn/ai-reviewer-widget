@@ -1,6 +1,6 @@
 export { createSecurityFindingId } from "./engine/finding-id";
 export { SecurityAnalysisEngine } from "./engine/security-analysis-engine";
-export { analyzeIntraproceduralTaint } from "./flow";
+export { analyzeInterproceduralTaint, analyzeIntraproceduralTaint } from "./flow";
 export { SecurityRuleRegistry } from "./registry/security-rule-registry";
 export { analyzeSupplyChain } from "./supply-chain";
 export { dangerousExecutionRules } from "./rules/dangerous-execution";

@@ -7,6 +7,7 @@ import type {
 import type {
   TaintFlowAdapter,
   TaintFlowMatch,
+  InterproceduralTaintOptions,
   TaintKind,
   TaintProperty,
   TaintState,
@@ -37,19 +38,52 @@ const TAINT_KIND_ORDER: readonly TaintKind[] = [
 ];
 
 type Environment = Map<string, TaintState>;
-type LocalFunction = TSESTree.FunctionDeclaration;
+type LocalFunction = TSESTree.FunctionDeclaration | TSESTree.FunctionExpression | TSESTree.ArrowFunctionExpression;
 
-const LOCAL_FUNCTIONS = new WeakMap<TaintFlowAdapter, ReadonlyMap<string, LocalFunction>>();
+interface LocalFunctionAnalysis {
+  readonly functions: ReadonlyMap<string, LocalFunction>;
+  readonly activeCalls: Set<string>;
+  readonly maxDepth: number;
+}
+
+const LOCAL_FUNCTIONS = new WeakMap<TaintFlowAdapter, LocalFunctionAnalysis>();
+
+/**
+ * Runs the bounded same-file call-graph pass. It deliberately resolves only
+ * statically named local functions and aliases; unresolved calls preserve their
+ * argument taint rather than being considered sanitizers.
+ */
+export function analyzeInterproceduralTaint(
+  ast: TSESTree.Program,
+  file: string,
+  adapter: TaintFlowAdapter,
+  options: InterproceduralTaintOptions = {},
+): readonly TaintFlowMatch[] {
+  return analyzeTaint(ast, file, adapter, options.maxCallDepth ?? 8);
+}
 
 export function analyzeIntraproceduralTaint(
   ast: TSESTree.Program,
   file: string,
   adapter: TaintFlowAdapter,
 ): readonly TaintFlowMatch[] {
+  return analyzeTaint(ast, file, adapter, 1);
+}
+
+function analyzeTaint(
+  ast: TSESTree.Program,
+  file: string,
+  adapter: TaintFlowAdapter,
+  maxDepth: number,
+): readonly TaintFlowMatch[] {
   const matches: TaintFlowMatch[] = [];
   const environment: Environment = new Map();
 
-  LOCAL_FUNCTIONS.set(adapter, collectLocalFunctions(ast));
+  LOCAL_FUNCTIONS.set(adapter, {
+    functions: collectLocalFunctions(ast),
+    activeCalls: new Set(),
+    maxDepth,
+  });
 
   walkNode(ast, environment, file, adapter, matches, true);
 
@@ -242,8 +276,10 @@ function inspectLocalFunctionCall(
   matches: TaintFlowMatch[],
 ): void {
   if (node.callee.type !== "Identifier") return;
-  const declaration = LOCAL_FUNCTIONS.get(adapter)?.get(node.callee.name);
+  const analysis = LOCAL_FUNCTIONS.get(adapter);
+  const declaration = analysis?.functions.get(node.callee.name);
   if (declaration === undefined) return;
+  if (analysis === undefined || analysis.activeCalls.has(node.callee.name) || analysis.activeCalls.size >= analysis.maxDepth) return;
 
   const callEnvironment = new Map(environment);
   declaration.params.forEach((parameter, index) => {
@@ -253,7 +289,12 @@ function inspectLocalFunctionCall(
       : evaluateNode(argument, environment, file, adapter);
     bindPattern(parameter, state, callEnvironment, file);
   });
-  walkNode(declaration.body, callEnvironment, file, adapter, matches, true);
+  analysis.activeCalls.add(node.callee.name);
+  try {
+    walkNode(declaration.body, callEnvironment, file, adapter, matches, true);
+  } finally {
+    analysis.activeCalls.delete(node.callee.name);
+  }
 }
 
 function collectLocalFunctions(ast: TSESTree.Program): ReadonlyMap<string, LocalFunction> {
@@ -262,8 +303,118 @@ function collectLocalFunctions(ast: TSESTree.Program): ReadonlyMap<string, Local
     if (statement.type === "FunctionDeclaration" && statement.id !== null) {
       functions.set(statement.id.name, statement);
     }
+    if (statement.type === "VariableDeclaration") {
+      for (const declaration of statement.declarations) {
+        if (declaration.id.type !== "Identifier" || declaration.init === null) continue;
+        if (isLocalFunction(declaration.init)) {
+          functions.set(declaration.id.name, declaration.init);
+        } else if (declaration.init.type === "Identifier") {
+          const target = functions.get(declaration.init.name);
+          if (target !== undefined) functions.set(declaration.id.name, target);
+        }
+      }
+    }
   }
   return functions;
+}
+
+function isLocalFunction(node: TSESTree.Node): node is LocalFunction {
+  return node.type === "FunctionDeclaration" ||
+    node.type === "FunctionExpression" ||
+    node.type === "ArrowFunctionExpression";
+}
+
+function evaluateLocalFunctionReturn(
+  call: TSESTree.CallExpression,
+  environment: Environment,
+  file: string,
+  adapter: TaintFlowAdapter,
+): TaintState | undefined {
+  if (call.callee.type !== "Identifier") return undefined;
+  const analysis = LOCAL_FUNCTIONS.get(adapter);
+  const declaration = analysis?.functions.get(call.callee.name);
+  if (analysis === undefined || declaration === undefined) return undefined;
+
+  // A cycle or the configured depth bound yields the conservative normal call
+  // behaviour below, which keeps argument taint intact without inventing paths.
+  if (analysis.activeCalls.has(call.callee.name) || analysis.activeCalls.size >= analysis.maxDepth) {
+    return undefined;
+  }
+
+  const functionEnvironment = new Map(environment);
+  declaration.params.forEach((parameter, index) => {
+    const argument = call.arguments[index];
+    const state = argument === undefined || argument.type === "SpreadElement"
+      ? undefined
+      : evaluateNode(argument, environment, file, adapter);
+    bindPattern(parameter, state, functionEnvironment, file);
+  });
+
+  analysis.activeCalls.add(call.callee.name);
+  try {
+    const returned = evaluateFunctionBodyReturn(declaration.body, functionEnvironment, file, adapter);
+    if (returned === undefined) return undefined;
+    return {
+      kinds: returned.kinds,
+      steps: dedupeSteps([...returned.steps, {
+        kind: "propagation",
+        label: `Returned from ${call.callee.name}`,
+        location: getLocation(call, file),
+      }]),
+      properties: returned.properties,
+    };
+  } finally {
+    analysis.activeCalls.delete(call.callee.name);
+  }
+}
+
+function evaluateFunctionBodyReturn(
+  body: TSESTree.BlockStatement | TSESTree.Expression,
+  environment: Environment,
+  file: string,
+  adapter: TaintFlowAdapter,
+): TaintState | undefined {
+  if (body.type !== "BlockStatement") return evaluateNode(body, environment, file, adapter);
+  const returns: (TaintState | undefined)[] = [];
+  for (const statement of body.body) {
+    if (statement.type === "VariableDeclaration") {
+      for (const declaration of statement.declarations) {
+        const state = declaration.init === null ? undefined : evaluateNode(declaration.init, environment, file, adapter);
+        bindPattern(declaration.id, state, environment, file);
+      }
+      continue;
+    }
+    if (statement.type === "ExpressionStatement" && statement.expression.type === "AssignmentExpression") {
+      const state = evaluateNode(statement.expression.right, environment, file, adapter);
+      bindPattern(statement.expression.left, state, environment, file);
+      continue;
+    }
+    if (statement.type === "ReturnStatement") {
+      returns.push(statement.argument === null ? undefined : evaluateNode(statement.argument, environment, file, adapter));
+      continue;
+    }
+    if (statement.type === "IfStatement") {
+      returns.push(
+        evaluateBranchReturn(statement.consequent, new Map(environment), file, adapter),
+        statement.alternate === null ? undefined : evaluateBranchReturn(statement.alternate, new Map(environment), file, adapter),
+      );
+    }
+  }
+  return mergeStates(returns);
+}
+
+function evaluateBranchReturn(
+  node: TSESTree.Statement,
+  environment: Environment,
+  file: string,
+  adapter: TaintFlowAdapter,
+): TaintState | undefined {
+  if (node.type === "ReturnStatement") {
+    return node.argument === null ? undefined : evaluateNode(node.argument, environment, file, adapter);
+  }
+  return node.type === "BlockStatement"
+    ? evaluateFunctionBodyReturn(node, environment, file, adapter)
+    : undefined;
 }
 
 function recordSinks(
@@ -416,6 +567,9 @@ function evaluateNode(
           properties: input.properties,
         };
       }
+
+      const localReturn = evaluateLocalFunctionReturn(node, environment, file, adapter);
+      if (localReturn !== undefined) return localReturn;
 
       return mergeStates([
         evaluateNode(node.callee, environment, file, adapter),
