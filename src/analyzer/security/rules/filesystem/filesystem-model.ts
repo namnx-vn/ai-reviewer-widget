@@ -20,7 +20,7 @@ export function createFilesystemFlowAdapter(): TaintFlowAdapter {
     matchSanitizer() { return undefined; },
     matchSinks(node) {
       if (node.type !== "CallExpression") return [];
-      const method = memberPath(node.callee)?.at(-1);
+      const method = lastMemberSegment(node.callee);
       const value = expressionArgument(node, 0);
       if (method === undefined || value === undefined) return [];
       if (READ_METHODS.has(method)) return [sink(node, value, "read")];
@@ -37,6 +37,11 @@ function sink(node: TSESTree.CallExpression, value: TSESTree.Node, kind: "read" 
 function expressionArgument(node: TSESTree.CallExpression, index: number): TSESTree.Node | undefined {
   const argument = node.arguments[index];
   return argument === undefined || argument.type === "SpreadElement" ? undefined : argument;
+}
+
+function lastMemberSegment(node: TSESTree.Node): string | undefined {
+  const path = memberPath(node);
+  return path === undefined || path.length === 0 ? undefined : path[path.length - 1];
 }
 
 function memberPath(node: TSESTree.Node): readonly string[] | undefined {
