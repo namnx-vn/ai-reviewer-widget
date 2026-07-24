@@ -6,6 +6,7 @@ import type { SecurityConfidence, SecurityFinding } from "./model/types";
 import { SecurityRuleRegistry } from "./registry/security-rule-registry";
 import { secretsRules } from "./rules/secrets";
 import { authenticationRules } from "./rules/auth";
+import { authorizationRules } from "./rules/authorization";
 import { sessionTokenRules } from "./rules/session";
 import { networkTransportRules } from "./rules/network";
 import { securityConfigurationRules } from "./rules/configuration";
@@ -19,6 +20,7 @@ export function analyzeSecurityFindings(file: string, source: string): readonly 
   const registry = new SecurityRuleRegistry();
   for (const rule of secretsRules) registry.register(rule);
   for (const rule of authenticationRules) registry.register(rule);
+  for (const rule of authorizationRules) registry.register(rule);
   for (const rule of sessionTokenRules) registry.register(rule);
   for (const rule of networkTransportRules) registry.register(rule);
   for (const rule of securityConfigurationRules) registry.register(rule);
