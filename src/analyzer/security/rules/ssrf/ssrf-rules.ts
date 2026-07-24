@@ -111,7 +111,10 @@ function knownRequestCalls(ast: TSESTree.Program): ReadonlySet<string> {
     if (module !== "axios" && module !== "http" && module !== "https" && module !== "node:http" && module !== "node:https") return;
     for (const specifier of node.specifiers) {
       if (specifier.type === "ImportNamespaceSpecifier" || specifier.type === "ImportDefaultSpecifier") calls.add(specifier.local.name);
-      else if (new Set(["get", "post", "put", "delete", "request"]).has(specifier.imported.name)) calls.add(specifier.local.name);
+      else {
+        const imported = specifier.imported.type === "Identifier" ? specifier.imported.name : specifier.imported.value;
+        if (new Set(["get", "post", "put", "delete", "request"]).has(imported)) calls.add(specifier.local.name);
+      }
     }
   });
   return calls;
