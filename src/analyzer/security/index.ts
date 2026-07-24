@@ -12,6 +12,7 @@ export { networkTransportRules } from "./rules/network";
 export { securityConfigurationRules } from "./rules/configuration";
 export { objectSecurityRules } from "./rules/object";
 export { sensitiveDataRules } from "./rules/data";
+export { ssrfRules } from "./rules/ssrf";
 export { secretsRules } from "./rules/secrets";
 export { sessionTokenRules } from "./rules/session";
 export {

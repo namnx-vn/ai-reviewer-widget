@@ -11,6 +11,7 @@ import { networkTransportRules } from "./rules/network";
 import { securityConfigurationRules } from "./rules/configuration";
 import { objectSecurityRules } from "./rules/object";
 import { sensitiveDataRules } from "./rules/data";
+import { ssrfRules } from "./rules/ssrf";
 import { analyzeSupplyChain, type SupplyChainManifest } from "./supply-chain";
 
 export function analyzeSecurityFindings(file: string, source: string): readonly ReviewFinding[] {
@@ -22,6 +23,7 @@ export function analyzeSecurityFindings(file: string, source: string): readonly 
   for (const rule of securityConfigurationRules) registry.register(rule);
   for (const rule of objectSecurityRules) registry.register(rule);
   for (const rule of sensitiveDataRules) registry.register(rule);
+  for (const rule of ssrfRules) registry.register(rule);
 
   return new SecurityAnalysisEngine().analyze({ file, source, ast: parseSource(source) }, registry)
     .map(toReviewFinding);
