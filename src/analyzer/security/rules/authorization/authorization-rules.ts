@@ -244,7 +244,7 @@ function mutationPayload(node: TSESTree.CallExpression): TSESTree.Node | undefin
     for (const property of first.properties) {
       if (property.type !== "Property") continue;
       const name = propertyName(property.key);
-      if ((name === "data" || name === "update" || name === "$set") && property.value.type !== "SpreadElement") return property.value;
+      if (name === "data" || name === "update" || name === "$set") return property.value;
     }
   }
   return first;
