@@ -82,8 +82,8 @@ function finding(context: SecurityRuleContext, kind: RuleKind, node: TSESTree.No
 function containedPathNames(ast: TSESTree.Program): ReadonlySet<string> {
   const resolved = new Set<string>(); const contained = new Set<string>();
   visit(ast, (node) => {
-    if (node.type === "VariableDeclarator" && node.id.type === "Identifier" && node.init?.type === "CallExpression" && memberPath(node.init.callee)?.at(-1) === "resolve") resolved.add(node.id.name);
-    if (node.type === "CallExpression" && memberPath(node.callee)?.at(-1) === "startsWith" && node.callee.type === "MemberExpression" && node.callee.object.type === "Identifier" && resolved.has(node.callee.object.name) && stringArgumentStartsWith(argument(node, 0), "/")) contained.add(node.callee.object.name);
+    if (node.type === "VariableDeclarator" && node.id.type === "Identifier" && node.init?.type === "CallExpression" && lastMemberSegment(node.init.callee) === "resolve") resolved.add(node.id.name);
+    if (node.type === "CallExpression" && lastMemberSegment(node.callee) === "startsWith" && node.callee.type === "MemberExpression" && node.callee.object.type === "Identifier" && resolved.has(node.callee.object.name) && stringArgumentStartsWith(argument(node, 0), "/")) contained.add(node.callee.object.name);
   });
   return contained;
 }
@@ -94,7 +94,8 @@ function isRequestValue(node: TSESTree.Node | undefined): boolean { const path =
 function stringArgumentStartsWith(node: TSESTree.Node | undefined, prefix: string): boolean { return node?.type === "Literal" && typeof node.value === "string" && node.value.startsWith(prefix); }
 function argument(node: TSESTree.CallExpression, index: number): TSESTree.Node | undefined { const value = node.arguments[index]; return value === undefined || value.type === "SpreadElement" ? undefined : value; }
 function locationOf(node: TSESTree.Node, path: string): SecurityFinding["location"] { return { path, line: node.loc?.start.line, column: node.loc?.start.column, range: node.range === undefined ? undefined : { start: node.range[0], end: node.range[1] } }; }
-function memberPath(node: TSESTree.Node): readonly string[] | undefined { if (node.type === "Identifier") return [node.name]; if (node.type !== "MemberExpression") return undefined; const object = memberPath(node.object); const property = !node.computed && node.property.type === "Identifier" ? node.property.name : node.property.type === "Literal" && typeof node.property.value === "string" ? node.property.value : undefined; return object === undefined || property === undefined ? undefined : [...object, property]; }
+function lastMemberSegment(node: TSESTree.Node | undefined): string | undefined { const path = memberPath(node); return path === undefined || path.length === 0 ? undefined : path[path.length - 1]; }
+function memberPath(node: TSESTree.Node | undefined): readonly string[] | undefined { if (node === undefined) return undefined; if (node.type === "Identifier") return [node.name]; if (node.type !== "MemberExpression") return undefined; const object = memberPath(node.object); const property = !node.computed && node.property.type === "Identifier" ? node.property.name : node.property.type === "Literal" && typeof node.property.value === "string" ? node.property.value : undefined; return object === undefined || property === undefined ? undefined : [...object, property]; }
 function visit(node: TSESTree.Node, callback: (node: TSESTree.Node) => void): void {
   callback(node);
   for (const value of Object.values(node)) {
