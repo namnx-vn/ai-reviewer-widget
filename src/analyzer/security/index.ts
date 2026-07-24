@@ -13,6 +13,7 @@ export { securityConfigurationRules } from "./rules/configuration";
 export { objectSecurityRules } from "./rules/object";
 export { sensitiveDataRules } from "./rules/data";
 export { ssrfRules } from "./rules/ssrf";
+export { filesystemRules } from "./rules/filesystem";
 export { secretsRules } from "./rules/secrets";
 export { sessionTokenRules } from "./rules/session";
 export {
