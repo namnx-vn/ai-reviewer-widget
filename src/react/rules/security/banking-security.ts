@@ -237,10 +237,9 @@ function containsHtmlSanitizer(node: TSESTree.Node, ast: TSESTree.Program): bool
     const name = calleeName(child.callee);
     if (/^(?:sanitizeHtml|escapeHtml|DOMPurify\.sanitize)$/.test(name)) found = true;
   });
-  if (found) return true;
-  return node.type === "Identifier" && resolveIdentifier(node.name, ast) !== undefined
-    ? containsHtmlSanitizer(resolveIdentifier(node.name, ast) as TSESTree.Node, ast)
-    : false;
+  if (found || node.type !== "Identifier") return found;
+  const resolved = resolveIdentifier(node.name, ast);
+  return resolved !== undefined && resolved !== node && containsHtmlSanitizer(resolved, ast);
 }
 
 function containsUntrustedBrowserSource(node: TSESTree.Node, ast: TSESTree.Program): boolean {
