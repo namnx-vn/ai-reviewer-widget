@@ -221,7 +221,8 @@ function openerMatch(node: TSESTree.JSXOpeningElement, context: ReactRuleContext
 
 function autocompleteMatch(node: TSESTree.JSXOpeningElement): Match | undefined {
   const nameAttribute = getJSXAttribute(node, "name") ?? getJSXAttribute(node, "id");
-  const field = nameAttribute === undefined ? undefined : jsxString(nameAttribute)?.toLowerCase();
+  if (nameAttribute === undefined) return undefined;
+  const field = jsxString(nameAttribute)?.toLowerCase();
   if (field === undefined || !/(?:otp|pin|cvv|cvc|security.?code)/i.test(field)) return undefined;
   const autocomplete = getJSXAttribute(node, "autoComplete") ?? getJSXAttribute(node, "autocomplete");
   const mode = autocomplete === undefined ? undefined : jsxString(autocomplete)?.toLowerCase();
@@ -297,7 +298,7 @@ function staticString(node: TSESTree.Node): string | undefined {
   return node.type === "Literal" && typeof node.value === "string" ? node.value : undefined;
 }
 
-function expressionArgument(node: TSESTree.CallExpression, index: number): TSESTree.Node | undefined {
+function expressionArgument(node: TSESTree.CallExpression, index: number): TSESTree.Expression | undefined {
   const argument = node.arguments[index];
   return argument === undefined || argument.type === "SpreadElement" ? undefined : argument;
 }
