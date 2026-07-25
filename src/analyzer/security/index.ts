@@ -13,6 +13,7 @@ export { networkTransportRules } from "./rules/network";
 export { securityConfigurationRules } from "./rules/configuration";
 export { objectSecurityRules } from "./rules/object";
 export { sensitiveDataRules } from "./rules/data";
+export { loggingErrorRules } from "./rules/logging";
 export { ssrfRules } from "./rules/ssrf";
 export { filesystemRules } from "./rules/filesystem";
 export { secretsRules } from "./rules/secrets";
