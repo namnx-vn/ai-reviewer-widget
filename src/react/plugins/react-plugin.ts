@@ -44,6 +44,7 @@ import {
   reactRscServerFunctionAsyncRule,
   reactRscServerFunctionInClientRule,
 } from "../rules/rsc";
+import { reactBankingSecurityRules } from "../rules/security";
 import {
   reactStateDerivedStateRule,
   reactStateMutationRule,
@@ -54,7 +55,7 @@ import {
 export const reactPlugin: ReactPlugin = {
   id: "react",
   name: "React",
-  version: "3.4.10",
+  version: "3.6.18",
   rules: [
     reactHooksMissingDepsRule,
     reactHooksStaleClosureRule,
@@ -95,5 +96,6 @@ export const reactPlugin: ReactPlugin = {
     reactRscServerFunctionAsyncRule,
     reactRscServerFunctionInClientRule,
     reactRscNonSerializableServerReturnRule,
+    ...reactBankingSecurityRules,
   ],
 };

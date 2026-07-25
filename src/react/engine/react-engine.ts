@@ -130,7 +130,7 @@ export class ReactEngine {
   }
 
   private isFindingSource(value: unknown): boolean {
-    return value === "ast" || value === "architecture" || value === "ai";
+    return value === "ast" || value === "architecture" || value === "security" || value === "ai";
   }
 
   private deduplicateFindings(
