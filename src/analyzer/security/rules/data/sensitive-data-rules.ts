@@ -5,7 +5,6 @@ import {
   analyzeInterproceduralTaint,
   type TaintFlowAdapter,
   type TaintFlowMatch,
-  type TaintKind,
   type TaintSanitizer,
   type TaintSink,
   type TaintSource,
@@ -16,6 +15,12 @@ import type {
   SecurityRuleContext,
   SecurityRuleMeta,
 } from "../../model/types";
+import {
+  classifySensitiveDataNode,
+  isSensitiveInputAccess,
+  isSensitiveRedactionCall,
+  toSensitiveTaintKinds,
+} from "./sensitive-data-classification";
 
 type DataRuleKind =
   | "log"
@@ -67,12 +72,14 @@ function define(kind: DataRuleKind, id: string, title: string, severity: Securit
 function createAdapter(): TaintFlowAdapter {
   return {
     matchSource(node): TaintSource | undefined {
-      const name = sensitiveName(node);
-      if (name === undefined || !isInputAccess(node)) return undefined;
-      return { node, label: `Sensitive ${classificationLabel(name)} data`, sourceKind: "request-input", kinds: classifications(name) };
+      if (!isSensitiveInputAccess(node)) return undefined;
+      const classifications = classifySensitiveDataNode(node);
+      const kinds = toSensitiveTaintKinds(classifications);
+      if (kinds.length === 0) return undefined;
+      return { node, label: `Sensitive ${classifications.join("/")} data`, sourceKind: "request-input", kinds };
     },
     matchSanitizer(node): TaintSanitizer | undefined {
-      if (node.callee.type !== "Identifier" || !/^(?:redact|mask|sanitizeSensitive)$/i.test(node.callee.name)) return undefined;
+      if (!isSensitiveRedactionCall(node)) return undefined;
       return { node, label: "Sensitive data redaction", sanitizerKind: "unknown", clears: ["secret", "credential", "payment-data"], argumentIndex: 0 };
     },
     matchSinks(node): readonly TaintSink[] { return sinks(node); },
@@ -102,29 +109,6 @@ function sinks(node: TSESTree.Node): readonly TaintSink[] {
   return [];
 }
 
-function sensitiveName(node: TSESTree.Node): string | undefined {
-  if (node.type === "Identifier") return node.name;
-  if (node.type === "MemberExpression" && !node.computed && node.property.type === "Identifier") return node.property.name;
-  return undefined;
-}
-
-function isInputAccess(node: TSESTree.Node): boolean {
-  if (node.type === "Identifier") return /^(?:password|pin|otp|pan|cvv|cvc|accessToken|refreshToken|privateKey|nationalId|personalId|accountId|balance|transaction)/i.test(node.name);
-  if (node.type !== "MemberExpression") return false;
-  let target: TSESTree.Node = node.object;
-  while (target.type === "MemberExpression") target = target.object;
-  return target.type === "Identifier" && /^(?:req|request|input|formData)$/i.test(target.name);
-}
-
-function classifications(name: string): readonly TaintKind[] {
-  const values: TaintKind[] = [];
-  if (/(?:password|pin|otp|access.?token|refresh.?token|private.?key)/i.test(name)) values.push("credential");
-  if (/(?:pan|cvv|cvc|account|balance|transaction)/i.test(name)) values.push("payment-data");
-  if (/(?:national|personal)/i.test(name)) values.push("secret");
-  return values;
-}
-
-function classificationLabel(name: string): string { return classifications(name).join("/") || "sensitive"; }
 function sinkLabel(kind: DataRuleKind): string { return `Sensitive data ${kind === "storage" ? "client storage" : kind} sink`; }
 function calleeName(node: TSESTree.Expression | TSESTree.Super): string {
   if (node.type === "Identifier") return node.name;
