@@ -14,6 +14,7 @@ export { securityConfigurationRules } from "./rules/configuration";
 export { objectSecurityRules } from "./rules/object";
 export { sensitiveDataRules } from "./rules/data";
 export { loggingErrorRules } from "./rules/logging";
+export { businessSecurityRules } from "./rules/business";
 export { ssrfRules } from "./rules/ssrf";
 export { filesystemRules } from "./rules/filesystem";
 export { secretsRules } from "./rules/secrets";
