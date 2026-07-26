@@ -13,7 +13,7 @@ import type {
   ComplianceReport,
 } from "./types";
 
-const RULE_ID_PATTERN = /^security\.[a-zA-Z0-9]+(?:[.-][a-zA-Z0-9]+)*$/;
+const RULE_ID_PATTERN = /^security\.[a-z0-9]+(?:[.-][a-z0-9]+)*$/;
 const NON_CERTIFYING_DISCLAIMER = "Mapped controls describe automated security traceability only. They do not establish certification, regulatory compliance, PCI compliance, ASVS compliance, or bank compliance.";
 
 export class ComplianceRegistry {

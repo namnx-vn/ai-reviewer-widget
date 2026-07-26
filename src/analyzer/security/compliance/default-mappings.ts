@@ -21,7 +21,6 @@ export const DEFAULT_COMPLIANCE_MAPPINGS: readonly ComplianceMappingDefinition[]
   define("security.network.tls-verification-disabled", "pci-dss", "4.2.1", "covered", "Explicit certificate-verification disablement is directly observable."),
   define("security.network.insecure-http", "pci-dss", "4.2.1", "partially-covered", "Cleartext transport is detected, while deployment termination and network controls require verification."),
   define("security.network.tls-verification-disabled", "nist-ssdf", "PW.7.2", "partially-covered", "The implementation weakness is detectable, while the SSDF practice also includes process controls."),
-  define("security.ssrF.untrusted-url", "owasp-top-10", "A10:2021", "covered", "Untrusted URL flow to network sinks is analyzed when the rule is present."),
   define("security.ssrf.untrusted-url", "owasp-top-10", "A10:2021", "covered", "Untrusted URL flow to network sinks is analyzed."),
   define("security.business.client-controlled-balance", "banking-policy", "BANK-LEDGER-AUTHORITY", "covered", "Client-controlled balance writes violate the authoritative-ledger policy."),
   define("security.business.client-controlled-fee", "banking-policy", "BANK-FEE-SERVER-CALC", "covered", "Transaction fees must be derived from trusted server-side policy."),

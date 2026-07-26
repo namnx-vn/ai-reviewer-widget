@@ -3,6 +3,26 @@ export { SecurityAnalysisEngine } from "./engine/security-analysis-engine";
 export { analyzeInterproceduralTaint, analyzeIntraproceduralTaint } from "./flow";
 export { SecurityRuleRegistry } from "./registry/security-rule-registry";
 export { analyzeSupplyChain } from "./supply-chain";
+export {
+  ComplianceRegistry,
+  DEFAULT_COMPLIANCE_MAPPINGS,
+  attachComplianceMappings,
+  createComplianceReport,
+  createDefaultComplianceRegistry,
+  isValidSecurityStandardMapping,
+  securityStandardMappingKey,
+  validateSecurityStandardMapping,
+} from "./compliance";
+export {
+  analyzeSecurityCompliance,
+  analyzeSecurityEvidenceFindings,
+} from "./review-findings";
+export {
+  SECURITY_PROFILE_DEFINITIONS,
+  applySecurityProfile,
+  getSecurityProfile,
+  resolveSecurityProfile,
+} from "./policies";
 export { dangerousExecutionRules } from "./rules/dangerous-execution";
 export { authenticationRules } from "./rules/auth";
 export { authorizationRules } from "./rules/authorization";
@@ -27,6 +47,26 @@ export {
   normalizeCryptoAlgorithm,
   type CryptoPolicy,
 } from "./policies/crypto-policy";
+export type {
+  ComplianceControlCoverage,
+  ComplianceCoverageState,
+  ComplianceCoverageSummary,
+  ComplianceFindingMapping,
+  ComplianceMappingDefinition,
+  ComplianceReport,
+} from "./compliance";
+export type {
+  ResolvedSecurityProfile,
+  SecurityCryptoProfilePolicy,
+  SecurityProfileDefinition,
+  SecurityProfileId,
+  SecurityQualityGateProfilePolicy,
+  SecurityRuleProfileOverride,
+  SecurityStorageMechanism,
+  SecurityStorageProfilePolicy,
+  SecurityTlsVersion,
+  SecurityTransportProfilePolicy,
+} from "./policies";
 export type {
   TaintFlowAdapter,
   TaintFlowMatch,

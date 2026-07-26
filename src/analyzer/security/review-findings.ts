@@ -1,8 +1,18 @@
 import type { ReviewFinding } from "../../review/types";
 
 import { parseSource } from "../ast/parser";
+import {
+  attachComplianceMappings,
+  createComplianceReport,
+  createDefaultComplianceRegistry,
+  type ComplianceReport,
+} from "./compliance";
 import { SecurityAnalysisEngine } from "./engine/security-analysis-engine";
 import type { SecurityConfidence, SecurityFinding } from "./model/types";
+import {
+  applySecurityProfile,
+  type SecurityProfileId,
+} from "./policies";
 import { SecurityRuleRegistry } from "./registry/security-rule-registry";
 import { secretsRules } from "./rules/secrets";
 import { authenticationRules } from "./rules/auth";
@@ -18,7 +28,48 @@ import { ssrfRules } from "./rules/ssrf";
 import { filesystemRules } from "./rules/filesystem";
 import { analyzeSupplyChain, type SupplyChainManifest } from "./supply-chain";
 
-export function analyzeSecurityFindings(file: string, source: string): readonly ReviewFinding[] {
+export function analyzeSecurityEvidenceFindings(
+  file: string,
+  source: string,
+  profileId: SecurityProfileId = "security/default",
+): readonly SecurityFinding[] {
+  const registry = createSourceSecurityRuleRegistry();
+  const findings = new SecurityAnalysisEngine().analyze(
+    { file, source, ast: parseSource(source) },
+    registry,
+  );
+  const complianceRegistry = createDefaultComplianceRegistry();
+  const mapped = findings.map((finding) => attachComplianceMappings(finding, complianceRegistry));
+  return applySecurityProfile(mapped, profileId);
+}
+
+export function analyzeSecurityFindings(
+  file: string,
+  source: string,
+  profileId: SecurityProfileId = "security/default",
+): readonly ReviewFinding[] {
+  return analyzeSecurityEvidenceFindings(file, source, profileId).map(toReviewFinding);
+}
+
+export function analyzeSecurityCompliance(
+  file: string,
+  source: string,
+  profileId: SecurityProfileId = "security/default",
+): ComplianceReport {
+  return createComplianceReport(analyzeSecurityEvidenceFindings(file, source, profileId));
+}
+
+export function analyzeSupplyChainFindings(
+  files: readonly { readonly path: string; readonly content: string }[],
+): readonly ReviewFinding[] {
+  const manifests = files.flatMap(toSupplyChainManifest);
+  const lockfiles = files.flatMap((file) => toSupplyChainLockfile(file.path));
+  const sourceFiles = files.map((file) => ({ path: file.path, source: file.content }));
+
+  return analyzeSupplyChain({ manifests, lockfiles, sourceFiles }).map(toReviewFinding);
+}
+
+function createSourceSecurityRuleRegistry(): SecurityRuleRegistry {
   const registry = new SecurityRuleRegistry();
   for (const rule of secretsRules) registry.register(rule);
   for (const rule of authenticationRules) registry.register(rule);
@@ -32,19 +83,7 @@ export function analyzeSecurityFindings(file: string, source: string): readonly 
   for (const rule of businessSecurityRules) registry.register(rule);
   for (const rule of ssrfRules) registry.register(rule);
   for (const rule of filesystemRules) registry.register(rule);
-
-  return new SecurityAnalysisEngine().analyze({ file, source, ast: parseSource(source) }, registry)
-    .map(toReviewFinding);
-}
-
-export function analyzeSupplyChainFindings(
-  files: readonly { readonly path: string; readonly content: string }[],
-): readonly ReviewFinding[] {
-  const manifests = files.flatMap(toSupplyChainManifest);
-  const lockfiles = files.flatMap((file) => toSupplyChainLockfile(file.path));
-  const sourceFiles = files.map((file) => ({ path: file.path, source: file.content }));
-
-  return analyzeSupplyChain({ manifests, lockfiles, sourceFiles }).map(toReviewFinding);
+  return registry;
 }
 
 function toReviewFinding(finding: SecurityFinding): ReviewFinding {

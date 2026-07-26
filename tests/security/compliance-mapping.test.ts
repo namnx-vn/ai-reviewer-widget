@@ -6,6 +6,9 @@ import {
   createComplianceReport,
   isValidSecurityStandardMapping,
 } from "../../src/analyzer/security/compliance";
+import type {
+  ComplianceMappingDefinition,
+} from "../../src/analyzer/security/compliance";
 import type { SecurityFinding } from "../../src/analyzer/security/model/types";
 
 describe("security compliance mapping", () => {
@@ -27,10 +30,10 @@ describe("security compliance mapping", () => {
       rationale: "test",
     }])).toThrow(/Invalid pci-dss control id/);
 
-    const definition = {
+    const definition: ComplianceMappingDefinition = {
       ruleId: "security.injection.sql",
-      mapping: { standard: "owasp-top-10", id: "A03:2021" } as const,
-      coverage: "covered" as const,
+      mapping: { standard: "owasp-top-10", id: "A03:2021" },
+      coverage: "covered",
       rationale: "Injection mapping.",
     };
     expect(() => new ComplianceRegistry([definition, definition])).toThrow(/Duplicate compliance mapping/);
