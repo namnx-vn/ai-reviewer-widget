@@ -2,8 +2,8 @@ import type { SecurityStandard, SecurityStandardMapping } from "../model/types";
 
 const STANDARD_ID_PATTERNS: Readonly<Record<SecurityStandard, RegExp>> = {
   cwe: /^CWE-[1-9]\d*$/,
-  "owasp-top-10": /^A(?:0[1-9]|10):2021$/,
-  "owasp-asvs": /^V[1-9]\d*(?:\.[1-9]\d*){0,2}$/,
+  "owasp-top-10": /^A(?:0[1-9]|10):(?:2021|2025)$/,
+  "owasp-asvs": /^v\d+\.\d+\.\d+-[1-9]\d*(?:\.[1-9]\d*){2}$/,
   "pci-dss": /^[1-9]\d*(?:\.\d+){1,2}$/,
   "nist-ssdf": /^(?:PO|PS|PW|RV)\.[1-9]\d*\.[1-9]\d*$/,
   "banking-policy": /^BANK-[A-Z0-9]+(?:-[A-Z0-9]+)*$/,

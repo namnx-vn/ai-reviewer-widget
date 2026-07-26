@@ -6,19 +6,19 @@ import {
   createComplianceReport,
   isValidSecurityStandardMapping,
 } from "../../src/analyzer/security/compliance";
-import type {
-  ComplianceMappingDefinition,
-} from "../../src/analyzer/security/compliance";
+import type { ComplianceMappingDefinition } from "../../src/analyzer/security/compliance";
 import type { SecurityFinding } from "../../src/analyzer/security/model/types";
 
 describe("security compliance mapping", () => {
   it("validates supported standard identifiers", () => {
     expect(isValidSecurityStandardMapping({ standard: "cwe", id: "CWE-89" })).toBe(true);
+    expect(isValidSecurityStandardMapping({ standard: "owasp-top-10", id: "A05:2025" })).toBe(true);
     expect(isValidSecurityStandardMapping({ standard: "owasp-top-10", id: "A03:2021" })).toBe(true);
-    expect(isValidSecurityStandardMapping({ standard: "owasp-asvs", id: "V5.3" })).toBe(true);
+    expect(isValidSecurityStandardMapping({ standard: "owasp-asvs", id: "v5.0.0-1.2.5" })).toBe(true);
     expect(isValidSecurityStandardMapping({ standard: "pci-dss", id: "6.4.3" })).toBe(true);
     expect(isValidSecurityStandardMapping({ standard: "nist-ssdf", id: "PW.7.2" })).toBe(true);
     expect(isValidSecurityStandardMapping({ standard: "banking-policy", id: "BANK-TXN-IDEMPOTENCY" })).toBe(true);
+    expect(isValidSecurityStandardMapping({ standard: "owasp-asvs", id: "V5.3" })).toBe(false);
     expect(isValidSecurityStandardMapping({ standard: "pci-dss", id: "PCI-6" })).toBe(false);
   });
 
@@ -32,7 +32,7 @@ describe("security compliance mapping", () => {
 
     const definition: ComplianceMappingDefinition = {
       ruleId: "security.injection.sql",
-      mapping: { standard: "owasp-top-10", id: "A03:2021" },
+      mapping: { standard: "owasp-top-10", id: "A05:2025" },
       coverage: "covered",
       rationale: "Injection mapping.",
     };
@@ -56,13 +56,13 @@ describe("security compliance mapping", () => {
     const registry = new ComplianceRegistry([
       {
         ruleId: "security.authz.idor-candidate",
-        mapping: { standard: "owasp-top-10", id: "A01:2021" },
+        mapping: { standard: "owasp-top-10", id: "A01:2025" },
         coverage: "manual-verification-required",
         rationale: "Ownership needs review.",
       },
       {
         ruleId: "security.authz.client-side-only",
-        mapping: { standard: "owasp-top-10", id: "A01:2021" },
+        mapping: { standard: "owasp-top-10", id: "A01:2025" },
         coverage: "covered",
         rationale: "Client authorization is observable.",
       },
@@ -74,7 +74,7 @@ describe("security compliance mapping", () => {
 
     expect(report.controls).toEqual([{
       standard: "owasp-top-10",
-      id: "A01:2021",
+      id: "A01:2025",
       control: undefined,
       coverage: "manual-verification-required",
       ruleIds: ["security.authz.client-side-only", "security.authz.idor-candidate"],
