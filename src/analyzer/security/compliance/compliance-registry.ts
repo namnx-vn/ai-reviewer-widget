@@ -91,7 +91,10 @@ function mergeStandards(
   additional: readonly SecurityStandardMapping[],
 ): readonly SecurityStandardMapping[] {
   const result = new Map<string, SecurityStandardMapping>();
-  for (const mapping of [...existing, ...additional]) {
+  for (const mapping of existing) {
+    result.set(securityStandardMappingKey(mapping), mapping);
+  }
+  for (const mapping of additional) {
     validateSecurityStandardMapping(mapping);
     result.set(securityStandardMappingKey(mapping), mapping);
   }

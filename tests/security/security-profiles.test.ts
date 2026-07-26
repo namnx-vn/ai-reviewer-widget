@@ -29,6 +29,9 @@ describe("security profiles", () => {
       "memory",
     ]);
     expect(profile.qualityGate.mandatoryRuleIds).toContain("security.injection.sql");
+    expect(profile.qualityGate.mandatoryRuleIds).toContain("security.crypto.insecure-random");
+    expect(profile.qualityGate.mandatoryRuleIds).toContain("security.execution.no-eval");
+    expect(profile.qualityGate.mandatoryRuleIds).toContain("security.execution.no-new-function");
     expect(profile.qualityGate.mandatoryRuleIds).toContain("security.business.transaction-replay-risk");
   });
 

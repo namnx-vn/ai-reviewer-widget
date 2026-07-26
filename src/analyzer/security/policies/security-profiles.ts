@@ -162,6 +162,9 @@ const BANKING_PROFILE: SecurityProfileDefinition = {
       "security.auth.jwt-decode-without-verify",
       "security.authz.client-side-only",
       "security.ssrf.untrusted-url",
+      "security.crypto.insecure-random",
+      "security.execution.no-eval",
+      "security.execution.no-new-function",
       "security.react.sensitive-local-storage",
       "security.business.transaction-idempotency",
       "security.business.transaction-replay-risk",
@@ -200,7 +203,10 @@ export function applySecurityProfile(
   profile: SecurityProfileId | ResolvedSecurityProfile,
 ): readonly SecurityFinding[] {
   const resolved = typeof profile === "string" ? getSecurityProfile(profile) : profile;
-  const overrides = new Map(resolved.ruleOverrides.map((override) => [override.ruleId, override]));
+  const overrides = new Map<string, SecurityRuleProfileOverride>();
+  for (const override of resolved.ruleOverrides) {
+    overrides.set(override.ruleId, override);
+  }
   const results: SecurityFinding[] = [];
 
   for (const finding of findings) {

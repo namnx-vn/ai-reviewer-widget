@@ -52,6 +52,21 @@ describe("security compliance mapping", () => {
     expect(enriched.evidence).toBe(finding.evidence);
   });
 
+  it("preserves legacy rule-owned standard metadata while validating new centralized mappings", () => {
+    const registry = new ComplianceRegistry([{
+      ruleId: "security.example.legacy",
+      mapping: { standard: "owasp-top-10", id: "A05:2025" },
+      coverage: "covered",
+      rationale: "Current centralized mapping.",
+    }]);
+    const finding = sampleFinding("security.example.legacy", [{ standard: "owasp-asvs", id: "V5.3" }]);
+    const enriched = attachComplianceMappings(finding, registry);
+    expect(enriched.standards).toEqual([
+      { standard: "owasp-asvs", id: "V5.3" },
+      { standard: "owasp-top-10", id: "A05:2025" },
+    ]);
+  });
+
   it("aggregates coverage deterministically and uses non-certifying wording", () => {
     const registry = new ComplianceRegistry([
       {
