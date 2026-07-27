@@ -26,6 +26,12 @@ export interface SecurityRuleProfileOverride {
   readonly minimumConfidence?: SecurityConfidence;
 }
 
+export interface SecurityResolvedRulePolicy {
+  readonly enabled: boolean;
+  readonly severity: SecuritySeverity;
+  readonly minimumConfidence: SecurityConfidence;
+}
+
 export interface SecurityCryptoProfilePolicy {
   readonly allowedAlgorithms?: readonly string[];
   readonly minimumPbkdf2Iterations?: number;
@@ -155,9 +161,16 @@ const BANKING_PROFILE: SecurityProfileDefinition = {
   ],
   qualityGate: {
     mandatoryRuleIds: [
+      "security.secrets.hardcoded-password",
       "security.secrets.api-key",
       "security.secrets.access-token",
+      "security.secrets.refresh-token",
       "security.secrets.private-key",
+      "security.secrets.jwt",
+      "security.secrets.database-url",
+      "security.secrets.secret-in-url",
+      "security.secrets.secret-in-log",
+      "security.secrets.client-exposure",
       "security.data.client-storage-sensitive",
       "security.auth.jwt-decode-without-verify",
       "security.authz.client-side-only",
@@ -198,26 +211,37 @@ export function resolveSecurityProfile(
   return resolveProfile(id, definitionsById, []);
 }
 
+export function resolveSecurityRulePolicy(
+  ruleId: string,
+  severity: SecuritySeverity,
+  profile: SecurityProfileId | ResolvedSecurityProfile,
+): SecurityResolvedRulePolicy {
+  const resolved = typeof profile === "string" ? getSecurityProfile(profile) : profile;
+  const override = resolved.ruleOverrides.find((candidate) => candidate.ruleId === ruleId);
+  return {
+    enabled: override?.enabled ?? true,
+    severity: override?.severity ?? severity,
+    minimumConfidence: override?.minimumConfidence ?? resolved.minimumConfidence,
+  };
+}
+
 export function applySecurityProfile(
   findings: readonly SecurityFinding[],
   profile: SecurityProfileId | ResolvedSecurityProfile,
 ): readonly SecurityFinding[] {
   const resolved = typeof profile === "string" ? getSecurityProfile(profile) : profile;
-  const overrides = new Map<string, SecurityRuleProfileOverride>();
-  for (const override of resolved.ruleOverrides) {
-    overrides.set(override.ruleId, override);
-  }
   const results: SecurityFinding[] = [];
 
   for (const finding of findings) {
-    const override = overrides.get(finding.ruleId);
-    if (override?.enabled === false) continue;
+    const policy = resolveSecurityRulePolicy(finding.ruleId, finding.severity, resolved);
+    if (!policy.enabled) continue;
+    if (confidenceRank(finding.confidence) < confidenceRank(policy.minimumConfidence)) continue;
 
-    const minimumConfidence = override?.minimumConfidence ?? resolved.minimumConfidence;
-    if (confidenceRank(finding.confidence) < confidenceRank(minimumConfidence)) continue;
-
-    const severity = override?.severity ?? finding.severity;
-    results.push(severity === finding.severity ? finding : { ...finding, severity });
+    results.push(
+      policy.severity === finding.severity
+        ? finding
+        : { ...finding, severity: policy.severity },
+    );
   }
 
   return results;

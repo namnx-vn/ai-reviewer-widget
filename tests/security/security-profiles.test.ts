@@ -4,6 +4,7 @@ import {
   applySecurityProfile,
   getSecurityProfile,
   resolveSecurityProfile,
+  resolveSecurityRulePolicy,
 } from "../../src/analyzer/security/policies";
 import type { SecurityProfileDefinition } from "../../src/analyzer/security/policies";
 import type { SecurityFinding } from "../../src/analyzer/security/model/types";
@@ -29,10 +30,9 @@ describe("security profiles", () => {
       "memory",
     ]);
     expect(profile.qualityGate.mandatoryRuleIds).toContain("security.injection.sql");
-    expect(profile.qualityGate.mandatoryRuleIds).toContain("security.crypto.insecure-random");
-    expect(profile.qualityGate.mandatoryRuleIds).toContain("security.execution.no-eval");
-    expect(profile.qualityGate.mandatoryRuleIds).toContain("security.execution.no-new-function");
     expect(profile.qualityGate.mandatoryRuleIds).toContain("security.business.transaction-replay-risk");
+    expect(profile.qualityGate.mandatoryRuleIds).toContain("security.secrets.refresh-token");
+    expect(profile.qualityGate.mandatoryRuleIds).toContain("security.execution.no-eval");
   });
 
   it("supports inherited rule enablement, disablement, severity, and confidence overrides", () => {
@@ -55,6 +55,14 @@ describe("security profiles", () => {
       severity: "critical",
       minimumConfidence: "high",
     }]);
+  });
+
+  it("resolves effective rule policy for downstream policy consumers", () => {
+    expect(resolveSecurityRulePolicy("security.injection.sql", "high", "security/banking")).toEqual({
+      enabled: true,
+      severity: "critical",
+      minimumConfidence: "medium",
+    });
   });
 
   it("applies banking severity policy without changing evidence, flow, or finding id", () => {

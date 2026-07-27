@@ -3,6 +3,7 @@ export {
   applySecurityProfile,
   getSecurityProfile,
   resolveSecurityProfile,
+  resolveSecurityRulePolicy,
 } from "./security-profiles";
 export type {
   ResolvedSecurityProfile,
@@ -10,6 +11,7 @@ export type {
   SecurityProfileDefinition,
   SecurityProfileId,
   SecurityQualityGateProfilePolicy,
+  SecurityResolvedRulePolicy,
   SecurityRuleProfileOverride,
   SecurityStorageMechanism,
   SecurityStorageProfilePolicy,
