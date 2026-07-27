@@ -4,6 +4,7 @@ import {
   ComplianceRegistry,
   attachComplianceMappings,
   createComplianceReport,
+  createDefaultComplianceRegistry,
   isValidSecurityStandardMapping,
 } from "../../src/analyzer/security/compliance";
 import type { ComplianceMappingDefinition } from "../../src/analyzer/security/compliance";
@@ -50,6 +51,17 @@ describe("security compliance mapping", () => {
     const enriched = attachComplianceMappings(finding, registry);
     expect(enriched.standards).toEqual([{ standard: "cwe", id: "CWE-89" }]);
     expect(enriched.evidence).toBe(finding.evidence);
+  });
+
+  it("uses the canonical SSRF rule id in default mappings", () => {
+    const mappings = createDefaultComplianceRegistry().getMappings("security.ssrf.untrusted-request");
+    expect(mappings).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        mapping: { standard: "owasp-top-10", id: "A01:2025" },
+        coverage: "covered",
+      }),
+    ]));
+    expect(createDefaultComplianceRegistry().getMappings("security.ssrf.untrusted-url")).toEqual([]);
   });
 
   it("preserves legacy rule-owned standard metadata while validating new centralized mappings", () => {

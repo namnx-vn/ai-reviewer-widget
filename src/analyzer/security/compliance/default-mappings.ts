@@ -26,7 +26,7 @@ export const DEFAULT_COMPLIANCE_MAPPINGS: readonly ComplianceMappingDefinition[]
   define("security.network.tls-verification-disabled", "pci-dss", "4.2.1", "partially-covered", "Certificate-verification evidence contributes to strong cryptography in transit, while deployment scope requires verification."),
   define("security.network.insecure-http", "pci-dss", "4.2.1", "partially-covered", "Cleartext transport is detected, while deployment termination and network scope require verification."),
   define("security.network.tls-verification-disabled", "nist-ssdf", "PW.7.2", "partially-covered", "The implementation weakness is detectable, while the SSDF practice also includes review and process controls."),
-  define("security.ssrf.untrusted-url", "owasp-top-10", "A01:2025", "covered", "OWASP Top 10:2025 includes SSRF within Broken Access Control and the analyzer models untrusted URL flow to request sinks."),
+  define("security.ssrf.untrusted-request", "owasp-top-10", "A01:2025", "covered", "OWASP Top 10:2025 includes SSRF within Broken Access Control and the analyzer models untrusted URL flow to request sinks."),
   define("security.business.client-controlled-balance", "banking-policy", "BANK-LEDGER-AUTHORITY", "covered", "Client-controlled balance writes violate the authoritative-ledger policy."),
   define("security.business.client-controlled-fee", "banking-policy", "BANK-FEE-SERVER-CALC", "covered", "Transaction fees must be derived from trusted server-side policy."),
   define("security.business.transaction-idempotency", "banking-policy", "BANK-TXN-IDEMPOTENCY", "manual-verification-required", "Static analysis identifies missing visible idempotency evidence but cannot prove distributed deduplication behavior."),

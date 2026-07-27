@@ -33,6 +33,7 @@ describe("security profiles", () => {
     expect(profile.qualityGate.mandatoryRuleIds).toContain("security.business.transaction-replay-risk");
     expect(profile.qualityGate.mandatoryRuleIds).toContain("security.secrets.refresh-token");
     expect(profile.qualityGate.mandatoryRuleIds).toContain("security.execution.no-eval");
+    expect(profile.qualityGate.mandatoryRuleIds).toContain("security.ssrf.untrusted-request");
   });
 
   it("supports inherited rule enablement, disablement, severity, and confidence overrides", () => {
@@ -59,6 +60,11 @@ describe("security profiles", () => {
 
   it("resolves effective rule policy for downstream policy consumers", () => {
     expect(resolveSecurityRulePolicy("security.injection.sql", "high", "security/banking")).toEqual({
+      enabled: true,
+      severity: "critical",
+      minimumConfidence: "medium",
+    });
+    expect(resolveSecurityRulePolicy("security.ssrf.untrusted-request", "high", "security/banking")).toEqual({
       enabled: true,
       severity: "critical",
       minimumConfidence: "medium",

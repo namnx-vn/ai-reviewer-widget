@@ -156,7 +156,7 @@ const BANKING_PROFILE: SecurityProfileDefinition = {
     { ruleId: "security.network.tls-verification-disabled", severity: "critical" },
     { ruleId: "security.auth.jwt-decode-without-verify", severity: "critical" },
     { ruleId: "security.authz.client-side-only", severity: "critical" },
-    { ruleId: "security.ssrf.untrusted-url", severity: "critical" },
+    { ruleId: "security.ssrf.untrusted-request", severity: "critical" },
     { ruleId: "security.react.sensitive-local-storage", severity: "critical" },
   ],
   qualityGate: {
@@ -174,7 +174,7 @@ const BANKING_PROFILE: SecurityProfileDefinition = {
       "security.data.client-storage-sensitive",
       "security.auth.jwt-decode-without-verify",
       "security.authz.client-side-only",
-      "security.ssrf.untrusted-url",
+      "security.ssrf.untrusted-request",
       "security.crypto.insecure-random",
       "security.execution.no-eval",
       "security.execution.no-new-function",

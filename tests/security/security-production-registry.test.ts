@@ -17,7 +17,7 @@ describe("security production registry", () => {
     expect(ruleIds.has("security.crypto.insecure-random")).toBe(true);
     expect(ruleIds.has("security.auth.jwt-decode-without-verify")).toBe(true);
     expect(ruleIds.has("security.authz.client-side-only")).toBe(true);
-    expect(ruleIds.has("security.ssrf.untrusted-url")).toBe(true);
+    expect(ruleIds.has("security.ssrf.untrusted-request")).toBe(true);
     expect(ruleIds.has("security.logging.payment-data")).toBe(true);
     expect(ruleIds.has("security.business.transaction-replay-risk")).toBe(true);
   });
