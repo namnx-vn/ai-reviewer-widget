@@ -110,9 +110,9 @@ The order below is normative unless repository architecture requires a documente
 | 3.6.18 | 🚧 Implemented — validation pending | [React / Browser Banking Security](./3.6.18-react-banking.md) |
 | 3.6.19 | ✅ Complete | [Security Taint Engine](./3.6.19-taint-engine.md) |
 | 3.6.20 | ✅ Complete | [Interprocedural Security Analysis](./3.6.20-interprocedural.md) |
-| 3.6.21 | 🚧 Implemented — validation pending | [Compliance Mapping](./3.6.21-compliance.md) |
-| 3.6.22 | 🚧 Implemented — validation pending | [Banking Security Profile](./3.6.22-banking-profile.md) |
-| 3.6.23 | 🚧 Implemented — validation pending | [Security Quality Gates](./3.6.23-quality-gates.md) |
+| 3.6.21 | ✅ Complete | [Compliance Mapping](./3.6.21-compliance.md) |
+| 3.6.22 | ✅ Complete | [Banking Security Profile](./3.6.22-banking-profile.md) |
+| 3.6.23 | ✅ Complete | [Security Quality Gates](./3.6.23-quality-gates.md) |
 
 ---
 
