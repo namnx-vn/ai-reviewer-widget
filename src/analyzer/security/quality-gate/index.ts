@@ -6,6 +6,7 @@ export {
 export type { SecurityReviewQualityGateInput } from "./review-adapter";
 export type {
   SecurityQualityGateAction,
+  SecurityQualityGateCategoryAction,
   SecurityQualityGateDecision,
   SecurityQualityGateFinding,
   SecurityQualityGateFindingResult,

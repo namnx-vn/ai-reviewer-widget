@@ -20,6 +20,7 @@ export function evaluateSecurityReviewQualityGate(
     baselineFindingIds: input.baselineFindingIds,
     suppressions: input.suppressions,
     severityActions: input.severityActions,
+    categoryActions: input.categoryActions,
     findings: toSecurityQualityGateFindings(input.findings),
   });
 }

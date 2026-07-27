@@ -51,6 +51,28 @@ describe("security quality gate", () => {
     expect(blocking.decision).toBe("fail");
   });
 
+  it("supports category-level actions without weakening profile blockers", () => {
+    const result = evaluateSecurityQualityGate({
+      findings: [finding("security.example.logging", "medium", "high", "logging-1", "logging")],
+      profile: "security/banking",
+      evaluatedAt,
+      categoryActions: [{ category: "logging", action: "fail" }],
+    });
+    expect(result.decision).toBe("fail");
+    expect(result.findings[0]).toMatchObject({ action: "fail", reasonCode: "category-policy" });
+  });
+
+  it("reports new low findings without changing a passing decision", () => {
+    const result = evaluateSecurityQualityGate({
+      findings: [finding("security.example.low", "low", "high")],
+      profile: "security/banking",
+      evaluatedAt,
+    });
+    expect(result.decision).toBe("pass");
+    expect(result.summary.reported).toBe(1);
+    expect(result.findings[0]?.reasonCode).toBe("report-only-severity");
+  });
+
   it("fails mandatory banking rules independent of non-blocking severity", () => {
     const result = evaluateSecurityQualityGate({
       findings: [finding("security.secrets.refresh-token", "medium", "high")],
@@ -151,7 +173,7 @@ describe("security quality gate", () => {
     expect(first.reasons.map((reason) => reason.findingId)).toEqual(["a", "z"]);
   });
 
-  it("rejects invalid suppression and timestamp inputs", () => {
+  it("rejects invalid suppression, duplicate action, and timestamp inputs", () => {
     expect(() => evaluateSecurityQualityGate({
       findings: [],
       profile: "security/default",
@@ -164,6 +186,16 @@ describe("security quality gate", () => {
       evaluatedAt,
       suppressions: [{ reason: "missing target" }],
     })).toThrow(/requires findingId or ruleId/);
+
+    expect(() => evaluateSecurityQualityGate({
+      findings: [],
+      profile: "security/default",
+      evaluatedAt,
+      categoryActions: [
+        { category: "logging", action: "warn" },
+        { category: "logging", action: "fail" },
+      ],
+    })).toThrow(/Duplicate security quality-gate action for category/);
   });
 });
 
@@ -172,6 +204,7 @@ function finding(
   severity: SecurityQualityGateFinding["severity"],
   confidence: SecurityQualityGateFinding["confidence"],
   id = `${ruleId}:src/example.ts:1`,
+  category?: SecurityQualityGateFinding["category"],
 ): SecurityQualityGateFinding {
-  return { id, ruleId, severity, confidence };
+  return { id, ruleId, severity, confidence, category };
 }

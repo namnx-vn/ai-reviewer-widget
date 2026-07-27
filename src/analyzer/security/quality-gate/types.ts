@@ -1,4 +1,8 @@
-import type { SecurityConfidence, SecuritySeverity } from "../model/types";
+import type {
+  SecurityCategory,
+  SecurityConfidence,
+  SecuritySeverity,
+} from "../model/types";
 import type { ResolvedSecurityProfile, SecurityProfileId } from "../policies";
 
 export type SecurityQualityGateDecision = "pass" | "warn" | "fail";
@@ -20,6 +24,7 @@ export type SecurityQualityGateFindingState =
 export type SecurityQualityGateReasonCode =
   | "mandatory-rule"
   | "blocking-severity"
+  | "category-policy"
   | "advisory-severity"
   | "report-only-severity"
   | "baseline-existing-debt"
@@ -33,6 +38,7 @@ export interface SecurityQualityGateFinding {
   readonly ruleId: string;
   readonly severity: SecuritySeverity;
   readonly confidence: SecurityConfidence;
+  readonly category?: SecurityCategory;
 }
 
 export interface SecurityQualityGateSuppression {
@@ -48,6 +54,11 @@ export interface SecurityQualityGateSeverityAction {
   readonly action: "fail" | "warn" | "report";
 }
 
+export interface SecurityQualityGateCategoryAction {
+  readonly category: SecurityCategory;
+  readonly action: "fail" | "warn" | "report";
+}
+
 export interface SecurityQualityGateInput {
   readonly findings: readonly SecurityQualityGateFinding[];
   readonly profile: SecurityProfileId | ResolvedSecurityProfile;
@@ -55,6 +66,7 @@ export interface SecurityQualityGateInput {
   readonly baselineFindingIds?: readonly string[];
   readonly suppressions?: readonly SecurityQualityGateSuppression[];
   readonly severityActions?: readonly SecurityQualityGateSeverityAction[];
+  readonly categoryActions?: readonly SecurityQualityGateCategoryAction[];
 }
 
 export interface SecurityQualityGateReason {
@@ -71,6 +83,7 @@ export interface SecurityQualityGateFindingResult {
   readonly action: SecurityQualityGateAction;
   readonly effectiveSeverity: SecuritySeverity;
   readonly confidence: SecurityConfidence;
+  readonly category?: SecurityCategory;
   readonly reasonCode: SecurityQualityGateReasonCode;
 }
 

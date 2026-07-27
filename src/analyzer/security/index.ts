@@ -63,6 +63,7 @@ export type {
 } from "./compliance";
 export type {
   SecurityQualityGateAction,
+  SecurityQualityGateCategoryAction,
   SecurityQualityGateDecision,
   SecurityQualityGateFinding,
   SecurityQualityGateFindingResult,

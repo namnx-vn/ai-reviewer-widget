@@ -1,4 +1,8 @@
-import type { SecurityConfidence, SecuritySeverity } from "../model/types";
+import type {
+  SecurityCategory,
+  SecurityConfidence,
+  SecuritySeverity,
+} from "../model/types";
 import {
   getSecurityProfile,
   resolveSecurityRulePolicy,
@@ -6,6 +10,7 @@ import {
 } from "../policies";
 import type {
   SecurityQualityGateAction,
+  SecurityQualityGateCategoryAction,
   SecurityQualityGateFinding,
   SecurityQualityGateFindingResult,
   SecurityQualityGateInput,
@@ -18,6 +23,10 @@ import type {
   SecurityQualityGateSummary,
 } from "./types";
 
+const ISO_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/;
+
+type DecisionAction = "fail" | "warn" | "report";
+
 export function evaluateSecurityQualityGate(
   input: SecurityQualityGateInput,
 ): SecurityQualityGateResult {
@@ -27,6 +36,7 @@ export function evaluateSecurityQualityGate(
     : input.profile;
   const baseline = new Set(input.baselineFindingIds ?? []);
   const severityActions = createSeverityActionMap(input.severityActions ?? []);
+  const categoryActions = createCategoryActionMap(input.categoryActions ?? []);
   const suppressions = prepareSuppressions(input.suppressions ?? [], evaluatedAtMs);
   const findings = [...input.findings].sort(compareFindings);
   const findingResults = findings.map((finding) => evaluateFinding(
@@ -34,6 +44,7 @@ export function evaluateSecurityQualityGate(
     profile,
     baseline,
     severityActions,
+    categoryActions,
     suppressions,
   ));
   const reasons = findingResults.map(toReason);
@@ -60,7 +71,8 @@ function evaluateFinding(
   finding: SecurityQualityGateFinding,
   profile: ResolvedSecurityProfile,
   baseline: ReadonlySet<string>,
-  severityActions: ReadonlyMap<SecuritySeverity, "fail" | "warn" | "report">,
+  severityActions: ReadonlyMap<SecuritySeverity, DecisionAction>,
+  categoryActions: ReadonlyMap<SecurityCategory, DecisionAction>,
   suppressions: readonly PreparedSuppression[],
 ): SecurityQualityGateFindingResult {
   validateFinding(finding);
@@ -99,6 +111,13 @@ function evaluateFinding(
     return result(finding, "new", "fail", rulePolicy.severity, "blocking-severity");
   }
 
+  const categoryAction = finding.category === undefined
+    ? undefined
+    : categoryActions.get(finding.category);
+  if (categoryAction !== undefined) {
+    return result(finding, "new", categoryAction, rulePolicy.severity, "category-policy");
+  }
+
   const action = severityActions.get(rulePolicy.severity) ?? defaultSeverityAction(rulePolicy.severity);
   return result(
     finding,
@@ -123,6 +142,7 @@ function result(
     action,
     effectiveSeverity,
     confidence: finding.confidence,
+    category: finding.category,
     reasonCode,
   };
 }
@@ -142,6 +162,9 @@ function reasonMessage(item: SecurityQualityGateFindingResult): string {
   }
   if (item.reasonCode === "blocking-severity") {
     return `New ${item.effectiveSeverity} finding ${item.ruleId} blocks the security quality gate.`;
+  }
+  if (item.reasonCode === "category-policy") {
+    return `New ${item.effectiveSeverity} finding ${item.ruleId} follows the configured ${item.category ?? "unknown"} category action.`;
   }
   if (item.reasonCode === "advisory-severity") {
     return `New ${item.effectiveSeverity} finding ${item.ruleId} requires review.`;
@@ -166,8 +189,8 @@ function reasonMessage(item: SecurityQualityGateFindingResult): string {
 
 function createSeverityActionMap(
   actions: readonly SecurityQualityGateSeverityAction[],
-): ReadonlyMap<SecuritySeverity, "fail" | "warn" | "report"> {
-  const result = new Map<SecuritySeverity, "fail" | "warn" | "report">();
+): ReadonlyMap<SecuritySeverity, DecisionAction> {
+  const result = new Map<SecuritySeverity, DecisionAction>();
   for (const item of actions) {
     if (result.has(item.severity)) {
       throw new Error(`Duplicate security quality-gate action for severity "${item.severity}".`);
@@ -177,7 +200,20 @@ function createSeverityActionMap(
   return result;
 }
 
-function defaultSeverityAction(severity: SecuritySeverity): "fail" | "warn" | "report" {
+function createCategoryActionMap(
+  actions: readonly SecurityQualityGateCategoryAction[],
+): ReadonlyMap<SecurityCategory, DecisionAction> {
+  const result = new Map<SecurityCategory, DecisionAction>();
+  for (const item of actions) {
+    if (result.has(item.category)) {
+      throw new Error(`Duplicate security quality-gate action for category "${item.category}".`);
+    }
+    result.set(item.category, item.action);
+  }
+  return result;
+}
+
+function defaultSeverityAction(severity: SecuritySeverity): DecisionAction {
   if (severity === "critical") return "fail";
   if (severity === "high" || severity === "medium") return "warn";
   return "report";
@@ -265,6 +301,9 @@ function validateFinding(finding: SecurityQualityGateFinding): void {
 }
 
 function parseTimestamp(value: string, label: string): number {
+  if (!ISO_TIMESTAMP_PATTERN.test(value)) {
+    throw new Error(`Invalid ${label} timestamp "${value}".`);
+  }
   const parsed = Date.parse(value);
   if (!Number.isFinite(parsed)) throw new Error(`Invalid ${label} timestamp "${value}".`);
   return parsed;
