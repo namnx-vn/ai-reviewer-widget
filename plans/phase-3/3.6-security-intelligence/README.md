@@ -57,6 +57,7 @@ src/analyzer/security/
 ├── interprocedural/
 ├── policies/
 ├── compliance/
+├── quality-gate/
 ├── rules/
 │   ├── execution/
 │   ├── injection/
@@ -111,7 +112,7 @@ The order below is normative unless repository architecture requires a documente
 | 3.6.20 | ✅ Complete | [Interprocedural Security Analysis](./3.6.20-interprocedural.md) |
 | 3.6.21 | 🚧 Implemented — validation pending | [Compliance Mapping](./3.6.21-compliance.md) |
 | 3.6.22 | 🚧 Implemented — validation pending | [Banking Security Profile](./3.6.22-banking-profile.md) |
-| 3.6.23 | ⏳ Planned | [Security Quality Gates](./3.6.23-quality-gates.md) |
+| 3.6.23 | 🚧 Implemented — validation pending | [Security Quality Gates](./3.6.23-quality-gates.md) |
 
 ---
 
