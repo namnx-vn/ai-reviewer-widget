@@ -173,6 +173,17 @@ describe("security quality gate", () => {
     expect(first.reasons.map((reason) => reason.findingId)).toEqual(["a", "z"]);
   });
 
+  it("rejects duplicate finding fingerprints", () => {
+    expect(() => evaluateSecurityQualityGate({
+      findings: [
+        finding("security.example.a", "high", "high", "duplicate"),
+        finding("security.example.b", "medium", "high", "duplicate"),
+      ],
+      profile: "security/banking",
+      evaluatedAt,
+    })).toThrow(/Duplicate security quality-gate finding id/);
+  });
+
   it("rejects invalid suppression, duplicate action, and timestamp inputs", () => {
     expect(() => evaluateSecurityQualityGate({
       findings: [],

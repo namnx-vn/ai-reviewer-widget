@@ -39,6 +39,7 @@ export function evaluateSecurityQualityGate(
   const categoryActions = createCategoryActionMap(input.categoryActions ?? []);
   const suppressions = prepareSuppressions(input.suppressions ?? [], evaluatedAtMs);
   const findings = [...input.findings].sort(compareFindings);
+  validateUniqueFindingIds(findings);
   const findingResults = findings.map((finding) => evaluateFinding(
     finding,
     profile,
@@ -266,10 +267,11 @@ function createSuppressionAudit(
     owner: value.owner,
     expiresAt: value.expiresAt,
     expired,
-    matchedFindingIds: findings
-      .filter((finding) => matchesSuppression(finding, value))
-      .map((finding) => finding.id)
-      .sort(),
+    matchedFindingIds: [...new Set(
+      findings
+        .filter((finding) => matchesSuppression(finding, value))
+        .map((finding) => finding.id),
+    )].sort(),
   }));
 }
 
@@ -300,6 +302,16 @@ function validateFinding(finding: SecurityQualityGateFinding): void {
   if (finding.ruleId.trim().length === 0) throw new Error("Security quality-gate rule id must not be empty.");
 }
 
+function validateUniqueFindingIds(findings: readonly SecurityQualityGateFinding[]): void {
+  const seen = new Set<string>();
+  for (const finding of findings) {
+    if (seen.has(finding.id)) {
+      throw new Error(`Duplicate security quality-gate finding id "${finding.id}".`);
+    }
+    seen.add(finding.id);
+  }
+}
+
 function parseTimestamp(value: string, label: string): number {
   if (!ISO_TIMESTAMP_PATTERN.test(value)) {
     throw new Error(`Invalid ${label} timestamp "${value}".`);
@@ -320,7 +332,11 @@ function suppressionKey(suppression: SecurityQualityGateSuppression): string {
 }
 
 function compareFindings(left: SecurityQualityGateFinding, right: SecurityQualityGateFinding): number {
-  return left.id.localeCompare(right.id) || left.ruleId.localeCompare(right.ruleId);
+  return left.id.localeCompare(right.id)
+    || left.ruleId.localeCompare(right.ruleId)
+    || left.severity.localeCompare(right.severity)
+    || left.confidence.localeCompare(right.confidence)
+    || (left.category ?? "").localeCompare(right.category ?? "");
 }
 
 function confidenceRank(confidence: SecurityConfidence): number {
