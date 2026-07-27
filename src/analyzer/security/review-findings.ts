@@ -14,6 +14,10 @@ import {
   type SecurityProfileId,
 } from "./policies";
 import { SecurityRuleRegistry } from "./registry/security-rule-registry";
+import { dangerousExecutionRules } from "./rules/dangerous-execution";
+import { injectionRules } from "./rules/injection";
+import { browserSecurityRules } from "./rules/browser";
+import { cryptoRules } from "./rules/crypto";
 import { secretsRules } from "./rules/secrets";
 import { authenticationRules } from "./rules/auth";
 import { authorizationRules } from "./rules/authorization";
@@ -69,20 +73,24 @@ export function analyzeSupplyChainFindings(
   return analyzeSupplyChain({ manifests, lockfiles, sourceFiles }).map(toReviewFinding);
 }
 
-function createSourceSecurityRuleRegistry(): SecurityRuleRegistry {
+export function createSourceSecurityRuleRegistry(): SecurityRuleRegistry {
   const registry = new SecurityRuleRegistry();
+  for (const rule of dangerousExecutionRules) registry.register(rule);
+  for (const rule of injectionRules) registry.register(rule);
+  for (const rule of browserSecurityRules) registry.register(rule);
   for (const rule of secretsRules) registry.register(rule);
+  for (const rule of cryptoRules) registry.register(rule);
   for (const rule of authenticationRules) registry.register(rule);
   for (const rule of authorizationRules) registry.register(rule);
   for (const rule of sessionTokenRules) registry.register(rule);
-  for (const rule of networkTransportRules) registry.register(rule);
-  for (const rule of securityConfigurationRules) registry.register(rule);
-  for (const rule of objectSecurityRules) registry.register(rule);
   for (const rule of sensitiveDataRules) registry.register(rule);
-  for (const rule of loggingErrorRules) registry.register(rule);
-  for (const rule of businessSecurityRules) registry.register(rule);
-  for (const rule of ssrfRules) registry.register(rule);
+  for (const rule of networkTransportRules) registry.register(rule);
   for (const rule of filesystemRules) registry.register(rule);
+  for (const rule of ssrfRules) registry.register(rule);
+  for (const rule of securityConfigurationRules) registry.register(rule);
+  for (const rule of loggingErrorRules) registry.register(rule);
+  for (const rule of objectSecurityRules) registry.register(rule);
+  for (const rule of businessSecurityRules) registry.register(rule);
   return registry;
 }
 
