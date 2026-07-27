@@ -14,6 +14,11 @@ export {
   validateSecurityStandardMapping,
 } from "./compliance";
 export {
+  evaluateSecurityQualityGate,
+  evaluateSecurityReviewQualityGate,
+  toSecurityQualityGateFindings,
+} from "./quality-gate";
+export {
   analyzeSecurityCompliance,
   analyzeSecurityEvidenceFindings,
 } from "./review-findings";
@@ -22,6 +27,7 @@ export {
   applySecurityProfile,
   getSecurityProfile,
   resolveSecurityProfile,
+  resolveSecurityRulePolicy,
 } from "./policies";
 export { dangerousExecutionRules } from "./rules/dangerous-execution";
 export { authenticationRules } from "./rules/auth";
@@ -56,11 +62,28 @@ export type {
   ComplianceReport,
 } from "./compliance";
 export type {
+  SecurityQualityGateAction,
+  SecurityQualityGateDecision,
+  SecurityQualityGateFinding,
+  SecurityQualityGateFindingResult,
+  SecurityQualityGateFindingState,
+  SecurityQualityGateInput,
+  SecurityQualityGateReason,
+  SecurityQualityGateReasonCode,
+  SecurityQualityGateResult,
+  SecurityQualityGateSeverityAction,
+  SecurityQualityGateSummary,
+  SecurityQualityGateSuppression,
+  SecurityQualityGateSuppressionAudit,
+  SecurityReviewQualityGateInput,
+} from "./quality-gate";
+export type {
   ResolvedSecurityProfile,
   SecurityCryptoProfilePolicy,
   SecurityProfileDefinition,
   SecurityProfileId,
   SecurityQualityGateProfilePolicy,
+  SecurityResolvedRulePolicy,
   SecurityRuleProfileOverride,
   SecurityStorageMechanism,
   SecurityStorageProfilePolicy,

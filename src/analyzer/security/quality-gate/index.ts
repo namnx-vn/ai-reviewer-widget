@@ -1,4 +1,9 @@
 export { evaluateSecurityQualityGate } from "./quality-gate";
+export {
+  evaluateSecurityReviewQualityGate,
+  toSecurityQualityGateFindings,
+} from "./review-adapter";
+export type { SecurityReviewQualityGateInput } from "./review-adapter";
 export type {
   SecurityQualityGateAction,
   SecurityQualityGateDecision,
