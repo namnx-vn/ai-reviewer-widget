@@ -31,7 +31,7 @@ This repo is a TypeScript/Vite React app for an AI-assisted code review widget. 
   - `components/`: UI widgets and dashboard views.
   - `review/`: aggregator, formatter, and reviewer logic.
   - `react/`: React-specific rules and utilities.
-- `tests/`: Vitest suites organized by domain (`ai`, `engine`, `github`, `review`, etc.).
+- `src/<module>/__tests__/`: Vitest suites colocated with the code they cover.
 - `docs/`: architecture and review-pipeline docs.
 - `public/`: static assets.
 - `scripts/`: helper scripts such as `review-pr.ts`.
@@ -60,7 +60,7 @@ Use the package scripts in `package.json`:
 ## Testing Guidelines
 
 - Add or update tests alongside behavior changes.
-- Place tests under `tests/` using the existing category structure.
+- Place tests in a `__tests__/` directory inside the source module they cover.
 - Prefer Vitest naming conventions such as `*.test.ts`.
 - Run `npm test` before submitting changes, especially when touching parser, analyzer, or review engine logic.
 
@@ -349,14 +349,17 @@ src/
 ├── components/
 └── ...
 
-tests/
+src/
 
 ├── ai/
+│   └── __tests__/
 ├── analyzer/
+│   ├── ast/
+│   │   └── __tests__/
+│   └── security/
+│       └── __tests__/
 ├── engine/
-├── github/
-├── review/
-├── react/
+│   └── __tests__/
 └── ...
 
 scripts/
