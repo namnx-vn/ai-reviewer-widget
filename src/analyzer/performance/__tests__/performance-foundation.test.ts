@@ -1,0 +1,6 @@
+import { describe, expect, it } from "vitest";
+import { parseSource } from "../../ast/parser";
+import { PerformanceAnalysisEngine, PerformanceRuleRegistry, createPerformanceFindingId, type PerformanceRule } from "..";
+
+const rule: PerformanceRule = { meta: { id: "performance.network.example", title: "Example", description: "Example rule", category: "network", defaultSeverity: "medium", defaultConfidence: "high" }, check: ({ file }) => [{ id: createPerformanceFindingId({ ruleId: "performance.network.example", path: file }), ruleId: "performance.network.example", title: "Example", message: "Example", severity: "medium", confidence: "high", category: "network", location: { path: file }, evidence: [{ message: "deterministic" }] }] };
+describe("performance foundation", () => { it("rejects duplicate ids and emits stable ordered findings", () => { const registry = new PerformanceRuleRegistry(); registry.register(rule); expect(() => registry.register(rule)).toThrow("already registered"); const result = new PerformanceAnalysisEngine().analyze({ source: "", file: "a.ts", ast: parseSource("") }, registry); expect(result).toHaveLength(1); expect(result[0]?.id).toBe(createPerformanceFindingId({ ruleId: rule.meta.id, path: "a.ts" })); }); });
