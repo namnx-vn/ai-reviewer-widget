@@ -2,3 +2,6 @@ export { importPerformanceRules } from "./import-rules";
 export { loadingPerformanceRules } from "./loading-rules";
 export { asyncPerformanceRules } from "./async-rules";
 export { memoryPerformanceRules } from "./memory-rules";
+export { assetPerformanceRules } from "./asset-rules";
+export { cpuPerformanceRules } from "./cpu-rules";
+export { databasePerformanceRules } from "./database-rules";
