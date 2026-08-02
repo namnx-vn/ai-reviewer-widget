@@ -5,3 +5,5 @@ export { memoryPerformanceRules } from "./memory-rules";
 export { assetPerformanceRules } from "./asset-rules";
 export { cpuPerformanceRules } from "./cpu-rules";
 export { databasePerformanceRules } from "./database-rules";
+export { cachePerformanceRules } from "./cache-rules";
+export { resiliencePerformanceRules } from "./resilience-rules";
