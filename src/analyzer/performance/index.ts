@@ -4,6 +4,8 @@ export { PerformanceRuleRegistry } from "./registry/performance-rule-registry";
 export { analyzePerformanceCosts } from "./cost/cost-propagation";
 export { analyzeInterproceduralPerformance } from "./interprocedural";
 export { applyPerformanceProfile, PERFORMANCE_PROFILE_DEFINITIONS, resolvePerformanceProfile } from "./policies";
+export { evaluatePerformanceQualityGate } from "./quality-gate";
+export type * from "./quality-gate";
 export type { PerformanceProfileId, ResolvedPerformanceProfile } from "./policies";
 export { assetPerformanceRules, asyncPerformanceRules, backpressurePerformanceRules, bankUiPerformanceRules, cachePerformanceRules, cpuPerformanceRules, databasePerformanceRules, importPerformanceRules, loadingPerformanceRules, memoryPerformanceRules, observabilityPerformanceRules, resiliencePerformanceRules, transactionPerformanceRules } from "./rules";
 export type * from "./model/types";
