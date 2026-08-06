@@ -6,6 +6,7 @@ import { noRemoteToRemoteImport } from "./architecture/rules";
 import type { ReviewFinding } from "../review/types";
 import { analyzeMicroFrontends } from "../mfe";
 import { analyzeSecurityFindings, analyzeSupplyChainFindings } from "./security/review-findings";
+import { analyzePerformanceFindings } from "./performance/review-findings";
 
 export function analyzeFile(
   file: string,
@@ -33,6 +34,7 @@ export function analyzeFile(
       ],
     ),
     ...analyzeSecurityFindings(file, source),
+    ...analyzePerformanceFindings(file, source),
   ];
 }
 
@@ -47,9 +49,15 @@ export function analyzeFiles(files: readonly { path: string; content: string }[]
       ? analyzeSecurityFindings(path, content)
       : [],
   );
+  const performanceFindings = files.flatMap(({ path, content }) =>
+    /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(path)
+      ? analyzePerformanceFindings(path, content)
+      : [],
+  );
   return [
     ...astFindings,
     ...securityFindings,
+    ...performanceFindings,
     ...analyzeArchitectureGraph(buildDependencyGraph(files), [noRemoteToRemoteImport]),
     ...analyzeMicroFrontends(files).findings,
     ...analyzeSupplyChainFindings(files),

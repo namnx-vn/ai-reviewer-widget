@@ -11,3 +11,4 @@ export { backpressurePerformanceRules } from "./backpressure-rules";
 export { transactionPerformanceRules } from "./transaction-rules";
 export { observabilityPerformanceRules } from "./observability-rules";
 export { bankUiPerformanceRules } from "./bank-ui-rules";
+export { networkPerformanceRules } from "./network-rules";

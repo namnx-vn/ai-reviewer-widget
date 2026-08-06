@@ -1,0 +1,5 @@
+import { describe, expect, it } from "vitest";
+import { parseSource } from "../../ast/parser";
+import { networkPerformanceRules, PerformanceAnalysisEngine, PerformanceRuleRegistry } from "..";
+function ids(source: string): readonly string[] { const registry = new PerformanceRuleRegistry(); networkPerformanceRules.forEach((rule) => registry.register(rule)); return new PerformanceAnalysisEngine().analyze({ file: "api.ts", source, ast: parseSource(source) }, registry).map((finding) => finding.ruleId); }
+describe("network performance rules", () => { it("detects literal duplicate, serial, loop and excessive requests", () => { const result = ids("async function load(){ await fetch('/a'); await fetch('/a'); for (const id of ids) { fetch(`/x/${id}`); } fetch('/c'); }"); expect(result).toContain("performance.network.duplicate-request"); expect(result).toContain("performance.network-waterfall"); expect(result).toContain("performance.network.sequential-independent-requests"); expect(result).toContain("performance.network.request-in-loop"); expect(result).toContain("performance.network.excessive-roundtrips"); }); });

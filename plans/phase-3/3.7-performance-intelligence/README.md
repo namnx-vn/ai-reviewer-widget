@@ -2,7 +2,7 @@
 
 > Engineering contract: [`../../../AGENTS.md`](../../../AGENTS.md)
 
-Status: ⏳ Planned
+Status: 🚧 In progress
 
 ---
 
@@ -39,26 +39,26 @@ Probabilistic AI MUST NOT participate in performance finding detection.
 
 | Phase | Status | Plan |
 | --- | --- | --- |
-| 3.7.0 | ⏳ Planned | [Performance Architecture Foundation](./3.7.0-performance-foundation.md) |
-| 3.7.1 | ⏳ Planned | [Bundle & Dependency Efficiency](./3.7.1-bundle-dependencies.md) |
-| 3.7.2 | ⏳ Planned | [React Rendering Performance](./3.7.2-react-rendering.md) |
-| 3.7.3 | ⏳ Planned | [Loading & Code Splitting](./3.7.3-loading-code-splitting.md) |
-| 3.7.4 | ⏳ Planned | [Image & Asset Performance](./3.7.4-images-assets.md) |
-| 3.7.5 | ⏳ Planned | [Network & Request Efficiency](./3.7.5-network-requests.md) |
-| 3.7.6 | ⏳ Planned | [Async & Concurrency Performance](./3.7.6-async-concurrency.md) |
-| 3.7.7 | ⏳ Planned | [Memory & Resource Safety](./3.7.7-memory-resources.md) |
-| 3.7.8 | ⏳ Planned | [CPU & Algorithmic Hotspots](./3.7.8-cpu-algorithms.md) |
-| 3.7.9 | ⏳ Planned | [Database & Persistence Efficiency](./3.7.9-database-persistence.md) |
+| 3.7.0 | 🚧 In progress | [Performance Architecture Foundation](./3.7.0-performance-foundation.md) |
+| 3.7.1 | 🚧 In progress | [Bundle & Dependency Efficiency](./3.7.1-bundle-dependencies.md) |
+| 3.7.2 | 🚧 In progress | [React Rendering Performance](./3.7.2-react-rendering.md) |
+| 3.7.3 | 🚧 In progress | [Loading & Code Splitting](./3.7.3-loading-code-splitting.md) |
+| 3.7.4 | 🚧 In progress | [Image & Asset Performance](./3.7.4-images-assets.md) |
+| 3.7.5 | 🚧 In progress | [Network & Request Efficiency](./3.7.5-network-requests.md) |
+| 3.7.6 | 🚧 In progress | [Async & Concurrency Performance](./3.7.6-async-concurrency.md) |
+| 3.7.7 | 🚧 In progress | [Memory & Resource Safety](./3.7.7-memory-resources.md) |
+| 3.7.8 | 🚧 In progress | [CPU & Algorithmic Hotspots](./3.7.8-cpu-algorithms.md) |
+| 3.7.9 | 🚧 In progress | [Database & Persistence Efficiency](./3.7.9-database-persistence.md) |
 | 3.7.10 | ✅ Complete | [Cache Intelligence](./3.7.10-cache.md) |
-| 3.7.11 | ⏳ Planned | [Transaction & Banking Critical Path](./3.7.11-banking-critical-path.md) |
+| 3.7.11 | 🚧 In progress | [Transaction & Banking Critical Path](./3.7.11-banking-critical-path.md) |
 | 3.7.12 | ✅ Complete | [Resilience, Timeout & Retry](./3.7.12-resilience-timeout-retry.md) |
-| 3.7.13 | ⏳ Planned | [Backpressure & Rate Control](./3.7.13-backpressure-rate-control.md) |
-| 3.7.14 | ⏳ Planned | [Observability & Performance Telemetry](./3.7.14-observability.md) |
-| 3.7.15 | ⏳ Planned | [Frontend Banking UX Performance](./3.7.15-frontend-banking-ux.md) |
+| 3.7.13 | 🚧 In progress | [Backpressure & Rate Control](./3.7.13-backpressure-rate-control.md) |
+| 3.7.14 | 🚧 In progress | [Observability & Performance Telemetry](./3.7.14-observability.md) |
+| 3.7.15 | 🚧 In progress | [Frontend Banking UX Performance](./3.7.15-frontend-banking-ux.md) |
 | 3.7.16 | ✅ Complete | [Performance Cost Propagation](./3.7.16-cost-propagation.md) |
-| 3.7.17 | ⏳ Planned | [Interprocedural Performance Analysis](./3.7.17-interprocedural.md) |
-| 3.7.18 | ⏳ Planned | [Performance Profiles](./3.7.18-performance-profiles.md) |
-| 3.7.19 | ⏳ Planned | [Performance Quality Gates](./3.7.19-quality-gates.md) |
+| 3.7.17 | 🚧 In progress | [Interprocedural Performance Analysis](./3.7.17-interprocedural.md) |
+| 3.7.18 | ✅ Complete | [Performance Profiles](./3.7.18-performance-profiles.md) |
+| 3.7.19 | ✅ Complete | [Performance Quality Gates](./3.7.19-quality-gates.md) |
 
 ---
 
@@ -83,6 +83,18 @@ Probabilistic AI MUST NOT participate in performance finding detection.
 ```
 
 Later phases MUST reuse the foundation, cost model, and interprocedural summaries rather than inventing alternatives.
+
+## Implementation Audit (2026-08-31)
+
+Implemented rules are intentionally recorded as partial until every rule ID and
+detection/noise-control contract in the linked sub-plan is present. Current gaps:
+
+- 3.7.0 context does not yet expose a reusable import graph or cross-file summaries.
+- 3.7.1 lacks duplicate-dependency and duplicate-runtime-library analysis.
+- 3.7.2 has existing React performance rules, but no Phase 3.7 rule-ID adapter.
+- 3.7.3, 3.7.4, 3.7.6–3.7.9, 3.7.11, and 3.7.13–3.7.15 cover only a subset of their planned rules.
+- 3.7.5 has the core request rules; wrapper/function-level dependency proofs still need expansion.
+- 3.7.17 is currently same-file only; cross-file import/export summaries remain planned.
 
 ---
 

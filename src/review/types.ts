@@ -9,6 +9,7 @@ export type FindingSource =
   | "ast"
   | "architecture"
   | "security"
+  | "performance"
   | "ai";
 
 export type ReviewDecision =
