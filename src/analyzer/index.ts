@@ -4,8 +4,10 @@ import { noConsoleRule } from "./ast/rules/no-console";
 import { noEvalRule } from "./ast/rules/no-eval";
 import { noRemoteToRemoteImport } from "./architecture/rules";
 import type { ReviewFinding } from "../review/types";
+import type { ReviewWarning } from "../review/types";
 import { analyzeMicroFrontends } from "../mfe";
 import { analyzeSecurityFindings, analyzeSupplyChainFindings } from "./security/review-findings";
+import { analyzeSecurityFindingsWithWarnings } from "./security/review-findings";
 import { analyzePerformanceFindings } from "./performance/review-findings";
 
 export function analyzeFile(
@@ -39,27 +41,39 @@ export function analyzeFile(
 }
 
 export function analyzeFiles(files: readonly { path: string; content: string }[]): ReviewFinding[] {
+  return analyzeFilesWithWarnings(files).findings;
+}
+
+export interface AnalyzerReviewResult {
+  readonly findings: ReviewFinding[];
+  readonly warnings: ReviewWarning[];
+}
+
+export function analyzeFilesWithWarnings(
+  files: readonly { path: string; content: string }[],
+): AnalyzerReviewResult {
   const astFindings = files.flatMap(({ path, content }) =>
     /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(path)
       ? analyzeAST(content, path, [noConsoleRule, noEvalRule])
       : [],
   );
-  const securityFindings = files.flatMap(({ path, content }) =>
-    /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(path)
-      ? analyzeSecurityFindings(path, content)
-      : [],
-  );
+  const securityAnalyses = files
+    .filter(({ path }) => /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(path))
+    .map(({ path, content }) => analyzeSecurityFindingsWithWarnings(path, content));
   const performanceFindings = files.flatMap(({ path, content }) =>
     /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(path)
       ? analyzePerformanceFindings(path, content)
       : [],
   );
-  return [
-    ...astFindings,
-    ...securityFindings,
-    ...performanceFindings,
-    ...analyzeArchitectureGraph(buildDependencyGraph(files), [noRemoteToRemoteImport]),
-    ...analyzeMicroFrontends(files).findings,
-    ...analyzeSupplyChainFindings(files),
-  ];
+  return {
+    findings: [
+      ...astFindings,
+      ...securityAnalyses.flatMap((analysis) => analysis.findings),
+      ...performanceFindings,
+      ...analyzeArchitectureGraph(buildDependencyGraph(files), [noRemoteToRemoteImport]),
+      ...analyzeMicroFrontends(files).findings,
+      ...analyzeSupplyChainFindings(files),
+    ],
+    warnings: securityAnalyses.flatMap((analysis) => analysis.warnings),
+  };
 }

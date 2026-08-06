@@ -4,13 +4,27 @@ import type {
 } from "../model/types";
 import { isSecurityFinding } from "../model/validation";
 import type { SecurityRuleRegistry } from "../registry/security-rule-registry";
+import type { ReviewWarning } from "../../../review/types";
+
+export interface SecurityAnalysisResult {
+  readonly findings: readonly SecurityFinding[];
+  readonly warnings: readonly ReviewWarning[];
+}
 
 export class SecurityAnalysisEngine {
   analyze(
     context: SecurityRuleContext,
     registry: SecurityRuleRegistry,
   ): readonly SecurityFinding[] {
+    return this.analyzeWithWarnings(context, registry).findings;
+  }
+
+  analyzeWithWarnings(
+    context: SecurityRuleContext,
+    registry: SecurityRuleRegistry,
+  ): SecurityAnalysisResult {
     const findings: SecurityFinding[] = [];
+    const warnings: ReviewWarning[] = [];
 
     for (const rule of registry.getRules()) {
       try {
@@ -20,11 +34,17 @@ export class SecurityAnalysisEngine {
           ...ruleFindings.filter(isSecurityFinding),
         );
       } catch {
-        continue;
+        warnings.push({
+          code: "SECURITY_RULE_FAILED",
+          message: `Security rule ${rule.meta.id} failed while analyzing ${context.file}.`,
+        });
       }
     }
 
-    return this.deduplicateFindings(findings);
+    return {
+      findings: this.deduplicateFindings(findings),
+      warnings,
+    };
   }
 
   private deduplicateFindings(

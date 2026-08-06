@@ -1,4 +1,5 @@
 import type { ReviewFinding } from "../../review/types";
+import type { ReviewWarning } from "../../review/types";
 
 import { parseSource } from "../ast/parser";
 import {
@@ -53,6 +54,31 @@ export function analyzeSecurityFindings(
   profileId: SecurityProfileId = "security/default",
 ): readonly ReviewFinding[] {
   return analyzeSecurityEvidenceFindings(file, source, profileId).map(toReviewFinding);
+}
+
+export interface SecurityReviewAnalysisResult {
+  readonly findings: readonly ReviewFinding[];
+  readonly warnings: readonly ReviewWarning[];
+}
+
+export function analyzeSecurityFindingsWithWarnings(
+  file: string,
+  source: string,
+  profileId: SecurityProfileId = "security/default",
+): SecurityReviewAnalysisResult {
+  const registry = createSourceSecurityRuleRegistry();
+  const analysis = new SecurityAnalysisEngine().analyzeWithWarnings(
+    { file, source, ast: parseSource(source) },
+    registry,
+  );
+  const complianceRegistry = createDefaultComplianceRegistry();
+  const mapped = analysis.findings.map((finding) =>
+    attachComplianceMappings(finding, complianceRegistry));
+
+  return {
+    findings: applySecurityProfile(mapped, profileId).map(toReviewFinding),
+    warnings: analysis.warnings,
+  };
 }
 
 export function analyzeSecurityCompliance(

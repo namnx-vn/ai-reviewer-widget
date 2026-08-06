@@ -153,4 +153,30 @@ describe("security architecture foundation", () => {
       createFinding("security.test.second", 20).id,
     ]);
   });
+
+  it("surfaces isolated rule failures as sanitized review warnings", () => {
+    const registry = new SecurityRuleRegistry();
+    const engine = new SecurityAnalysisEngine();
+
+    registry.register(createRule("security.test.failure", () => {
+      throw new Error("provider-token=do-not-expose");
+    }));
+    registry.register(createRule("security.test.healthy", () => [
+      createFinding("security.test.healthy", 30),
+    ]));
+
+    const result = engine.analyzeWithWarnings(context, registry);
+
+    expect(result.findings.map((finding) => finding.ruleId)).toEqual([
+      "security.test.healthy",
+    ]);
+    expect(result.warnings).toEqual([{
+      code: "SECURITY_RULE_FAILED",
+      message: expect.stringContaining(
+        "security.test.failure",
+      ),
+    }]);
+    expect(result.warnings[0]?.message).toContain("src/handler.ts");
+    expect(result.warnings[0]?.message).not.toContain("do-not-expose");
+  });
 });

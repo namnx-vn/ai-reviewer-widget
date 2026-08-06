@@ -189,6 +189,53 @@ describe("ReactEngine", () => {
     ).not.toThrow();
   });
 
+  it("surfaces rule failures once as sanitized review warnings", () => {
+    const plugin: ReactPlugin = {
+      id: "mixed",
+      name: "Mixed",
+      version: "1.0.0",
+      rules: [
+        {
+          id: "react.broken",
+          description: "Broken rule",
+          check: () => {
+            throw new Error("provider-token=do-not-expose");
+          },
+        },
+        {
+          id: "react.healthy",
+          description: "Healthy rule",
+          check: (_node, context) => [{
+            id: "react.healthy:Component.tsx:1",
+            ruleId: "react.healthy",
+            title: "Healthy finding",
+            message: "Healthy rule still runs.",
+            severity: "low",
+            source: "ast",
+            confidence: 1,
+            location: { file: context.file, line: 1 },
+          }],
+        },
+      ],
+    };
+
+    const result = new ReactEngine().analyzeWithWarnings({
+      source: "export function Component() { return <div />; }",
+      file: "Component.tsx",
+      plugins: [plugin],
+    });
+
+    expect(result.findings.map((finding) => finding.ruleId)).toEqual([
+      "react.healthy",
+    ]);
+    expect(result.warnings).toEqual([{
+      code: "REACT_RULE_FAILED",
+      message: expect.stringContaining("react.broken"),
+    }]);
+    expect(result.warnings[0]?.message).toContain("Component.tsx");
+    expect(result.warnings[0]?.message).not.toContain("do-not-expose");
+  });
+
   it("returns no React findings when the source cannot be parsed", () => {
     const engine = new ReactEngine();
 

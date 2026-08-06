@@ -53,7 +53,12 @@ export interface ReviewStats {
 
 export type ReviewWarningCode =
   | "AI_REVIEW_FAILED"
-  | "SOURCE_PARSE_FAILED";
+  | "AI_INPUT_OMITTED"
+  | "AI_INPUT_REDACTED"
+  | "AI_INPUT_TRUNCATED"
+  | "SOURCE_PARSE_FAILED"
+  | "SECURITY_RULE_FAILED"
+  | "REACT_RULE_FAILED";
 
 /** A non-fatal condition encountered while producing a review. */
 export interface ReviewWarning {
@@ -73,5 +78,28 @@ export interface ReviewResult {
   /** Non-fatal provider failures; deterministic findings are still valid. */
   warnings: ReviewWarning[];
 
+  /** Auditable security policy decision when a PR quality gate was requested. */
+  securityQualityGate?: ReviewSecurityQualityGate;
+
   durationMs: number;
+}
+
+export interface ReviewSecurityQualityGate {
+  readonly decision: "pass" | "warn" | "fail";
+  readonly profileId: string;
+  readonly evaluatedAt: string;
+  readonly summary: {
+    readonly total: number;
+    readonly newFindings: number;
+    readonly baseline: number;
+    readonly suppressed: number;
+    readonly blocking: number;
+    readonly warnings: number;
+  };
+  readonly reasons: readonly {
+    readonly code: string;
+    readonly findingId: string;
+    readonly ruleId: string;
+    readonly message: string;
+  }[];
 }

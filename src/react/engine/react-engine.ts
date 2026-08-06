@@ -1,6 +1,6 @@
 import { TSESTree } from "@typescript-eslint/typescript-estree";
 import { parseSource } from "../../analyzer/ast/parser";
-import type { ReviewFinding } from "../../review/types";
+import type { ReviewFinding, ReviewWarning } from "../../review/types";
 import {
   createReactAnalysisContext,
   type ReactAnalysisContext,
@@ -16,14 +16,23 @@ export interface ReactEngineInput {
   readonly plugins: readonly ReactPlugin[];
 }
 
+export interface ReactAnalysisResult {
+  readonly findings: ReviewFinding[];
+  readonly warnings: ReviewWarning[];
+}
+
 export class ReactEngine {
   analyze(input: ReactEngineInput): ReviewFinding[] {
+    return this.analyzeWithWarnings(input).findings;
+  }
+
+  analyzeWithWarnings(input: ReactEngineInput): ReactAnalysisResult {
     let ast: TSESTree.Program;
 
     try {
       ast = parseSource(input.source);
     } catch {
-      return [];
+      return { findings: [], warnings: [] };
     }
 
     const context = createReactAnalysisContext(
@@ -34,23 +43,30 @@ export class ReactEngine {
     );
 
     const findings: ReviewFinding[] = [];
+    const warnings: ReviewWarning[] = [];
+    const failedRuleIds = new Set<string>();
 
-    this.visit(ast, context, findings);
+    this.visit(ast, context, findings, warnings, failedRuleIds);
 
-    return this.deduplicateFindings(findings);
+    return {
+      findings: this.deduplicateFindings(findings),
+      warnings,
+    };
   }
 
   private visit(
     node: unknown,
     context: ReactAnalysisContext,
     findings: ReviewFinding[],
+    warnings: ReviewWarning[],
+    failedRuleIds: Set<string>,
   ): void {
     if (!this.isObject(node)) {
       return;
     }
 
     for (const rule of context.rules) {
-      const ruleFindings = this.runRule(rule, node, context);
+      const ruleFindings = this.runRule(rule, node, context, warnings, failedRuleIds);
 
       findings.push(...ruleFindings);
     }
@@ -62,14 +78,14 @@ export class ReactEngine {
 
       if (Array.isArray(value)) {
         for (const child of value) {
-          this.visit(child, context, findings);
+          this.visit(child, context, findings, warnings, failedRuleIds);
         }
 
         continue;
       }
 
       if (this.isObject(value)) {
-        this.visit(value, context, findings);
+        this.visit(value, context, findings, warnings, failedRuleIds);
       }
     }
   }
@@ -78,6 +94,8 @@ export class ReactEngine {
     rule: ReactRule,
     node: TSESTree.Node | unknown,
     context: ReactAnalysisContext,
+    warnings: ReviewWarning[],
+    failedRuleIds: Set<string>,
   ): ReviewFinding[] {
     try {
       const result: unknown = rule.check(node as TSESTree.Node, {
@@ -94,6 +112,13 @@ export class ReactEngine {
         )
         : [];
     } catch {
+      if (!failedRuleIds.has(rule.id)) {
+        failedRuleIds.add(rule.id);
+        warnings.push({
+          code: "REACT_RULE_FAILED",
+          message: `React rule ${rule.id} failed while analyzing ${context.file}.`,
+        });
+      }
       return [];
     }
   }
