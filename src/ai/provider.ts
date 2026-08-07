@@ -10,6 +10,8 @@ export interface AIProviderConfig {
   model: string;
 
   baseUrl: string;
+
+  timeoutMs?: number;
 }
 
 export abstract class BaseAIProvider

@@ -75,6 +75,11 @@ export class OpenAIProvider
     input: AIReviewInput,
   ): Promise<AIReviewResult> {
     let response: Response;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      this.config.timeoutMs ?? 15_000,
+    );
 
     try {
       response = await fetch(
@@ -112,6 +117,7 @@ export class OpenAIProvider
             },
           ],
         }),
+        signal: controller.signal,
       },
       );
     } catch (error) {
@@ -121,6 +127,8 @@ export class OpenAIProvider
           : "OpenAI network request failed",
         true,
       );
+    } finally {
+      clearTimeout(timeoutId);
     }
 
     if (!response.ok) {
