@@ -56,6 +56,37 @@ describe("GitHub review output", () => {
     }));
   });
 
+  it("includes an auditable security gate summary", async () => {
+    const octokit = new Octokit({ auth: "test" });
+    const create = vi.spyOn(octokit.checks, "create").mockResolvedValue({} as never);
+
+    await createCheckRun(octokit, "owner", "repo", "head-sha", {
+      ...result,
+      decision: "FAIL",
+      securityQualityGate: {
+        decision: "fail",
+        profileId: "security/banking",
+        evaluatedAt: "2026-08-31T10:00:00.000Z",
+        summary: {
+          total: 2,
+          newFindings: 1,
+          baseline: 1,
+          suppressed: 0,
+          blocking: 1,
+          warnings: 0,
+        },
+        reasons: [],
+      },
+    });
+
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({
+      conclusion: "failure",
+      output: expect.objectContaining({
+        summary: expect.stringContaining("**Profile:** security/banking"),
+      }),
+    }));
+  });
+
   it("does not make a review API call with no commentable findings", async () => {
     const octokit = new Octokit({ auth: "test" });
     const createReview = vi.spyOn(octokit.pulls, "createReview").mockResolvedValue({} as never);

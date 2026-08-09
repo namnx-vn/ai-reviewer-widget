@@ -4,6 +4,7 @@ import { filterFindingsForChangedLines } from "../src/github/comments";
 import { getChangedLines } from "../src/github/diff";
 import type { PullRequestFile } from "../src/github/pull-request";
 import { reviewPullRequest } from "../src/review/reviewer";
+import { createPullRequestSecurityGateConfig } from "../src/config/security-quality-gate";
 
 const token = requiredEnvironment("GITHUB_TOKEN");
 const [owner, repo] = parseRepository(requiredEnvironment("GITHUB_REPOSITORY"));
@@ -17,12 +18,27 @@ const reviewableFiles = pullRequest.files.filter(isReviewableFile);
 const files = await Promise.all(reviewableFiles.map(async (file) => ({
   path: file.filename,
   content: await github.getFileContent(owner, repo, file.filename, pullRequest.headSha),
+  patch: file.patch,
+  changedLines: [...getChangedLines(file.patch)],
 })));
+const baseFiles = await Promise.all(
+  reviewableFiles
+    .filter((file) => file.status === "modified")
+    .map(async (file) => ({
+      path: file.filename,
+      content: await github.getFileContent(owner, repo, file.filename, pullRequest.baseSha),
+    })),
+);
 
 const result = await reviewPullRequest({
   title: pullRequest.title,
   description: pullRequest.body,
   files,
+  baseFiles,
+  securityQualityGate: createPullRequestSecurityGateConfig(
+    process.env,
+    new Date().toISOString(),
+  ),
 }, createOpenAIProviderFromEnv(process.env));
 
 const changedLinesByFile = new Map(

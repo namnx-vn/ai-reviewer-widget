@@ -46,6 +46,17 @@ function buildSummary(
   result: ReviewResult,
 ): string {
   const warnings = getWarnings(result);
+  const securityGate = result.securityQualityGate;
+  const securityGateSummary = securityGate === undefined
+    ? ""
+    : [
+        "\n## Security quality gate",
+        "",
+        `**Profile:** ${securityGate.profileId}`,
+        `**Decision:** ${securityGate.decision.toUpperCase()}`,
+        `**New:** ${securityGate.summary.newFindings} · **Baseline:** ${securityGate.summary.baseline} · **Suppressed:** ${securityGate.summary.suppressed} · **Blocking:** ${securityGate.summary.blocking}`,
+        "",
+      ].join("\n");
   const warningSummary = warnings.length === 0
     ? ""
     : `\n## Warnings\n\n${warnings.map((warning) => `- ${warning}`).join("\n")}\n`;
@@ -68,7 +79,7 @@ function buildSummary(
 **Findings:** ${result.findings.length}
 
 **Duration:** ${Math.round(result.durationMs)}ms
-${warningSummary}`;
+${securityGateSummary}${warningSummary}`;
 }
 
 function getWarnings(result: ReviewResult): string[] {

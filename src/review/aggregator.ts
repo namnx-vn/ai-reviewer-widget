@@ -25,7 +25,9 @@ export function aggregateReview(
     score,
 
     decision:
-      buildDecision(score),
+      findings.some((finding) => finding.severity === "critical")
+        ? "FAIL"
+        : buildDecision(score),
 
     findings,
 

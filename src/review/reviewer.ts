@@ -1,4 +1,4 @@
-import { analyzeFiles } from "../analyzer";
+import { analyzeFilesWithWarnings } from "../analyzer";
 import { aggregateReview } from "./aggregator";
 import type { ReviewResult } from "./types";
 import type { ReviewFinding, ReviewWarning } from "./types";
@@ -8,6 +8,10 @@ import { ReactEngine } from "../react/engine";
 import { nextjsPlugin, reactPlugin } from "../react";
 import type { ReactPlugin } from "../react/engine";
 import { parseSource } from "../analyzer/ast/parser";
+import { prepareAIReviewDiff } from "../ai/input-policy";
+import { evaluateSecurityReviewQualityGate } from "../analyzer/security/quality-gate";
+import type { SecurityProfileId } from "../analyzer/security/policies";
+import type { SecurityQualityGateSuppression } from "../analyzer/security/quality-gate";
 
 export function convertAIFindings(result: AIReviewResult): ReviewFinding[] {
   return result.findings.map((finding, index) => ({
@@ -24,6 +28,8 @@ export function convertAIFindings(result: AIReviewResult): ReviewFinding[] {
 export interface ReviewFile {
   path: string;
   content: string;
+  patch?: string;
+  changedLines?: readonly number[];
 }
 
 export function reviewFiles(files: ReviewFile[]): ReviewResult {
@@ -41,6 +47,13 @@ export interface PRReviewInput {
   title: string;
   description?: string;
   files: ReviewFile[];
+  baseFiles?: ReviewFile[];
+  securityQualityGate?: {
+    readonly profile?: SecurityProfileId;
+    readonly evaluatedAt: string;
+    readonly baselineFindingIds?: readonly string[];
+    readonly suppressions?: readonly SecurityQualityGateSuppression[];
+  };
 }
 
 export async function reviewPullRequest(
@@ -48,23 +61,126 @@ export async function reviewPullRequest(
   aiProvider?: AIProvider,
 ): Promise<ReviewResult> {
   const deterministicAnalysis = analyzeDeterministicFiles(input.files);
-  const diff = input.files
-    .map((file) => `FILE: ${file.path}\n${file.content}`)
-    .join("\n\n");
+  const preparedAIInput = prepareAIReviewDiff(input.files);
+  const warnings = [...deterministicAnalysis.warnings];
+  if (aiProvider) {
+    if (preparedAIInput.diff === undefined) {
+      warnings.push({
+        code: "AI_INPUT_OMITTED",
+        message: "AI review was skipped because no changed-line patch was available.",
+      });
+    } else if (preparedAIInput.omittedFiles > 0) {
+      warnings.push({
+        code: "AI_INPUT_OMITTED",
+        message: `AI review omitted ${preparedAIInput.omittedFiles} file(s) without changed-line patches.`,
+      });
+    }
+    if (preparedAIInput.redactedValues > 0) {
+      warnings.push({
+        code: "AI_INPUT_REDACTED",
+        message: `AI review input redacted ${preparedAIInput.redactedValues} sensitive value(s).`,
+      });
+    }
+    if (preparedAIInput.truncated) {
+      warnings.push({
+        code: "AI_INPUT_TRUNCATED",
+        message: "AI review input was truncated to stay within the configured data budget.",
+      });
+    }
+  }
 
-  return new ReviewEngine().execute({
+  const result = await new ReviewEngine().execute({
     deterministicFindings: deterministicAnalysis.findings,
-    warnings: deterministicAnalysis.warnings,
+    warnings,
     aiProvider,
-    aiInput: aiProvider
+    aiInput: aiProvider && preparedAIInput.diff
       ? {
           pullRequestTitle: input.title,
           pullRequestDescription: input.description,
-          diff,
+          diff: preparedAIInput.diff,
           deterministicFindings: JSON.stringify(deterministicAnalysis.findings),
         }
       : undefined,
   });
+
+  if (!input.securityQualityGate) return result;
+
+  const securityQualityGate = evaluateSecurityReviewQualityGate({
+    findings: result.findings,
+    profile: input.securityQualityGate.profile ?? "security/banking",
+    evaluatedAt: input.securityQualityGate.evaluatedAt,
+    baselineFindingIds: [
+      ...(input.securityQualityGate.baselineFindingIds ?? []),
+      ...findUnchangedSecurityFindingIds(
+        result.findings,
+        input.files,
+        input.baseFiles === undefined
+          ? []
+          : analyzeDeterministicFiles(input.baseFiles).findings,
+      ),
+    ],
+    suppressions: input.securityQualityGate.suppressions,
+  });
+  const securityAnalyzerFailed = result.warnings.some(
+    (warning) => warning.code === "SECURITY_RULE_FAILED",
+  );
+  const acceptedSecurityFindingIds = new Set(
+    securityQualityGate.findings
+      .filter((finding) => finding.state !== "new")
+      .map((finding) => finding.findingId),
+  );
+  const policyDecision = aggregateReview(
+    result.findings.filter((finding) => !acceptedSecurityFindingIds.has(finding.id)),
+    result.durationMs,
+    result.warnings,
+  ).decision;
+
+  return {
+    ...result,
+    decision: securityAnalyzerFailed || securityQualityGate.decision === "fail"
+      ? "FAIL"
+      : securityQualityGate.decision === "warn" && policyDecision === "PASS"
+        ? "WARN"
+        : policyDecision,
+    securityQualityGate,
+  };
+}
+
+function findUnchangedSecurityFindingIds(
+  findings: readonly ReviewFinding[],
+  files: readonly ReviewFile[],
+  baseFindings: readonly ReviewFinding[],
+): readonly string[] {
+  const changedLinesByFile = new Map(
+    files
+      .filter((file) => file.changedLines !== undefined)
+      .map((file) => [file.path, new Set(file.changedLines)]),
+  );
+
+  const baseFindingKeys = new Set(
+    baseFindings
+      .filter((finding) => finding.source === "security")
+      .map(securityFindingKey),
+  );
+
+  return findings
+    .filter((finding) => {
+      if (finding.source !== "security" || finding.location?.line === undefined) return false;
+      const changedLines = changedLinesByFile.get(finding.location.file);
+      return changedLines !== undefined
+        && !changedLines.has(finding.location.line)
+        && baseFindingKeys.has(securityFindingKey(finding));
+    })
+    .map((finding) => finding.id);
+}
+
+function securityFindingKey(finding: ReviewFinding): string {
+  return [
+    finding.ruleId,
+    finding.location?.file ?? "",
+    finding.title,
+    finding.message,
+  ].join("\u0000");
 }
 
 function analyzeDeterministicFiles(
@@ -72,12 +188,20 @@ function analyzeDeterministicFiles(
 ): DeterministicAnalysis {
   const { parseableFiles, warnings } = getParseableFiles(files);
 
+  const analyzerAnalysis = analyzeFilesWithWarnings(parseableFiles);
+  const reactAnalyses = parseableFiles.map(({ path, content }) =>
+    analyzeReactFile(path, content));
+
   return {
     findings: [
-      ...analyzeFiles(parseableFiles),
-      ...parseableFiles.flatMap(({ path, content }) => analyzeReactFile(path, content)),
+      ...analyzerAnalysis.findings,
+      ...reactAnalyses.flatMap((analysis) => analysis.findings),
     ],
-    warnings,
+    warnings: [
+      ...warnings,
+      ...analyzerAnalysis.warnings,
+      ...reactAnalyses.flatMap((analysis) => analysis.warnings),
+    ],
   };
 }
 
@@ -120,12 +244,15 @@ function isSourceFile(path: string): boolean {
   return /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(path);
 }
 
-function analyzeReactFile(path: string, content: string): ReviewFinding[] {
+function analyzeReactFile(
+  path: string,
+  content: string,
+): { readonly findings: ReviewFinding[]; readonly warnings: ReviewWarning[] } {
   if (!/\.(tsx|jsx)$/.test(path)) {
-    return [];
+    return { findings: [], warnings: [] };
   }
 
-  return new ReactEngine().analyze({
+  return new ReactEngine().analyzeWithWarnings({
     source: content,
     file: path,
     plugins: getReactPlugins(path),
