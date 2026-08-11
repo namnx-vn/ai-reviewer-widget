@@ -11,6 +11,7 @@ export default defineConfig({
       reporter: ['text', 'html'],
       include: [
         'src/ai/**/*.ts',
+        'src/config/**/*.ts',
         'src/analyzer/**/*.ts',
         'src/engine/**/*.ts',
         'src/github/**/*.ts',
@@ -19,6 +20,8 @@ export default defineConfig({
       ],
       exclude: ['**/__tests__/**', '**/*.test.ts'],
       thresholds: {
+        // Ratchet the current branch baseline; raise to 80 as legacy gaps are covered.
+        branches: 77,
         lines: 80,
         functions: 80,
         statements: 80,

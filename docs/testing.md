@@ -27,8 +27,8 @@ For analyzer/rule work, include positive and negative fixtures and verify normal
 
 ## CI
 
-`.github/workflows/ci.yml` runs on pull requests and pushes to `main` using Node 22, then executes install, typecheck, lint, test, and build. `.github/workflows/ai-review.yml` executes the same validation sequence before running the PR reviewer.
+`.github/workflows/ci.yml` runs on pull requests and pushes to `main` using Node 22. Its quality job executes dependency auditing at high severity, repository secret scanning, SBOM generation from `package-lock.json`, typecheck, lint, unit/integration tests with coverage, and build. A separate job installs Chromium and runs the Playwright end-to-end suite. `.github/workflows/ai-review.yml` validates the project before running the PR reviewer.
 
-## Current limitations
+## Coverage gate
 
-No repository-wide enforced coverage percentage was identified. Do not claim a coverage threshold until configuration or CI explicitly enforces one.
+CI enforces repository-wide minimums of 80% for functions, lines, and statements, plus a 77% branch-coverage ratchet over the source domains included in `vite.config.ts`. The branch ratchet reflects the current 77.27% baseline and must move upward to 80%; lowering it is not permitted. New source domains should be added to the coverage include list when they become production boundaries.

@@ -24,6 +24,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Execute trusted reviewer code; PR head content is fetched by API.
+          ref: ${{ github.event.pull_request.base.sha }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -34,14 +37,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      - name: Secret scan
+        run: npm run security:secrets
+
       - name: Typecheck
         run: npm run typecheck
 
       - name: Lint
         run: npm run lint
 
-      - name: Test
-        run: npm test
+      - name: Test and coverage
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build
@@ -53,4 +62,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          SECURITY_GATE_PROFILE: security/banking
+          SECURITY_GATE_BASELINE_IDS: ${{ vars.SECURITY_GATE_BASELINE_IDS }}
+          SECURITY_GATE_SUPPRESSIONS_JSON: ${{ vars.SECURITY_GATE_SUPPRESSIONS_JSON }}
         run: npm run review:pr

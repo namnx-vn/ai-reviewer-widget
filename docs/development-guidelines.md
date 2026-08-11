@@ -99,7 +99,7 @@ npm test
 npm run build
 ```
 
-Use `npm run test:e2e` for browser-flow changes and `npm run test:coverage` when evaluating coverage.
+Use `npm run test:e2e` for browser-flow changes and `npm run test:coverage` before submitting changes. CI enforces at least 80% function, line, and statement coverage. Branch coverage is ratcheted at 77% from the current baseline and must be raised to 80% as legacy gaps are covered.
 
 ## Commit and pull-request conventions
 
@@ -122,6 +122,5 @@ Follow the nearest existing rule family rather than inventing a parallel framewo
 These are recommendations, not current repository rules:
 
 - add a small documentation-link checker to CI;
-- document exact coverage thresholds if/when they become enforced;
 - add a dedicated contributor guide only if contribution workflow grows beyond `AGENTS.md` + this document;
 - connect the browser dashboard to a real review result only when an explicit application/API boundary is designed.

@@ -12,6 +12,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:watch": "vitest",
+    "security:secrets": "tsx scripts/secret-scan.ts",
     "review:pr": "tsx scripts/review-pr.ts"
   },
   "dependencies": {
