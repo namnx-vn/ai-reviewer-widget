@@ -79,15 +79,15 @@ Status: 🚧 Active
 
 ### 3.6 — Security Intelligence
 
-⏳ Planned
+✅ Completed
 
-[Plan](./phase-3/3.6-security-intelligence.md)
+[Plan](./phase-3/3.6-security-intelligence/README.md)
 
 ### 3.7 — Performance Intelligence
 
-⏳ Planned
+🚧 Active
 
-[Plan](./phase-3/3.7-performance-intelligence.md)
+[Plan](./phase-3/3.7-performance-intelligence/README.md)
 
 ### 3.8 — Plugin SDK
 

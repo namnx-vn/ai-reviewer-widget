@@ -4,7 +4,7 @@ AI Reviewer Widget is an AI-assisted code review platform that combines determin
 
 ## Status
 
-Implemented roadmap coverage currently reaches **Phase 3.6 — Security Intelligence**. Phase 3.7 (Performance Intelligence) and Phase 3.8 (Plugin SDK) remain planned in `plans/`.
+Phase 3.6 — Security Intelligence is complete. Phase 3.7 — Performance Intelligence is active with partial sub-phases complete; Phase 3.8 — Plugin SDK remains planned in `plans/`.
 
 The browser UI is currently a **demo presentation surface** backed by a static `ReviewResult`; the operational review workflow is the CLI/GitHub Actions path through `scripts/review-pr.ts`.
 
