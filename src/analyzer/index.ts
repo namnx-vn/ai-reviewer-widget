@@ -2,6 +2,7 @@ import { analyzeAST } from "./ast/analyzer";
 import { analyzeArchitecture, analyzeArchitectureGraph, buildDependencyGraph } from "./architecture/analyzer";
 import { noConsoleRule } from "./ast/rules/no-console";
 import { noEvalRule } from "./ast/rules/no-eval";
+import type { ASTRule } from "./ast/rules";
 import { noRemoteToRemoteImport } from "./architecture/rules";
 import type { ReviewFinding } from "../review/types";
 import type { ReviewWarning } from "../review/types";
@@ -13,6 +14,7 @@ import { analyzePerformanceFindings } from "./performance/review-findings";
 export function analyzeFile(
   file: string,
   source: string,
+  astRules: readonly ASTRule[] = [],
 ): ReviewFinding[] {
   if (!/\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(file)) {
     return [];
@@ -25,6 +27,7 @@ export function analyzeFile(
       [
         noConsoleRule,
         noEvalRule,
+        ...astRules,
       ],
     ),
 
@@ -40,8 +43,11 @@ export function analyzeFile(
   ];
 }
 
-export function analyzeFiles(files: readonly { path: string; content: string }[]): ReviewFinding[] {
-  return analyzeFilesWithWarnings(files).findings;
+export function analyzeFiles(
+  files: readonly { path: string; content: string }[],
+  astRules: readonly ASTRule[] = [],
+): ReviewFinding[] {
+  return analyzeFilesWithWarnings(files, astRules).findings;
 }
 
 export interface AnalyzerReviewResult {
@@ -51,10 +57,11 @@ export interface AnalyzerReviewResult {
 
 export function analyzeFilesWithWarnings(
   files: readonly { path: string; content: string }[],
+  astRules: readonly ASTRule[] = [],
 ): AnalyzerReviewResult {
   const astFindings = files.flatMap(({ path, content }) =>
     /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(path)
-      ? analyzeAST(content, path, [noConsoleRule, noEvalRule])
+      ? analyzeAST(content, path, [noConsoleRule, noEvalRule, ...astRules])
       : [],
   );
   const securityAnalyses = files
