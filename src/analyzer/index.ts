@@ -9,7 +9,7 @@ import type { ReviewWarning } from "../review/types";
 import { analyzeMicroFrontends } from "../mfe";
 import { analyzeSecurityFindings, analyzeSupplyChainFindings } from "./security/review-findings";
 import { analyzeSecurityFindingsWithWarnings } from "./security/review-findings";
-import { analyzePerformanceFindings } from "./performance/review-findings";
+import { analyzePerformanceFiles, analyzePerformanceFindings } from "./performance/review-findings";
 
 export function analyzeFile(
   file: string,
@@ -59,28 +59,26 @@ export function analyzeFilesWithWarnings(
   files: readonly { path: string; content: string }[],
   astRules: readonly ASTRule[] = [],
 ): AnalyzerReviewResult {
-  const astFindings = files.flatMap(({ path, content }) =>
-    /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(path)
-      ? analyzeAST(content, path, [noConsoleRule, noEvalRule, ...astRules])
-      : [],
+  const sourceFiles = files.filter(({ path }) => isSourceFile(path));
+  const astFindings = sourceFiles.flatMap(({ path, content }) =>
+    analyzeAST(content, path, [noConsoleRule, noEvalRule, ...astRules]),
   );
-  const securityAnalyses = files
-    .filter(({ path }) => /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(path))
+  const securityAnalyses = sourceFiles
     .map(({ path, content }) => analyzeSecurityFindingsWithWarnings(path, content));
-  const performanceFindings = files.flatMap(({ path, content }) =>
-    /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(path)
-      ? analyzePerformanceFindings(path, content)
-      : [],
-  );
+
   return {
     findings: [
       ...astFindings,
       ...securityAnalyses.flatMap((analysis) => analysis.findings),
-      ...performanceFindings,
-      ...analyzeArchitectureGraph(buildDependencyGraph(files), [noRemoteToRemoteImport]),
+      ...analyzePerformanceFiles(files),
+      ...analyzeArchitectureGraph(buildDependencyGraph(sourceFiles), [noRemoteToRemoteImport]),
       ...analyzeMicroFrontends(files).findings,
       ...analyzeSupplyChainFindings(files),
     ],
     warnings: securityAnalyses.flatMap((analysis) => analysis.warnings),
   };
+}
+
+function isSourceFile(path: string): boolean {
+  return /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/.test(path);
 }
