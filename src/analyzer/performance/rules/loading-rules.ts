@@ -89,9 +89,8 @@ const dynamicImportHotpathRule: PerformanceRule = {
 function hasLazyLoadingEvidence(ast: TSESTree.Program): boolean {
   let found = false;
   visit(ast, (node) => {
-    if (node.type !== "CallExpression") return;
-    if (callName(node) === "lazy") found = true;
-    if (node.callee.type === "Import") found = true;
+    if (node.type === "ImportExpression") found = true;
+    if (node.type === "CallExpression" && callName(node) === "lazy") found = true;
   });
   return found;
 }
