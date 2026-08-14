@@ -13,3 +13,10 @@ function collectFunctions(ast: TSESTree.Program): ReadonlyMap<string, TSESTree.F
 function inspectFunction(node: TSESTree.FunctionDeclaration | TSESTree.ArrowFunctionExpression | TSESTree.FunctionExpression, context: PerformanceRuleContext): { readonly costs: readonly PerformanceCostKind[]; readonly calls: readonly string[] } { const costs = new Set<PerformanceCostKind>(); const calls = new Set<string>(); visit(node.body, (child) => { if (child.type !== "CallExpression") return; const path = callPath(child); if (!path) return; const kinds = costKinds(path, context); if (kinds.length > 0) kinds.forEach((kind) => costs.add(kind)); else calls.add(path); }); return { costs: [...costs].sort(), calls: [...calls].sort() }; }
 function costKinds(path: string, context: PerformanceRuleContext): readonly PerformanceCostKind[] { if (path === "fetch" || path.startsWith("axios.")) return ["network", "external-service"]; if (path === "JSON.stringify" || path === "JSON.parse") return ["serialization"]; if ((context.databaseAdapters ?? []).some((adapter) => adapter.callPaths.includes(path))) return ["database"]; return []; }
 function summarize(name: string, direct: ReadonlyMap<string, readonly PerformanceCostKind[]>, calls: ReadonlyMap<string, readonly string[]>, functions: ReadonlyMap<string, unknown>): PerformanceFunctionSummary { const costs = new Set(direct.get(name)); const unknown = new Set<string>(); const visited = new Set<string>([name]); const walk = (current: string, depth: number): void => { if (depth >= MAX_DEPTH) return; for (const call of calls.get(current) ?? []) { if (!functions.has(call)) { unknown.add(call); continue; } if (visited.has(call)) continue; visited.add(call); (direct.get(call) ?? []).forEach((kind) => costs.add(kind)); walk(call, depth + 1); } }; walk(name, 0); return { name, directCostKinds: direct.get(name) ?? [], costKinds: [...costs].sort(), calls: calls.get(name) ?? [], unknownCalls: [...unknown].sort() }; }
+
+export {
+  analyzeInterproceduralPerformanceFiles,
+  createInterproceduralContext,
+  type PerformanceInterproceduralFile,
+  type PerformanceInterproceduralOptions,
+} from "./repository";
