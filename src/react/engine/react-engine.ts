@@ -6,7 +6,7 @@ import {
   type ReactAnalysisContext,
 } from "./react-context";
 import type { ReactPlugin } from "./react-plugin";
-import type { ReactRule } from "./react-rule";
+import type { ReactPerformanceConfiguration, ReactRule } from "./react-rule";
 
 const NON_AST_KEYS = new Set(["parent", "loc", "range", "tokens", "comments"]);
 
@@ -14,6 +14,7 @@ export interface ReactEngineInput {
   readonly source: string;
   readonly file: string;
   readonly plugins: readonly ReactPlugin[];
+  readonly performance?: ReactPerformanceConfiguration;
 }
 
 export interface ReactAnalysisResult {
@@ -40,6 +41,7 @@ export class ReactEngine {
       input.file,
       ast,
       input.plugins,
+      input.performance,
     );
 
     const findings: ReviewFinding[] = [];
@@ -104,6 +106,7 @@ export class ReactEngine {
         ast: context.ast,
         hooks: context.hooks,
         dependencyHooks: context.dependencyHooks,
+        performance: context.performance,
       });
 
       return Array.isArray(result)
@@ -155,7 +158,11 @@ export class ReactEngine {
   }
 
   private isFindingSource(value: unknown): boolean {
-    return value === "ast" || value === "architecture" || value === "security" || value === "ai";
+    return value === "ast"
+      || value === "architecture"
+      || value === "security"
+      || value === "performance"
+      || value === "ai";
   }
 
   private deduplicateFindings(
