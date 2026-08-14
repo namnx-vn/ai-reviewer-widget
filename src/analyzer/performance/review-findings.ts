@@ -2,6 +2,7 @@ import type { ReviewFinding } from "../../review/types";
 import { parseSource } from "../ast/parser";
 import { PerformanceAnalysisEngine } from "./engine/performance-analysis-engine";
 import { createPerformanceRepositoryContext } from "./engine/repository-context";
+import { analyzeInterproceduralPerformanceFiles } from "./interprocedural";
 import type { PerformanceFinding, PerformanceRule } from "./model/types";
 import { PerformanceRuleRegistry } from "./registry/performance-rule-registry";
 import { assetPerformanceRules, asyncPerformanceRules, backpressurePerformanceRules, bankUiPerformanceRules, cachePerformanceRules, cpuPerformanceRules, databasePerformanceRules, importPerformanceRules, loadingPerformanceRules, memoryPerformanceRules, networkPerformanceRules, observabilityPerformanceRules, resiliencePerformanceRules, transactionPerformanceRules } from "./rules";
@@ -24,11 +25,15 @@ export function analyzePerformanceFiles(
   files: readonly PerformanceSourceFile[],
 ): readonly ReviewFinding[] {
   const registry = createDefaultRegistry();
-  const repository = createPerformanceRepositoryContext(files);
+  const sourceFiles = files.filter((file) => isSourceFile(file.path));
+  const baseRepository = createPerformanceRepositoryContext(files);
+  const repository = {
+    ...baseRepository,
+    interprocedural: analyzeInterproceduralPerformanceFiles(sourceFiles),
+  };
   const engine = new PerformanceAnalysisEngine();
 
-  return files
-    .filter((file) => isSourceFile(file.path))
+  return sourceFiles
     .flatMap((file) => {
       try {
         return engine.analyze({
