@@ -1,5 +1,5 @@
 import type { ReactPlugin } from "./react-plugin";
-import type { ReactRule } from "./react-rule";
+import type { ReactPerformanceConfiguration, ReactRule } from "./react-rule";
 import type { TSESTree } from "@typescript-eslint/typescript-estree";
 import {
   createHookContext,
@@ -14,6 +14,7 @@ export interface ReactAnalysisContext {
   readonly hooks: HookContext;
   readonly rules: readonly ReactRule[];
   readonly dependencyHooks: readonly DependencyHookConfiguration[];
+  readonly performance?: ReactPerformanceConfiguration;
 }
 
 export function createReactAnalysisContext(
@@ -21,6 +22,7 @@ export function createReactAnalysisContext(
   file: string,
   ast: TSESTree.Program,
   plugins: readonly ReactPlugin[] = [],
+  performance?: ReactPerformanceConfiguration,
 ): ReactAnalysisContext {
   const rules = getUniqueRules(plugins);
   const dependencyHooks = plugins.flatMap(
@@ -34,6 +36,7 @@ export function createReactAnalysisContext(
     hooks: createHookContext(ast),
     rules,
     dependencyHooks,
+    performance,
   };
 }
 
