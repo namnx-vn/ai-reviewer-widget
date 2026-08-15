@@ -40,7 +40,7 @@ const oversizedSourcePatternRule = imageRule(
   "An image source name explicitly indicates a raw, original, full-size, or 4K asset.",
   (node) => {
     const source = literalAttribute(node, "src");
-    return source !== undefined && /(?:^|[-_.\/])(raw|original|full[-_]?size|4k|uhd)(?:[-_.\/]|$)/i.test(source);
+    return source !== undefined && /(?:^|[-_./])(raw|original|full[-_]?size|4k|uhd)(?:[-_./]|$)/i.test(source);
   },
   "Serve an appropriately sized derivative for the rendered image slot.",
 );
