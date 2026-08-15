@@ -5,32 +5,6 @@ import type { PerformanceFinding, PerformanceRule, PerformanceRuleContext } from
 const HEAVY_LIBRARIES = new Set(["lodash", "moment", "rxjs", "date-fns", "@mui/material", "antd"]);
 const BARREL_SEGMENTS = new Set(["index", "components", "utils"]);
 
-export const importPerformanceRules: readonly PerformanceRule[] = [
-  createImportRule(
-    "performance.large-import",
-    "Large runtime import",
-    "medium",
-    (node) => node.specifiers.length >= 8,
-    "A single runtime import exposes many bindings and can increase shipped code.",
-  ),
-  duplicateDependencyRule,
-  createImportRule(
-    "performance.barrel-overimport",
-    "Barrel import",
-    "low",
-    (node) => node.specifiers.length >= 4 && node.source.value.split("/").some((segment) => BARREL_SEGMENTS.has(segment)),
-    "A wide barrel import can pull unrelated runtime modules into an entrypoint.",
-  ),
-  createImportRule(
-    "performance.heavy-library-whole-import",
-    "Whole heavy-library import",
-    "high",
-    (node) => HEAVY_LIBRARIES.has(node.source.value) && node.specifiers.some((specifier) => specifier.type === "ImportNamespaceSpecifier" || specifier.type === "ImportDefaultSpecifier"),
-    "A whole-library runtime import prevents narrow import evidence.",
-  ),
-  duplicateRuntimeLibraryRule,
-];
-
 const duplicateDependencyRule: PerformanceRule = {
   meta: {
     id: "performance.duplicate-dependency",
@@ -93,6 +67,32 @@ const duplicateRuntimeLibraryRule: PerformanceRule = {
     });
   },
 };
+
+export const importPerformanceRules: readonly PerformanceRule[] = [
+  createImportRule(
+    "performance.large-import",
+    "Large runtime import",
+    "medium",
+    (node) => node.specifiers.length >= 8,
+    "A single runtime import exposes many bindings and can increase shipped code.",
+  ),
+  duplicateDependencyRule,
+  createImportRule(
+    "performance.barrel-overimport",
+    "Barrel import",
+    "low",
+    (node) => node.specifiers.length >= 4 && node.source.value.split("/").some((segment) => BARREL_SEGMENTS.has(segment)),
+    "A wide barrel import can pull unrelated runtime modules into an entrypoint.",
+  ),
+  createImportRule(
+    "performance.heavy-library-whole-import",
+    "Whole heavy-library import",
+    "high",
+    (node) => HEAVY_LIBRARIES.has(node.source.value) && node.specifiers.some((specifier) => specifier.type === "ImportNamespaceSpecifier" || specifier.type === "ImportDefaultSpecifier"),
+    "A whole-library runtime import prevents narrow import evidence.",
+  ),
+  duplicateRuntimeLibraryRule,
+];
 
 function createImportRule(
   id: string,
