@@ -1,2 +1,2 @@
-export { nextjsPlugin, reactPlugin } from "./plugins";
+export { nextjsPlugin, performancePlugin, reactPlugin } from "./plugins";
 export { reactBankingSecurityRules } from "./rules/security";
