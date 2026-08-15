@@ -13,6 +13,9 @@ import { callPath, visit } from "../rules/ast-utils";
 const DEFAULT_MAX_DEPTH = 8;
 const DEFAULT_MAX_SUMMARIES = 2_000;
 
+type FunctionNode = TSESTree.FunctionDeclaration | TSESTree.ArrowFunctionExpression | TSESTree.FunctionExpression;
+type ProgramStatement = TSESTree.Program["body"][number];
+
 export interface PerformanceInterproceduralFile {
   readonly path: string;
   readonly content: string;
@@ -24,28 +27,26 @@ export interface PerformanceInterproceduralOptions {
   readonly databaseCallPaths?: readonly string[];
 }
 
+interface ImportBinding {
+  readonly resolvedPath: string;
+  readonly importedName: string;
+}
+
 interface FunctionRecord {
   readonly id: string;
   readonly name: string;
   readonly file: string;
   readonly node: FunctionNode;
   readonly exported: boolean;
-  readonly importBindings: ReadonlyMap<string, ImportBinding>;
-}
-
-type FunctionNode = TSESTree.FunctionDeclaration | TSESTree.ArrowFunctionExpression | TSESTree.FunctionExpression;
-
-interface ImportBinding {
-  readonly resolvedPath: string;
-  readonly importedName: string;
+  readonly imports: ReadonlyMap<string, ImportBinding>;
 }
 
 interface DirectSummary {
   readonly directCostKinds: readonly PerformanceCostKind[];
   readonly calls: readonly string[];
   readonly unknownCalls: readonly string[];
-  readonly parameterEffects: readonly PerformanceParameterEffect[];
   readonly returnCalls: readonly string[];
+  readonly parameterEffects: readonly PerformanceParameterEffect[];
 }
 
 export function analyzeInterproceduralPerformanceFiles(
@@ -60,41 +61,37 @@ export function analyzeInterproceduralPerformanceFiles(
     try {
       programs.set(normalizePath(file.path), parseSource(file.content));
     } catch {
-      // Parse failures are isolated by the parent analyzer; interprocedural analysis skips them.
+      // The parent analyzer owns parse warnings; interprocedural analysis stays fail-soft.
     }
-  }
-
-  const importBindingsByFile = new Map<string, ReadonlyMap<string, ImportBinding>>();
-  for (const [file, program] of programs) {
-    importBindingsByFile.set(file, collectImportBindings(file, program, graph));
   }
 
   const functions = new Map<string, FunctionRecord>();
+  const maxSummaries = Math.max(1, options.maxSummaries ?? DEFAULT_MAX_SUMMARIES);
   for (const [file, program] of programs) {
-    const bindings = importBindingsByFile.get(file) ?? new Map<string, ImportBinding>();
-    for (const record of collectFunctions(file, program, bindings)) {
-      if (functions.size >= (options.maxSummaries ?? DEFAULT_MAX_SUMMARIES)) break;
+    const imports = collectImportBindings(file, program, graph);
+    for (const record of collectFunctions(file, program, imports)) {
+      if (functions.size >= maxSummaries) break;
       functions.set(record.id, record);
     }
+    if (functions.size >= maxSummaries) break;
   }
 
   const direct = new Map<string, DirectSummary>();
-  for (const [id, record] of functions) {
-    direct.set(id, inspectFunction(record, functions, options));
-  }
+  for (const [id, record] of functions) direct.set(id, inspectFunction(record, functions, options));
 
   const maxDepth = Math.max(1, options.maxDepth ?? DEFAULT_MAX_DEPTH);
   const summaries = [...functions.values()]
     .sort((left, right) => left.id.localeCompare(right.id))
     .map((record) => summarize(record, direct, functions, maxDepth));
 
-  const callGraph = new Map<string, readonly string[]>(
-    [...direct.entries()]
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([id, summary]) => [id, summary.calls] as const),
-  );
-
-  return { summaries, callGraph };
+  return {
+    summaries,
+    callGraph: new Map(
+      [...direct.entries()]
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([id, summary]) => [id, summary.calls] as const),
+    ),
+  };
 }
 
 function collectImportBindings(
@@ -103,7 +100,9 @@ function collectImportBindings(
   graph: ReturnType<typeof buildDependencyGraph>,
 ): ReadonlyMap<string, ImportBinding> {
   const bindings = new Map<string, ImportBinding>();
-  const edges = graph.edges.filter((edge) => normalizePath(edge.from) === file && edge.resolvedPath !== undefined);
+  const edges = graph.edges.filter(
+    (edge) => normalizePath(edge.from) === file && edge.resolvedPath !== undefined,
+  );
 
   for (const statement of program.body) {
     if (statement.type !== "ImportDeclaration" || statement.importKind === "type") continue;
@@ -112,14 +111,15 @@ function collectImportBindings(
     const resolvedPath = normalizePath(edge.resolvedPath);
 
     for (const specifier of statement.specifiers) {
-      if (specifier.type === "ImportSpecifier") {
-        const importedName = specifier.imported.type === "Identifier"
-          ? specifier.imported.name
-          : String(specifier.imported.value);
-        bindings.set(specifier.local.name, { resolvedPath, importedName });
-      } else if (specifier.type === "ImportDefaultSpecifier") {
+      if (specifier.type === "ImportDefaultSpecifier") {
         bindings.set(specifier.local.name, { resolvedPath, importedName: "default" });
+        continue;
       }
+      if (specifier.type !== "ImportSpecifier" || specifier.importKind === "type") continue;
+      const importedName = specifier.imported.type === "Identifier"
+        ? specifier.imported.name
+        : String(specifier.imported.value);
+      bindings.set(specifier.local.name, { resolvedPath, importedName });
     }
   }
 
@@ -129,90 +129,75 @@ function collectImportBindings(
 function collectFunctions(
   file: string,
   program: TSESTree.Program,
-  importBindings: ReadonlyMap<string, ImportBinding>,
+  imports: ReadonlyMap<string, ImportBinding>,
 ): readonly FunctionRecord[] {
   const exportedNames = collectExportedNames(program);
   const records: FunctionRecord[] = [];
 
   for (const statement of program.body) {
-    if (statement.type === "FunctionDeclaration" && statement.id !== null) {
-      records.push({
-        id: functionId(file, statement.id.name),
-        name: statement.id.name,
-        file,
-        node: statement,
-        exported: exportedNames.has(statement.id.name),
-        importBindings,
-      });
+    const declaration = unwrapNamedExport(statement);
+    if (declaration?.type === "FunctionDeclaration" && declaration.id !== null) {
+      records.push(createRecord(file, declaration.id.name, declaration, exportedNames.has(declaration.id.name), imports));
       continue;
     }
-
-    const declaration = unwrapVariableDeclaration(statement);
-    if (declaration === undefined) continue;
+    if (declaration?.type !== "VariableDeclaration") continue;
     for (const item of declaration.declarations) {
       if (item.id.type !== "Identifier" || item.init === null) continue;
       if (item.init.type !== "ArrowFunctionExpression" && item.init.type !== "FunctionExpression") continue;
-      records.push({
-        id: functionId(file, item.id.name),
-        name: item.id.name,
-        file,
-        node: item.init,
-        exported: exportedNames.has(item.id.name),
-        importBindings,
-      });
+      records.push(createRecord(file, item.id.name, item.init, exportedNames.has(item.id.name), imports));
     }
   }
 
-  const defaultExport = program.body.find((statement) => statement.type === "ExportDefaultDeclaration");
-  if (defaultExport?.type === "ExportDefaultDeclaration") {
-    const declaration = defaultExport.declaration;
+  for (const statement of program.body) {
+    if (statement.type !== "ExportDefaultDeclaration") continue;
+    const declaration = statement.declaration;
     if (declaration.type === "FunctionDeclaration") {
-      const name = declaration.id?.name ?? "default";
-      records.push({
-        id: functionId(file, "default"),
-        name,
-        file,
-        node: declaration,
-        exported: true,
-        importBindings,
-      });
+      records.push(createRecord(file, "default", declaration, true, imports, declaration.id?.name ?? "default"));
     } else if (declaration.type === "ArrowFunctionExpression" || declaration.type === "FunctionExpression") {
-      records.push({
-        id: functionId(file, "default"),
-        name: "default",
-        file,
-        node: declaration,
-        exported: true,
-        importBindings,
-      });
+      records.push(createRecord(file, "default", declaration, true, imports));
     }
   }
 
-  return deduplicateFunctions(records);
+  return [...new Map(records.map((record) => [record.id, record])).values()];
+}
+
+function unwrapNamedExport(statement: ProgramStatement): TSESTree.DeclarationStatement | null {
+  if (statement.type === "ExportNamedDeclaration") return statement.declaration;
+  return statement.type === "FunctionDeclaration" || statement.type === "VariableDeclaration"
+    ? statement
+    : null;
 }
 
 function collectExportedNames(program: TSESTree.Program): ReadonlySet<string> {
   const names = new Set<string>();
   for (const statement of program.body) {
-    if (statement.type === "ExportNamedDeclaration") {
-      const declaration = statement.declaration;
-      if (declaration?.type === "FunctionDeclaration" && declaration.id !== null) names.add(declaration.id.name);
-      if (declaration?.type === "VariableDeclaration") {
-        for (const item of declaration.declarations) if (item.id.type === "Identifier") names.add(item.id.name);
-      }
-      for (const specifier of statement.specifiers) {
-        if (specifier.local.type === "Identifier") names.add(specifier.local.name);
-      }
+    if (statement.type !== "ExportNamedDeclaration") continue;
+    const declaration = statement.declaration;
+    if (declaration?.type === "FunctionDeclaration" && declaration.id !== null) names.add(declaration.id.name);
+    if (declaration?.type === "VariableDeclaration") {
+      for (const item of declaration.declarations) if (item.id.type === "Identifier") names.add(item.id.name);
     }
+    for (const specifier of statement.specifiers) names.add(specifier.local.name);
   }
   return names;
 }
 
-function unwrapVariableDeclaration(statement: TSESTree.ProgramStatement): TSESTree.VariableDeclaration | undefined {
-  if (statement.type === "VariableDeclaration") return statement;
-  return statement.type === "ExportNamedDeclaration" && statement.declaration?.type === "VariableDeclaration"
-    ? statement.declaration
-    : undefined;
+function createRecord(
+  file: string,
+  exportName: string,
+  node: FunctionNode,
+  exported: boolean,
+  imports: ReadonlyMap<string, ImportBinding>,
+  displayName = exportName,
+): FunctionRecord {
+  return {
+    id: functionId(file, exportName),
+    name: displayName,
+    file,
+    node,
+    exported,
+    imports,
+  };
 }
 
 function inspectFunction(
@@ -224,16 +209,16 @@ function inspectFunction(
   const calls = new Set<string>();
   const unknownCalls = new Set<string>();
   const returnCalls = new Set<string>();
-  const parameterEffects = collectParameterEffects(record.node);
-  const body = record.node.body;
 
-  visit(body, (node, ancestors) => {
+  visit(record.node.body, (node, ancestors) => {
     if (node.type !== "CallExpression") return;
     const path = callPath(node);
     if (path === undefined) return;
     const kinds = costKinds(path, options);
-    kinds.forEach((kind) => costs.add(kind));
-    if (kinds.length > 0) return;
+    if (kinds.length > 0) {
+      kinds.forEach((kind) => costs.add(kind));
+      return;
+    }
 
     const resolved = resolveCall(record, path, functions);
     if (resolved === undefined) {
@@ -248,8 +233,8 @@ function inspectFunction(
     directCostKinds: [...costs].sort(),
     calls: [...calls].sort(),
     unknownCalls: [...unknownCalls].sort(),
-    parameterEffects,
     returnCalls: [...returnCalls].sort(),
+    parameterEffects: collectParameterEffects(record.node),
   };
 }
 
@@ -258,16 +243,13 @@ function resolveCall(
   path: string,
   functions: ReadonlyMap<string, FunctionRecord>,
 ): string | undefined {
-  if (!path.includes(".")) {
-    const localId = functionId(record.file, path);
-    if (functions.has(localId)) return localId;
-    const binding = record.importBindings.get(path);
-    if (binding !== undefined) {
-      const importedId = functionId(binding.resolvedPath, binding.importedName);
-      if (functions.has(importedId)) return importedId;
-    }
-  }
-  return undefined;
+  if (path.includes(".")) return undefined;
+  const local = functionId(record.file, path);
+  if (functions.has(local)) return local;
+  const imported = record.imports.get(path);
+  if (imported === undefined) return undefined;
+  const importedId = functionId(imported.resolvedPath, imported.importedName);
+  return functions.has(importedId) ? importedId : undefined;
 }
 
 function summarize(
@@ -276,45 +258,48 @@ function summarize(
   functions: ReadonlyMap<string, FunctionRecord>,
   maxDepth: number,
 ): PerformanceFunctionSummary {
-  const own = direct.get(record.id) ?? emptyDirectSummary();
-  const costs = new Set<PerformanceCostKind>(own.directCostKinds);
+  const root = direct.get(record.id) ?? emptyDirectSummary();
+  const costs = new Set<PerformanceCostKind>(root.directCostKinds);
   const returnCosts = new Set<PerformanceCostKind>();
-  const unknown = new Set<string>(own.unknownCalls);
-  const visited = new Set<string>([record.id]);
+  const unknown = new Set(root.unknownCalls);
 
-  const walk = (current: string, depth: number, isReturnPath: boolean): void => {
+  const walk = (
+    current: string,
+    depth: number,
+    path: ReadonlySet<string>,
+    returning: boolean,
+  ): void => {
     if (depth >= maxDepth) return;
     const summary = direct.get(current);
     if (summary === undefined) return;
     for (const call of summary.calls) {
-      if (!functions.has(call)) {
+      const child = direct.get(call);
+      if (child === undefined || !functions.has(call)) {
         unknown.add(call);
         continue;
       }
-      const child = direct.get(call);
-      child?.directCostKinds.forEach((kind) => {
+      const childReturning = returning || summary.returnCalls.includes(call);
+      child.directCostKinds.forEach((kind) => {
         costs.add(kind);
-        if (isReturnPath || summary.returnCalls.includes(call)) returnCosts.add(kind);
+        if (childReturning) returnCosts.add(kind);
       });
-      child?.unknownCalls.forEach((unknownCall) => unknown.add(unknownCall));
-      if (visited.has(call)) continue;
-      visited.add(call);
-      walk(call, depth + 1, isReturnPath || summary.returnCalls.includes(call));
+      child.unknownCalls.forEach((unknownCall) => unknown.add(unknownCall));
+      if (path.has(call)) continue;
+      walk(call, depth + 1, new Set([...path, call]), childReturning);
     }
   };
 
-  own.returnCalls.forEach((call) => direct.get(call)?.directCostKinds.forEach((kind) => returnCosts.add(kind)));
-  walk(record.id, 0, false);
+  walk(record.id, 0, new Set([record.id]), false);
 
   return {
     name: record.name,
     file: record.file,
     exported: record.exported,
-    directCostKinds: own.directCostKinds,
+    directCostKinds: root.directCostKinds,
     costKinds: [...costs].sort(),
-    calls: own.calls,
+    calls: root.calls,
     unknownCalls: [...unknown].sort(),
-    parameterEffects: own.parameterEffects,
+    parameterEffects: root.parameterEffects,
     returnsCostKinds: [...returnCosts].sort(),
   };
 }
@@ -327,19 +312,34 @@ function collectParameterEffects(node: FunctionNode): readonly PerformanceParame
 
   for (const parameter of parameters) {
     visit(node.body, (child, ancestors) => {
-      if (isLoopNode(child) && loopUsesIdentifier(child, parameter.name)) {
-        effects.set(`${parameter.index}:iteration-size`, { parameterIndex: parameter.index, effect: "iteration-size" });
+      if (isLoop(child) && loopUsesIdentifier(child, parameter.name)) {
+        addEffect(effects, parameter.index, "iteration-size");
       }
-      if (child.type === "CallExpression" && child.callee.type === "Identifier" && child.callee.name === parameter.name && ancestors.some(isLoopNode)) {
-        effects.set(`${parameter.index}:callback-repeated`, { parameterIndex: parameter.index, effect: "callback-repeated" });
+      if (child.type === "CallExpression"
+        && child.callee.type === "Identifier"
+        && child.callee.name === parameter.name
+        && ancestors.some(isLoop)) {
+        addEffect(effects, parameter.index, "callback-repeated");
       }
-      if (child.type === "CallExpression" && ["fetch", "request"].includes(callPath(child) ?? "") && containsIdentifier(child, parameter.name)) {
-        effects.set(`${parameter.index}:request-input`, { parameterIndex: parameter.index, effect: "request-input" });
+      if (child.type === "CallExpression"
+        && ["fetch", "request"].includes(callPath(child) ?? "")
+        && containsIdentifier(child, parameter.name)) {
+        addEffect(effects, parameter.index, "request-input");
       }
     });
   }
 
-  return [...effects.values()].sort((left, right) => left.parameterIndex - right.parameterIndex || left.effect.localeCompare(right.effect));
+  return [...effects.values()].sort(
+    (left, right) => left.parameterIndex - right.parameterIndex || left.effect.localeCompare(right.effect),
+  );
+}
+
+function addEffect(
+  effects: Map<string, PerformanceParameterEffect>,
+  parameterIndex: number,
+  effect: PerformanceParameterEffect["effect"],
+): void {
+  effects.set(`${parameterIndex}:${effect}`, { parameterIndex, effect });
 }
 
 function loopUsesIdentifier(node: TSESTree.Node, name: string): boolean {
@@ -357,27 +357,32 @@ function containsIdentifier(node: TSESTree.Node, name: string): boolean {
   return found;
 }
 
-function costKinds(path: string, options: PerformanceInterproceduralOptions): readonly PerformanceCostKind[] {
+function costKinds(
+  path: string,
+  options: PerformanceInterproceduralOptions,
+): readonly PerformanceCostKind[] {
   if (path === "fetch" || path === "request" || path.startsWith("axios.")) return ["network", "external-service"];
   if (path === "JSON.stringify" || path === "JSON.parse") return ["serialization"];
   if ((options.databaseCallPaths ?? []).includes(path)) return ["database"];
-  if (["sort", "toSorted"].some((name) => path.endsWith(`.${name}`))) return ["cpu-heavy"];
+  if (path.endsWith(".sort") || path.endsWith(".toSorted")) return ["cpu-heavy"];
   return [];
 }
 
 function emptyDirectSummary(): DirectSummary {
-  return { directCostKinds: [], calls: [], unknownCalls: [], parameterEffects: [], returnCalls: [] };
-}
-
-function deduplicateFunctions(records: readonly FunctionRecord[]): readonly FunctionRecord[] {
-  return [...new Map(records.map((record) => [record.id, record])).values()];
+  return {
+    directCostKinds: [],
+    calls: [],
+    unknownCalls: [],
+    returnCalls: [],
+    parameterEffects: [],
+  };
 }
 
 function functionId(file: string, name: string): string {
   return `${normalizePath(file)}#${name}`;
 }
 
-function isLoopNode(node: TSESTree.Node): boolean {
+function isLoop(node: TSESTree.Node): boolean {
   return node.type === "ForStatement"
     || node.type === "ForInStatement"
     || node.type === "ForOfStatement"
