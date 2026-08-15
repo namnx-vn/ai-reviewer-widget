@@ -1,5 +1,5 @@
 import type { TSESTree } from "@typescript-eslint/typescript-estree";
-import type { PerformanceFinding, PerformanceRule, PerformanceRuleContext } from "../model/types";
+import type { PerformanceFinding, PerformanceRule } from "../model/types";
 import { callName, finding, isLoop, visit } from "./ast-utils";
 
 const DIRECT_REQUESTS = new Set(["fetch", "request"]);
