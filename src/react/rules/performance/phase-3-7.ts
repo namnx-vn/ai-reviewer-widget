@@ -10,14 +10,15 @@ export const performanceLargeComponentRule: ReactRule = {
   id: "performance.large-component",
   description: "Detect structurally complex React components using JSX, branch, and repeated-work evidence.",
   check(node, context) {
-    if (!isNamedComponent(node)) return [];
-    const metrics = componentMetrics(node);
+    const component = componentCandidate(node);
+    if (component === undefined) return [];
+    const metrics = componentMetrics(component);
     if (metrics.jsxElements < 12 || metrics.branches < 3 || metrics.repeatedWork < 2) return [];
     return [createFinding(
       this.id,
       "Structurally large component",
-      `Component ${node.id?.name ?? "component"} contains ${metrics.jsxElements} JSX elements, ${metrics.branches} branch points, and ${metrics.repeatedWork} repeated collection operations.`,
-      node,
+      `Component ${component.name} contains ${metrics.jsxElements} JSX elements, ${metrics.branches} branch points, and ${metrics.repeatedWork} repeated collection operations.`,
+      component.node,
       context.file,
       "Split independent rendering responsibilities or move derived work into focused child boundaries.",
       0.88,
@@ -147,10 +148,16 @@ function adaptRule(rule: ReactRule, id: string, title: string): ReactRule {
   };
 }
 
+interface ComponentCandidate {
+  readonly name: string;
+  readonly node: TSESTree.Node;
+  readonly body: TSESTree.Node;
+}
+
 function bankingRule(
   id: string,
   title: string,
-  predicate: (component: ComponentNode, context: ReactRuleContext) => boolean,
+  predicate: (component: ComponentCandidate, context: ReactRuleContext) => boolean,
   message: string,
   suggestion: string,
 ): ReactRule {
@@ -158,27 +165,31 @@ function bankingRule(
     id,
     description: message,
     check(node, context) {
-      if (!isNamedComponent(node)) return [];
+      const component = componentCandidate(node);
+      if (component === undefined) return [];
       const critical = new Set(context.performance?.criticalUiComponents ?? []);
-      const name = node.id?.name;
-      if (name === undefined || !critical.has(name) || !predicate(node, context)) return [];
-      return [createFinding(id, title, message, node, context.file, suggestion, 0.9)];
+      if (!critical.has(component.name) || !predicate(component, context)) return [];
+      return [createFinding(id, title, message, component.node, context.file, suggestion, 0.9)];
     },
   };
 }
 
-type ComponentNode = TSESTree.FunctionDeclaration | TSESTree.FunctionExpression;
-
-function isNamedComponent(node: TSESTree.Node): node is ComponentNode {
-  if (node.type === "FunctionDeclaration") return node.id !== null && /^[A-Z]/.test(node.id.name);
-  return node.type === "FunctionExpression" && node.id !== null && /^[A-Z]/.test(node.id.name);
+function componentCandidate(node: TSESTree.Node): ComponentCandidate | undefined {
+  if (node.type === "FunctionDeclaration" && node.id !== null && /^[A-Z]/.test(node.id.name)) {
+    return { name: node.id.name, node, body: node.body };
+  }
+  if (node.type !== "VariableDeclarator" || node.id.type !== "Identifier" || !/^[A-Z]/.test(node.id.name) || node.init === null) {
+    return undefined;
+  }
+  if (node.init.type !== "ArrowFunctionExpression" && node.init.type !== "FunctionExpression") return undefined;
+  return { name: node.id.name, node, body: node.init.body };
 }
 
-function componentMetrics(node: ComponentNode): { readonly jsxElements: number; readonly branches: number; readonly repeatedWork: number } {
+function componentMetrics(component: ComponentCandidate): { readonly jsxElements: number; readonly branches: number; readonly repeatedWork: number } {
   let jsxElements = 0;
   let branches = 0;
   let repeatedWork = 0;
-  walk(node.body, (child) => {
+  walk(component.body, (child) => {
     if (child.type === "JSXElement" || child.type === "JSXFragment") jsxElements += 1;
     if (child.type === "IfStatement" || child.type === "ConditionalExpression" || child.type === "SwitchStatement" || child.type === "LogicalExpression") branches += 1;
     if (child.type === "CallExpression" && ["map", "filter", "reduce", "sort", "toSorted"].includes(memberName(child) ?? "")) repeatedWork += 1;
@@ -186,9 +197,9 @@ function componentMetrics(node: ComponentNode): { readonly jsxElements: number; 
   return { jsxElements, branches, repeatedWork };
 }
 
-function countAwaitedFetches(node: ComponentNode): number {
+function countAwaitedFetches(component: ComponentCandidate): number {
   let count = 0;
-  walk(node.body, (child, ancestors) => {
+  walk(component.body, (child, ancestors) => {
     if (child.type === "CallExpression"
       && ["fetch", "request"].includes(memberName(child) ?? "")
       && ancestors.some((ancestor) => ancestor.type === "AwaitExpression")) count += 1;
@@ -196,9 +207,9 @@ function countAwaitedFetches(node: ComponentNode): number {
   return count;
 }
 
-function hasDuplicateLiteralFetch(node: ComponentNode): boolean {
+function hasDuplicateLiteralFetch(component: ComponentCandidate): boolean {
   const requests = new Map<string, number>();
-  walk(node.body, (child) => {
+  walk(component.body, (child) => {
     if (child.type !== "CallExpression" || !["fetch", "request"].includes(memberName(child) ?? "")) return;
     const argument = child.arguments[0];
     if (argument?.type !== "Literal" || typeof argument.value !== "string") return;
