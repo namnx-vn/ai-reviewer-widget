@@ -21,7 +21,7 @@ const unboundedCacheRule: PerformanceRule = {
     "A module-level cache-like Map or Set grows without eviction or size-bound evidence.",
   ),
   check(context) {
-    return persistentCollections(context.ast)
+    return persistentCollections(context.ast, context.source)
       .filter((collection) => /cache|memo|store/i.test(collection.name)
         && collection.grows
         && !collection.bounded)
@@ -42,7 +42,7 @@ const unboundedMapSetRule: PerformanceRule = {
     "A module-level Map or Set grows without cleanup or configured bound evidence.",
   ),
   check(context) {
-    return persistentCollections(context.ast)
+    return persistentCollections(context.ast, context.source)
       .filter((collection) => collection.grows && !collection.bounded)
       .map((collection) => finding(
         this,
@@ -156,7 +156,10 @@ interface PersistentCollection {
   readonly bounded: boolean;
 }
 
-function persistentCollections(ast: TSESTree.Program): readonly PersistentCollection[] {
+function persistentCollections(
+  ast: TSESTree.Program,
+  source: string,
+): readonly PersistentCollection[] {
   const result: PersistentCollection[] = [];
   for (const statement of ast.body) {
     if (statement.type !== "VariableDeclaration") continue;
@@ -172,7 +175,7 @@ function persistentCollections(ast: TSESTree.Program): readonly PersistentCollec
         if (["set", "add"].includes(method)) grows = true;
         if (["delete", "clear", "shift", "pop"].includes(method)) bounded = true;
       });
-      if (new RegExp(`${name}\\.size\\s*[><=]`, "u").test(sourceText(ast))) bounded = true;
+      if (new RegExp(`${escapeRegExp(name)}\\.size\\s*[><=]`, "u").test(source)) bounded = true;
       result.push({ name, node: declaration.init, grows, bounded });
     }
   }
@@ -221,8 +224,8 @@ function numericArgument(argument: TSESTree.CallExpressionArgument | undefined):
   return argument?.type === "Literal" && typeof argument.value === "number" ? argument.value : 0;
 }
 
-function sourceText(_ast: TSESTree.Program): string {
-  return "";
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function meta(
