@@ -1,11 +1,18 @@
 export { PerformanceAnalysisEngine } from "./engine/performance-analysis-engine";
 export { createPerformanceFindingId } from "./engine/finding-id";
+export { createPerformanceRepositoryContext } from "./engine/repository-context";
 export { PerformanceRuleRegistry } from "./registry/performance-rule-registry";
 export { analyzePerformanceCosts } from "./cost/cost-propagation";
-export { analyzeInterproceduralPerformance } from "./interprocedural";
+export {
+  analyzeInterproceduralPerformance,
+  analyzeInterproceduralPerformanceFiles,
+  createInterproceduralContext,
+  type PerformanceInterproceduralFile,
+  type PerformanceInterproceduralOptions,
+} from "./interprocedural";
 export { applyPerformanceProfile, PERFORMANCE_PROFILE_DEFINITIONS, resolvePerformanceProfile } from "./policies";
 export { evaluatePerformanceQualityGate } from "./quality-gate";
-export { analyzePerformanceFindings } from "./review-findings";
+export { analyzePerformanceFiles, analyzePerformanceFindings } from "./review-findings";
 export type * from "./quality-gate";
 export type { PerformanceProfileId, ResolvedPerformanceProfile } from "./policies";
 export { assetPerformanceRules, asyncPerformanceRules, backpressurePerformanceRules, bankUiPerformanceRules, cachePerformanceRules, cpuPerformanceRules, databasePerformanceRules, importPerformanceRules, loadingPerformanceRules, memoryPerformanceRules, networkPerformanceRules, observabilityPerformanceRules, resiliencePerformanceRules, transactionPerformanceRules } from "./rules";
