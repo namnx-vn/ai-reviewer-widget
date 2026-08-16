@@ -60,6 +60,7 @@ describe("wave 4 performance rules", () => {
       }],
     )).toEqual([
       "performance.database.missing-pagination",
+      "performance.database.n-plus-one",
       "performance.database.query-in-loop",
       "performance.database.unbounded-query",
     ]);
