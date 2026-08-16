@@ -6,33 +6,6 @@ import { isConfiguredCritical } from "./critical-path-utils";
 const EXTERNAL_CALLS = new Set(["fetch", "request", "get", "post", "put", "patch", "delete"]);
 const CPU_CALLS = new Set(["sort", "stringify", "parse", "hash", "encrypt", "decrypt", "sign", "verify"]);
 
-export const transactionPerformanceRules: readonly PerformanceRule[] = [
-  createCriticalRule(
-    "performance.transaction.external-call-in-critical-section",
-    "External call in critical transaction path",
-    "A configured critical path issues an external request.",
-    "Move nonessential work out of the critical section or use a bounded dependency boundary.",
-    (node) => node.type === "CallExpression" && EXTERNAL_CALLS.has(callName(node) ?? ""),
-  ),
-  excessiveRoundtripsRule,
-  sequentialIndependentWorkRule,
-  nonIdempotentRetryRule,
-  createCriticalRule(
-    "performance.transaction.blocking-cpu-work",
-    "Blocking CPU work in critical transaction path",
-    "A configured critical path performs structurally blocking CPU work.",
-    "Move expensive CPU work off the latency-critical path or precompute it where correctness permits.",
-    (node, ancestors) => isBlockingCpu(node, ancestors),
-  ),
-  createCriticalRule(
-    "performance.transaction.unbounded-fanout",
-    "Unbounded fan-out in critical transaction path",
-    "A configured critical path fans out dynamic concurrent work.",
-    "Apply a bounded concurrency policy before entering the transaction path.",
-    (node) => isDynamicPromiseAll(node),
-  ),
-];
-
 const excessiveRoundtripsRule: PerformanceRule = {
   meta: meta(
     "performance.transaction.excessive-roundtrips",
@@ -110,6 +83,33 @@ const nonIdempotentRetryRule: PerformanceRule = {
     return findings;
   },
 };
+
+export const transactionPerformanceRules: readonly PerformanceRule[] = [
+  createCriticalRule(
+    "performance.transaction.external-call-in-critical-section",
+    "External call in critical transaction path",
+    "A configured critical path issues an external request.",
+    "Move nonessential work out of the critical section or use a bounded dependency boundary.",
+    (node) => node.type === "CallExpression" && EXTERNAL_CALLS.has(callName(node) ?? ""),
+  ),
+  excessiveRoundtripsRule,
+  sequentialIndependentWorkRule,
+  nonIdempotentRetryRule,
+  createCriticalRule(
+    "performance.transaction.blocking-cpu-work",
+    "Blocking CPU work in critical transaction path",
+    "A configured critical path performs structurally blocking CPU work.",
+    "Move expensive CPU work off the latency-critical path or precompute it where correctness permits.",
+    (node, ancestors) => isBlockingCpu(node, ancestors),
+  ),
+  createCriticalRule(
+    "performance.transaction.unbounded-fanout",
+    "Unbounded fan-out in critical transaction path",
+    "A configured critical path fans out dynamic concurrent work.",
+    "Apply a bounded concurrency policy before entering the transaction path.",
+    (node) => isDynamicPromiseAll(node),
+  ),
+];
 
 function createCriticalRule(
   id: string,
