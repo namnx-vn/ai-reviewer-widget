@@ -2,14 +2,6 @@ import type { TSESTree } from "@typescript-eslint/typescript-estree";
 import type { PerformanceFinding, PerformanceRule } from "../model/types";
 import { finding, visit } from "./ast-utils";
 
-export const assetPerformanceRules: readonly PerformanceRule[] = [
-  imageOptimizationRule,
-  imageMissingLazyRule,
-  imageMissingDimensionsRule,
-  oversizedSourcePatternRule,
-  eagerNoncriticalAssetRule,
-];
-
 const imageOptimizationRule = imageRule(
   "performance.image",
   "Unoptimized image delivery pattern",
@@ -69,6 +61,14 @@ const eagerNoncriticalAssetRule: PerformanceRule = {
     });
   },
 };
+
+export const assetPerformanceRules: readonly PerformanceRule[] = [
+  imageOptimizationRule,
+  imageMissingLazyRule,
+  imageMissingDimensionsRule,
+  oversizedSourcePatternRule,
+  eagerNoncriticalAssetRule,
+];
 
 function imageRule(
   id: string,
