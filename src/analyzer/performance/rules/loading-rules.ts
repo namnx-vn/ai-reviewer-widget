@@ -5,6 +5,32 @@ import { callName, finding, isLoop, visit } from "./ast-utils";
 const HEAVY_OPTIONAL_SEGMENTS = /(?:^|\/)(?:charts?|editors?|maps?|pdf|reports?|analytics|export|admin|optional)(?:\/|$)/i;
 const ROUTE_SEGMENTS = /(?:^|\/)(?:routes?|pages?)(?:\/|$)/i;
 
+const dynamicImportHotpathRule: PerformanceRule = {
+  meta: {
+    id: "performance.dynamic-import-inside-hotpath",
+    title: "Dynamic import in repeated path",
+    description: "A dynamic import is created from a loop or repeated collection callback.",
+    category: "loading",
+    defaultSeverity: "medium",
+    defaultConfidence: "high",
+  },
+  check(context) {
+    const findings: PerformanceFinding[] = [];
+    visit(context.ast, (node, ancestors) => {
+      if (node.type !== "ImportExpression") return;
+      if (!ancestors.some((ancestor) => isLoop(ancestor) || isRepeatedCallback(ancestor))) return;
+      findings.push(finding(
+        this,
+        context,
+        node,
+        this.meta.description,
+        "Hoist and cache the import promise outside the repeated path.",
+      ));
+    });
+    return findings;
+  },
+};
+
 export const loadingPerformanceRules: readonly PerformanceRule[] = [
   importRule(
     "performance.missing-lazy",
@@ -59,32 +85,6 @@ function importRule(
     },
   };
 }
-
-const dynamicImportHotpathRule: PerformanceRule = {
-  meta: {
-    id: "performance.dynamic-import-inside-hotpath",
-    title: "Dynamic import in repeated path",
-    description: "A dynamic import is created from a loop or repeated collection callback.",
-    category: "loading",
-    defaultSeverity: "medium",
-    defaultConfidence: "high",
-  },
-  check(context) {
-    const findings: PerformanceFinding[] = [];
-    visit(context.ast, (node, ancestors) => {
-      if (node.type !== "ImportExpression") return;
-      if (!ancestors.some((ancestor) => isLoop(ancestor) || isRepeatedCallback(ancestor))) return;
-      findings.push(finding(
-        this,
-        context,
-        node,
-        this.meta.description,
-        "Hoist and cache the import promise outside the repeated path.",
-      ));
-    });
-    return findings;
-  },
-};
 
 function hasLazyLoadingEvidence(ast: TSESTree.Program): boolean {
   let found = false;
