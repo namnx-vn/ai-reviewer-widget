@@ -1,5 +1,36 @@
 import { describe, expect, it } from "vitest";
 import { parseSource } from "../../ast/parser";
-import { backpressurePerformanceRules, PerformanceAnalysisEngine, PerformanceRuleRegistry } from "..";
-function ids(source: string): readonly string[] { const registry = new PerformanceRuleRegistry(); backpressurePerformanceRules.forEach((rule) => registry.register(rule)); return new PerformanceAnalysisEngine().analyze({ file: "worker.ts", source, ast: parseSource(source) }, registry).map((finding) => finding.ruleId); }
-describe("backpressure rules", () => { it("detects unbounded producer and hot-loop requests", () => expect(ids("for (const job of jobs) { queue.push(job); fetch(job.url); }")).toEqual(["performance.backpressure.unbounded-queue", "performance.rate-control.hot-loop-external-call"])); it("does not flag drained queues", () => expect(ids("for (const job of jobs) { queue.push(job); } queue.shift();")).not.toContain("performance.backpressure.unbounded-queue")); it("detects dynamic Promise.all fan-out", () => expect(ids("await Promise.all(jobs.map(run));")).toContain("performance.backpressure.missing-concurrency-limit")); });
+import {
+  backpressurePerformanceRules,
+  PerformanceAnalysisEngine,
+  PerformanceRuleRegistry,
+} from "..";
+
+function ids(source: string): readonly string[] {
+  const registry = new PerformanceRuleRegistry();
+  backpressurePerformanceRules.forEach((rule) => registry.register(rule));
+  return new PerformanceAnalysisEngine().analyze(
+    { file: "worker.ts", source, ast: parseSource(source) },
+    registry,
+  ).map((finding) => finding.ruleId);
+}
+
+describe("backpressure rules", () => {
+  it("detects unbounded producer and hot-loop requests", () => {
+    expect(ids("for (const job of jobs) { queue.push(job); fetch(job.url); }")).toEqual([
+      "performance.backpressure.unbounded-producer",
+      "performance.backpressure.unbounded-queue",
+      "performance.rate-control.hot-loop-external-call",
+    ]);
+  });
+
+  it("does not flag drained queues", () => {
+    expect(ids("for (const job of jobs) { queue.push(job); } queue.shift();"))
+      .not.toContain("performance.backpressure.unbounded-queue");
+  });
+
+  it("detects dynamic Promise.all fan-out", () => {
+    expect(ids("await Promise.all(jobs.map(run));"))
+      .toContain("performance.backpressure.missing-concurrency-limit");
+  });
+});
