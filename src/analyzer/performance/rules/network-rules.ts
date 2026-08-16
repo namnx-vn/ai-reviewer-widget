@@ -4,14 +4,6 @@ import { callName, finding, isLoop, visit } from "./ast-utils";
 
 const DIRECT_REQUESTS = new Set(["fetch", "request"]);
 
-export const networkPerformanceRules: readonly PerformanceRule[] = [
-  networkWaterfallRule,
-  sequentialIndependentRequestsRule,
-  duplicateRequestRule,
-  requestInLoopRule,
-  excessiveRoundtripsRule,
-];
-
 const networkWaterfallRule = createSequentialRule(
   "performance.network-waterfall",
   "Network waterfall",
@@ -107,6 +99,14 @@ const excessiveRoundtripsRule: PerformanceRule = {
     return findings;
   },
 };
+
+export const networkPerformanceRules: readonly PerformanceRule[] = [
+  networkWaterfallRule,
+  sequentialIndependentRequestsRule,
+  duplicateRequestRule,
+  requestInLoopRule,
+  excessiveRoundtripsRule,
+];
 
 function createSequentialRule(
   id: string,
