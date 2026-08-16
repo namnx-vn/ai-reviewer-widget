@@ -5,15 +5,6 @@ import { callName, finding, visit } from "./ast-utils";
 const CLEANUP_METHODS = new Set(["close", "destroy", "end", "dispose", "release"]);
 const RESOURCE_CREATORS = new Set(["open", "createReadStream", "createWriteStream", "connect", "createConnection"]);
 
-export const memoryPerformanceRules: readonly PerformanceRule[] = [
-  unboundedCacheRule,
-  unboundedMapSetRule,
-  listenerLeakRule,
-  timerLeakRule,
-  largeBufferRetentionRule,
-  missingCleanupRule,
-];
-
 const unboundedCacheRule: PerformanceRule = {
   meta: meta(
     "performance.memory.unbounded-cache",
@@ -148,6 +139,15 @@ const missingCleanupRule: PerformanceRule = {
     return unique(findings);
   },
 };
+
+export const memoryPerformanceRules: readonly PerformanceRule[] = [
+  unboundedCacheRule,
+  unboundedMapSetRule,
+  listenerLeakRule,
+  timerLeakRule,
+  largeBufferRetentionRule,
+  missingCleanupRule,
+];
 
 interface PersistentCollection {
   readonly name: string;
