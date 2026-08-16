@@ -2,15 +2,6 @@ import type { TSESTree } from "@typescript-eslint/typescript-estree";
 import type { PerformanceDatabaseAdapter, PerformanceFinding, PerformanceRule } from "../model/types";
 import { callPath, finding, isLoop, visit } from "./ast-utils";
 
-export const databasePerformanceRules: readonly PerformanceRule[] = [
-  queryInLoopRule,
-  nPlusOneRule,
-  unboundedQueryRule,
-  missingPaginationRule,
-  repeatedIdenticalQueryRule,
-  transactionRoundtripRule,
-];
-
 const queryInLoopRule = createDatabaseRule(
   "performance.database.query-in-loop",
   "Database query in loop",
@@ -129,6 +120,15 @@ const transactionRoundtripRule: PerformanceRule = {
     return findings;
   },
 };
+
+export const databasePerformanceRules: readonly PerformanceRule[] = [
+  queryInLoopRule,
+  nPlusOneRule,
+  unboundedQueryRule,
+  missingPaginationRule,
+  repeatedIdenticalQueryRule,
+  transactionRoundtripRule,
+];
 
 function createDatabaseRule(
   id: string,
