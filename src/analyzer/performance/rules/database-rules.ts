@@ -92,7 +92,6 @@ const transactionRoundtripRule: PerformanceRule = {
     "performance.database.transaction-roundtrip",
     "Excessive transaction roundtrips",
     "A configured transaction callback performs three or more modeled database calls.",
-    "Prefer set-based writes or combine related operations inside the transaction adapter where semantics allow it.",
     "high",
   ),
   check(context) {
