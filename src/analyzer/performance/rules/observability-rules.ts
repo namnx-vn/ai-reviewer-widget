@@ -3,12 +3,6 @@ import type { PerformanceFinding, PerformanceRule } from "../model/types";
 import { callName, callPath, finding, isLoop, visit } from "./ast-utils";
 import { isConfiguredCritical } from "./critical-path-utils";
 
-export const observabilityPerformanceRules: readonly PerformanceRule[] = [
-  criticalPathLatencyBoundaryRule,
-  externalCallTimingRule,
-  retryAttemptContextRule,
-];
-
 const criticalPathLatencyBoundaryRule: PerformanceRule = {
   meta: {
     id: "performance.observability.critical-path-without-latency-boundary",
@@ -94,6 +88,12 @@ const retryAttemptContextRule: PerformanceRule = {
     return findings;
   },
 };
+
+export const observabilityPerformanceRules: readonly PerformanceRule[] = [
+  criticalPathLatencyBoundaryRule,
+  externalCallTimingRule,
+  retryAttemptContextRule,
+];
 
 function criticalFunctions(
   ast: TSESTree.Program,
