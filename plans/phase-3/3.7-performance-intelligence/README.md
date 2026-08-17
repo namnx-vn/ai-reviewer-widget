@@ -2,7 +2,7 @@
 
 > Engineering contract: [`../../../AGENTS.md`](../../../AGENTS.md)
 
-Status: 🚧 In progress
+Status: ✅ Complete
 
 ---
 
@@ -39,24 +39,24 @@ Probabilistic AI MUST NOT participate in performance finding detection.
 
 | Phase | Status | Plan |
 | --- | --- | --- |
-| 3.7.0 | 🚧 In progress | [Performance Architecture Foundation](./3.7.0-performance-foundation.md) |
-| 3.7.1 | 🚧 In progress | [Bundle & Dependency Efficiency](./3.7.1-bundle-dependencies.md) |
-| 3.7.2 | 🚧 In progress | [React Rendering Performance](./3.7.2-react-rendering.md) |
-| 3.7.3 | 🚧 In progress | [Loading & Code Splitting](./3.7.3-loading-code-splitting.md) |
-| 3.7.4 | 🚧 In progress | [Image & Asset Performance](./3.7.4-images-assets.md) |
-| 3.7.5 | 🚧 In progress | [Network & Request Efficiency](./3.7.5-network-requests.md) |
-| 3.7.6 | 🚧 In progress | [Async & Concurrency Performance](./3.7.6-async-concurrency.md) |
-| 3.7.7 | 🚧 In progress | [Memory & Resource Safety](./3.7.7-memory-resources.md) |
-| 3.7.8 | 🚧 In progress | [CPU & Algorithmic Hotspots](./3.7.8-cpu-algorithms.md) |
-| 3.7.9 | 🚧 In progress | [Database & Persistence Efficiency](./3.7.9-database-persistence.md) |
+| 3.7.0 | ✅ Complete | [Performance Architecture Foundation](./3.7.0-performance-foundation.md) |
+| 3.7.1 | ✅ Complete | [Bundle & Dependency Efficiency](./3.7.1-bundle-dependencies.md) |
+| 3.7.2 | ✅ Complete | [React Rendering Performance](./3.7.2-react-rendering.md) |
+| 3.7.3 | ✅ Complete | [Loading & Code Splitting](./3.7.3-loading-code-splitting.md) |
+| 3.7.4 | ✅ Complete | [Image & Asset Performance](./3.7.4-images-assets.md) |
+| 3.7.5 | ✅ Complete | [Network & Request Efficiency](./3.7.5-network-requests.md) |
+| 3.7.6 | ✅ Complete | [Async & Concurrency Performance](./3.7.6-async-concurrency.md) |
+| 3.7.7 | ✅ Complete | [Memory & Resource Safety](./3.7.7-memory-resources.md) |
+| 3.7.8 | ✅ Complete | [CPU & Algorithmic Hotspots](./3.7.8-cpu-algorithms.md) |
+| 3.7.9 | ✅ Complete | [Database & Persistence Efficiency](./3.7.9-database-persistence.md) |
 | 3.7.10 | ✅ Complete | [Cache Intelligence](./3.7.10-cache.md) |
-| 3.7.11 | 🚧 In progress | [Transaction & Banking Critical Path](./3.7.11-banking-critical-path.md) |
+| 3.7.11 | ✅ Complete | [Transaction & Banking Critical Path](./3.7.11-banking-critical-path.md) |
 | 3.7.12 | ✅ Complete | [Resilience, Timeout & Retry](./3.7.12-resilience-timeout-retry.md) |
-| 3.7.13 | 🚧 In progress | [Backpressure & Rate Control](./3.7.13-backpressure-rate-control.md) |
-| 3.7.14 | 🚧 In progress | [Observability & Performance Telemetry](./3.7.14-observability.md) |
-| 3.7.15 | 🚧 In progress | [Frontend Banking UX Performance](./3.7.15-frontend-banking-ux.md) |
+| 3.7.13 | ✅ Complete | [Backpressure & Rate Control](./3.7.13-backpressure-rate-control.md) |
+| 3.7.14 | ✅ Complete | [Observability & Performance Telemetry](./3.7.14-observability.md) |
+| 3.7.15 | ✅ Complete | [Frontend Banking UX Performance](./3.7.15-frontend-banking-ux.md) |
 | 3.7.16 | ✅ Complete | [Performance Cost Propagation](./3.7.16-cost-propagation.md) |
-| 3.7.17 | 🚧 In progress | [Interprocedural Performance Analysis](./3.7.17-interprocedural.md) |
+| 3.7.17 | ✅ Complete | [Interprocedural Performance Analysis](./3.7.17-interprocedural.md) |
 | 3.7.18 | ✅ Complete | [Performance Profiles](./3.7.18-performance-profiles.md) |
 | 3.7.19 | ✅ Complete | [Performance Quality Gates](./3.7.19-quality-gates.md) |
 
@@ -84,40 +84,26 @@ Probabilistic AI MUST NOT participate in performance finding detection.
 
 Later phases MUST reuse the foundation, cost model, and interprocedural summaries rather than inventing alternatives.
 
-## Implementation Audit (2026-08-31)
-
-Implemented rules are intentionally recorded as partial until every rule ID and
-detection/noise-control contract in the linked sub-plan is present. Current gaps:
-
-- 3.7.0 context does not yet expose a reusable import graph or cross-file summaries.
-- 3.7.1 lacks duplicate-dependency and duplicate-runtime-library analysis.
-- 3.7.2 has existing React performance rules, but no Phase 3.7 rule-ID adapter.
-- 3.7.3, 3.7.4, 3.7.6–3.7.9, 3.7.11, and 3.7.13–3.7.15 cover only a subset of their planned rules.
-- 3.7.5 has the core request rules; wrapper/function-level dependency proofs still need expansion.
-- 3.7.17 is currently same-file only; cross-file import/export summaries remain planned.
-
 ---
 
-## Wave 5 Completion
+## Completion Audit (2026-08-31)
 
-Wave 5 is complete:
+The repository was audited against every linked Phase 3.7 sub-plan and the remaining gaps were completed.
 
-```text
-3.7.10 Cache Intelligence                 ✅
-3.7.12 Resilience, Timeout & Retry         ✅
-3.7.16 Performance Cost Propagation        ✅
-```
+Delivered completion work includes:
 
-Validation evidence:
+- 3.7.0 repository-aware performance context with reusable import/package metadata.
+- 3.7.1 dependency duplication, runtime duplication, barrel, heavy-library, and large-import coverage.
+- 3.7.2 a dedicated React Phase 3.7 adapter with the planned performance and banking-critical UI rule IDs.
+- 3.7.3–3.7.9 complete loading, asset, network, async/concurrency, memory/resource, CPU/algorithm, and configured persistence rule sets.
+- 3.7.11 complete configured banking-critical transaction analysis.
+- 3.7.13 complete queue, producer, stream-control, concurrency-limit, and hot-loop rate-control analysis.
+- 3.7.14 configured critical-path latency, external-call timing, and retry-attempt telemetry analysis.
+- 3.7.15 banking-critical frontend performance rules activated only through explicit critical UI configuration.
+- 3.7.17 cross-file import/export performance summaries and cost propagation while retaining deterministic cycle/safety limits.
+- Existing 3.7.10 cache, 3.7.12 resilience, 3.7.16 symbolic cost propagation, 3.7.18 profiles, and 3.7.19 quality gates remain the shared production contracts.
 
-```text
-TypeScript  ✅
-Lint        ✅
-Tests       ✅ 74 files / 602 tests
-Build       ✅
-```
-
-The `3.7.16` symbolic cost-summary contract is now the required cost-analysis boundary for Phase `3.7.17` and later consumers.
+Focused completion regression coverage validates exact rule registration, package-lock dependency duplication, repository propagation, configured database adapters, critical paths, React adapters, and false-positive boundaries.
 
 ---
 
@@ -162,7 +148,7 @@ Profiles may raise severity for findings on those paths, but the underlying dete
 
 ## Validation
 
-Every sub-phase is complete only after:
+Phase 3.7 is complete only when the repository passes:
 
 ```bash
 npm run typecheck
@@ -171,4 +157,4 @@ npm test
 npm run build
 ```
 
-and after deterministic ordering plus false-positive regression checks pass.
+plus CI coverage, deterministic ordering, false-positive regressions, and end-to-end validation.
