@@ -15,6 +15,7 @@ const DEFAULT_MAX_SUMMARIES = 2_000;
 
 type FunctionNode = TSESTree.FunctionDeclaration | TSESTree.ArrowFunctionExpression | TSESTree.FunctionExpression;
 type ProgramStatement = TSESTree.Program["body"][number];
+type FunctionDeclarationStatement = TSESTree.FunctionDeclaration | TSESTree.VariableDeclaration;
 
 export interface PerformanceInterproceduralFile {
   readonly path: string;
@@ -161,8 +162,13 @@ function collectFunctions(
   return [...new Map(records.map((record) => [record.id, record])).values()];
 }
 
-function unwrapNamedExport(statement: ProgramStatement): TSESTree.DeclarationStatement | null {
-  if (statement.type === "ExportNamedDeclaration") return statement.declaration;
+function unwrapNamedExport(statement: ProgramStatement): FunctionDeclarationStatement | null {
+  if (statement.type === "ExportNamedDeclaration") {
+    const declaration = statement.declaration;
+    return declaration?.type === "FunctionDeclaration" || declaration?.type === "VariableDeclaration"
+      ? declaration
+      : null;
+  }
   return statement.type === "FunctionDeclaration" || statement.type === "VariableDeclaration"
     ? statement
     : null;
@@ -177,7 +183,9 @@ function collectExportedNames(program: TSESTree.Program): ReadonlySet<string> {
     if (declaration?.type === "VariableDeclaration") {
       for (const item of declaration.declarations) if (item.id.type === "Identifier") names.add(item.id.name);
     }
-    for (const specifier of statement.specifiers) names.add(specifier.local.name);
+    for (const specifier of statement.specifiers) {
+      names.add(specifier.local.type === "Identifier" ? specifier.local.name : String(specifier.local.value));
+    }
   }
   return names;
 }
