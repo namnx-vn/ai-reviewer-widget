@@ -132,6 +132,54 @@ describe("Phase 3.7 completion", () => {
     ]));
   });
 
+  it("does not enforce observability without configured telemetry adapters", () => {
+    expect(run(`
+      async function authorizePayment() {
+        await fetch("/payment");
+      }
+    `, observabilityPerformanceRules, {
+      criticalEntrypoints: ["authorizePayment"],
+    })).toEqual([]);
+  });
+
+  it("accepts configured timing context around critical external calls", () => {
+    expect(run(`
+      async function authorizePayment() {
+        telemetry.span("authorize-payment");
+        await fetch("/payment");
+      }
+    `, observabilityPerformanceRules, {
+      criticalEntrypoints: ["authorizePayment"],
+      telemetryCallPaths: ["telemetry.span"],
+    })).toEqual([]);
+  });
+
+  it("accepts retry telemetry carrying explicit attempt context", () => {
+    expect(run(`
+      async function authorizePayment() {
+        telemetry.span("authorize-payment");
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          telemetry.span("payment-retry", { attempt });
+          await fetch("/payment");
+        }
+      }
+    `, observabilityPerformanceRules, {
+      criticalEntrypoints: ["authorizePayment"],
+      telemetryCallPaths: ["telemetry.span"],
+    })).not.toContain("performance.observability.retry-without-attempt-context");
+  });
+
+  it("ignores telemetry policy for unconfigured generic functions", () => {
+    expect(run(`
+      async function loadCatalog() {
+        await fetch("/catalog");
+      }
+    `, observabilityPerformanceRules, {
+      criticalEntrypoints: ["authorizePayment"],
+      telemetryCallPaths: ["telemetry.span"],
+    })).toEqual([]);
+  });
+
   it("propagates costs through cross-file imports and exports", () => {
     const result = analyzeInterproceduralPerformanceFiles([
       { path: "api.ts", content: 'export async function loadBalance() { return fetch("/balance"); }' },
