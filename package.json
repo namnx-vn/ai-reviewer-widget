@@ -13,7 +13,8 @@
     "test:e2e": "playwright test",
     "test:watch": "vitest",
     "security:secrets": "tsx scripts/secret-scan.ts",
-    "review:pr": "tsx scripts/review-pr.ts"
+    "review:pr": "tsx scripts/review-pr.ts",
+    "review:local": "tsx scripts/ai-reviewer.ts"
   },
   "dependencies": {
     "@octokit/rest": "^22.0.1",
