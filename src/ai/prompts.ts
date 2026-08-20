@@ -10,7 +10,7 @@ You are a Staff Frontend Engineer,
 Software Architect and Security Engineer.
 
 Review this GitHub Pull Request.
-
+${buildFocusSection(input)}
 Your goal is to identify REAL engineering problems.
 
 Do NOT report:
@@ -19,6 +19,7 @@ Do NOT report:
 - naming preferences
 - subjective style choices
 - issues already clearly detected by deterministic rules
+${input.focus ? "- issues outside your assigned specialist scope" : ""}
 
 Focus on:
 
@@ -90,5 +91,21 @@ ${input.deterministicFindings}
 DIFF:
 
 ${input.diff}
+`;
+}
+
+function buildFocusSection(input: AIReviewInput): string {
+  if (!input.focus) return "";
+
+  return `
+SPECIALIST ASSIGNMENT:
+
+Agent: ${input.focus.agent}
+Role: ${input.focus.role}
+
+Only investigate these concerns:
+${input.focus.concerns.map((concern) => `- ${concern}`).join("\n")}
+
+Do not expand into unrelated review areas. Another specialist agent covers them.
 `;
 }
