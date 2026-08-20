@@ -1,4 +1,4 @@
-import { createOpenAIProviderFromEnv } from "../src/ai/factory";
+import { createAIProviderFromEnv } from "../src/ai/factory";
 import { GitHubClient } from "../src/github/client";
 import { filterFindingsForChangedLines } from "../src/github/comments";
 import { getChangedLines } from "../src/github/diff";
@@ -39,7 +39,7 @@ const result = await reviewPullRequest({
     process.env,
     new Date().toISOString(),
   ),
-}, createOpenAIProviderFromEnv(process.env));
+}, createAIProviderFromEnv(process.env));
 
 const changedLinesByFile = new Map(
   reviewableFiles.map((file) => [file.filename, getChangedLines(file.patch)]),
