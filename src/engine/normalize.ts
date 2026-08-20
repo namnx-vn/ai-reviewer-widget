@@ -14,7 +14,9 @@ export function normalizeAIFindings(
       id: `ai-${index + 1}`,
 
       ruleId:
-        "ai.semantic-review",
+        finding.agent === undefined
+          ? "ai.semantic-review"
+          : `ai.${finding.agent}-review`,
 
       title:
         finding.title,
