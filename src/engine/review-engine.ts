@@ -70,6 +70,13 @@ export class ReviewEngine {
           normalizeAIFindings(
             aiResult,
           );
+
+        warnings.push(
+          ...(aiResult.warnings ?? []).map((warning) => ({
+            code: warning.code,
+            message: warning.message,
+          })),
+        );
       } catch {
         warnings.push({
           code: "AI_REVIEW_FAILED",
