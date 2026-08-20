@@ -1,10 +1,24 @@
+import { MultiAgentAIProvider } from "./multi-agent-provider";
 import { OpenAIProvider } from "./openai-provider";
+import type { AIProvider } from "./types";
 
 export type AIEnvironment = Readonly<Record<string, string | undefined>>;
 
 const DEFAULT_MODEL = "gpt-4o-mini";
 const DEFAULT_BASE_URL = "https://api.openai.com/v1";
 const DEFAULT_TIMEOUT_MS = 15_000;
+
+export function createAIProviderFromEnv(
+  environment: AIEnvironment = process.env,
+): AIProvider | undefined {
+  const provider = createOpenAIProviderFromEnv(environment);
+  if (!provider) return undefined;
+
+  const reviewMode = parseReviewMode(environment.AI_REVIEW_MODE);
+  return reviewMode === "multi-agent"
+    ? new MultiAgentAIProvider(provider)
+    : provider;
+}
 
 export function createOpenAIProviderFromEnv(
   environment: AIEnvironment = process.env,
@@ -33,6 +47,17 @@ export function createOpenAIProviderFromEnv(
     baseUrl,
     timeoutMs: parseTimeout(environment.AI_TIMEOUT_MS),
   });
+}
+
+function parseReviewMode(value: string | undefined): "single" | "multi-agent" {
+  if (value === undefined || value.trim().length === 0) return "single";
+
+  const reviewMode = value.trim();
+  if (reviewMode === "single" || reviewMode === "multi-agent") {
+    return reviewMode;
+  }
+
+  throw new Error("AI_REVIEW_MODE must be either single or multi-agent.");
 }
 
 function parseTimeout(value: string | undefined): number {
