@@ -53,6 +53,7 @@ export interface ReviewStats {
 
 export type ReviewWarningCode =
   | "AI_REVIEW_FAILED"
+  | "AI_AGENT_FAILED"
   | "AI_INPUT_OMITTED"
   | "AI_INPUT_REDACTED"
   | "AI_INPUT_TRUNCATED"
