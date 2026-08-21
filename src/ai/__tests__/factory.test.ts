@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { createOpenAIProviderFromEnv } from "../factory";
+import {
+  createAIProviderFromEnv,
+  createOpenAIProviderFromEnv,
+} from "../factory";
 
 describe("createOpenAIProviderFromEnv", () => {
   it("does not create a provider without an API key", () => {
@@ -36,5 +39,29 @@ describe("createOpenAIProviderFromEnv", () => {
       AI_API_KEY: "key",
       AI_TIMEOUT_MS: "500",
     })).toThrow(/AI_TIMEOUT_MS/);
+  });
+});
+
+describe("createAIProviderFromEnv", () => {
+  it("keeps single-agent review as the default", () => {
+    const provider = createAIProviderFromEnv({ AI_API_KEY: "key" });
+
+    expect(provider?.name).toBe("openai");
+  });
+
+  it("creates the multi-agent orchestrator when explicitly enabled", () => {
+    const provider = createAIProviderFromEnv({
+      AI_API_KEY: "key",
+      AI_REVIEW_MODE: "multi-agent",
+    });
+
+    expect(provider?.name).toBe("openai:multi-agent");
+  });
+
+  it("rejects unsupported review modes", () => {
+    expect(() => createAIProviderFromEnv({
+      AI_API_KEY: "key",
+      AI_REVIEW_MODE: "swarm",
+    })).toThrow(/AI_REVIEW_MODE/);
   });
 });
