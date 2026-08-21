@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { MultiAgentAIProvider } from "../multi-agent-provider";
 import type {
   AIProvider,
+  AIReviewAgentId,
   AIReviewInput,
   AIReviewResult,
 } from "../types";
@@ -78,11 +79,7 @@ describe("MultiAgentAIProvider", () => {
 });
 
 function resultForAgent(
-  agent: AIReviewInput["focus"] extends infer Focus
-    ? Focus extends { agent: infer Agent }
-      ? Agent
-      : never
-    : never,
+  agent: AIReviewAgentId | undefined,
 ): AIReviewResult {
   if (agent === "security") {
     return {
