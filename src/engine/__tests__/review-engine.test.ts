@@ -67,6 +67,44 @@ describe("ReviewEngine", () => {
     }]);
   });
 
+  it("keeps successful specialist findings and warnings from partial failures", async () => {
+    const provider: AIProvider = {
+      name: "test:multi-agent",
+      review: async () => ({
+        findings: [{
+          title: "Unsafe authorization boundary",
+          message: "The route trusts a client-controlled role.",
+          severity: "high",
+          confidence: 0.95,
+          file: "src/api.ts",
+          line: 12,
+          agent: "security",
+        }],
+        warnings: [{
+          code: "AI_AGENT_FAILED",
+          agent: "react",
+          message: "react AI review agent was unavailable; other review results were retained.",
+        }],
+      }),
+    };
+
+    const result = await new ReviewEngine().execute({
+      deterministicFindings: [],
+      aiProvider: provider,
+      aiInput: {
+        pullRequestTitle: "Test",
+        diff: "",
+        deterministicFindings: "[]",
+      },
+    });
+
+    expect(result.findings[0]?.ruleId).toBe("ai.security-review");
+    expect(result.warnings).toEqual([{
+      code: "AI_AGENT_FAILED",
+      message: "react AI review agent was unavailable; other review results were retained.",
+    }]);
+  });
+
   it("keeps high-confidence AI findings and downgrades low-confidence ones", async () => {
     const provider: AIProvider = {
       name: "test",
