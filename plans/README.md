@@ -113,6 +113,14 @@ Status: ✅ Completed for the currently defined scope
 
 ---
 
+# R1 — Source Architecture Refactor
+
+Status: 📌 Next
+
+[Source Architecture Refactor](./source-architecture-refactor.md)
+
+---
+
 # Status Legend
 
 | Status | Meaning |

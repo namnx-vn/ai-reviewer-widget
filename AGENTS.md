@@ -131,6 +131,7 @@ Detailed plans are maintained in `/plans`.
 | 3.6    | ✅ Complete    | [Security](./plans/phase-3/3.6-security-intelligence/README.md)                        |
 | 3.7    | ✅ Complete    | [Performance](./plans/phase-3/3.7-performance-intelligence/README.md)                  |
 | 3.8    | ✅ Complete    | [Plugin SDK](./plans/phase-3/3.8-plugin-sdk.md)                                        |
+| R1     | 📌 Next        | [Source Architecture Refactor](./plans/source-architecture-refactor.md)                |
 
 ## Plan Execution Rule
 
@@ -236,8 +237,8 @@ Do not change the technology stack without explicit authorization.
 
 ## Frontend
 
-- React 18
-- React DOM 18
+- React 19
+- React DOM 19
 - Vite
 - @vitejs/plugin-react-swc
 
@@ -373,6 +374,57 @@ Do not create random top-level directories.
 New modules must belong to an existing architectural boundary
 unless a new boundary is genuinely required.
 
+## Target Maintainable Source Structure
+
+The current repo already has useful boundaries (`ai`, `analyzer`, `engine`,
+`github`, `review`, `react`, `mfe`, `plugins`, `cli`, `components`). Future
+large refactors should evolve those boundaries toward an explicit
+domain/application/adapters structure without breaking public exports.
+
+Recommended target:
+
+```text
+src/
+├── domain/
+│   └── review/          # ReviewFinding, ReviewResult, scoring, decisions, aggregation
+├── application/
+│   └── review/          # reviewFiles/reviewPullRequest use cases and ports
+├── analyzer/            # deterministic AST, architecture, security, performance analyzers
+├── react/               # React-specific deterministic intelligence
+├── mfe/                 # micro-frontend deterministic intelligence
+├── ai/                  # LLM providers, prompts, parser, input policy adapter
+├── github/              # GitHub PR/check/comment adapter
+├── cli/                 # local CLI adapter and process-independent IO
+├── plugins/             # extension contracts, registry, and runtime
+└── ui/                  # browser app, feature presentation, and shared components
+```
+
+Migration rules:
+
+- Move behavior incrementally; preserve compatibility re-exports from existing
+  files such as `src/review/types.ts`, `src/review/reviewer.ts`, and
+  `src/engine/review-engine.ts` until dependents are migrated.
+- `domain/` must not import from `application/`, `ai/`, `github/`, `ui/`,
+  `cli/`, `scripts/`, plugins, or concrete analyzers.
+- `application/` may coordinate ports and use cases, but infrastructure must be
+  injected rather than imported through unrelated modules.
+- `analyzer/`, `react/`, and `mfe/` may depend on domain contracts and shared
+  analyzer primitives, but must not depend on application use cases or
+  infrastructure adapters.
+- `ai/`, `github/`, `plugins/`, and `cli/` must integrate through application
+  ports or the composition root rather than create alternate review pipelines.
+- `ui/` must stay presentation/composition only and must not
+  parse ASTs, call LLMs, call GitHub, or calculate review scores.
+- Cross-boundary imports must use the owning boundary's public entry point.
+  Deep imports are allowed only within the same subsystem.
+- CLI, GitHub automation, plugins, tests, and future APIs must use one shared
+  application review pipeline.
+- Structural waves must preserve findings, warning codes, scores, decisions,
+  quality-gate results, CLI exit codes, and GitHub output unless the active plan
+  explicitly authorizes a behavior change.
+- Avoid big-bang file moves. Each refactor step must keep
+  `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build` green.
+
 ---
 
 # 7. Architecture
@@ -485,6 +537,39 @@ Keep domain models independent from UI and GitHub.
 
 ---
 
+## domain/
+
+Target location for framework-independent review contracts and pure policies.
+
+Examples:
+
+- ReviewFinding, ReviewResult, and ReviewWarning
+- scoring and decision policies
+- finding aggregation, merge, deduplication, confidence, and severity policies
+
+The domain must be deterministic, side-effect free, and independent of
+application and infrastructure code.
+
+---
+
+## application/
+
+Target location for review use cases, ports, and orchestration.
+
+Examples:
+
+- review files
+- review a pull request
+- run registered deterministic analyzers
+- invoke optional AI review through a port
+- apply quality gates
+- construct the final ReviewResult
+
+Application code owns sequencing but must not contain Octokit, filesystem,
+terminal, DOM, or concrete AI HTTP implementation details.
+
+---
+
 ## github/
 
 Responsible for GitHub integration.
@@ -518,9 +603,10 @@ React rules must NOT be mixed into generic AST rules.
 
 ---
 
-## components/
+## components/ and ui/
 
-Responsible for presentation/UI.
+`components/` is the legacy presentation location. New feature-oriented browser
+code belongs under `ui/`; existing components migrate incrementally.
 
 UI components must not contain:
 
@@ -537,11 +623,9 @@ Keep business logic outside React components.
 
 Preferred dependency direction:
 
-components
+ui / cli / GitHub entry points
 ↓
-application / orchestration
-↓
-engine
+application
 ↓
 domain
 
@@ -550,9 +634,10 @@ Infrastructure:
 github
 ai
 analyzer
+plugins
 
-must be injected into orchestration rather than deeply imported
-through unrelated modules.
+must implement or be supplied through application ports rather than being
+deeply imported through unrelated modules.
 
 Avoid circular dependencies.
 
