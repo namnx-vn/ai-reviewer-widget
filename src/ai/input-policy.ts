@@ -10,8 +10,25 @@ export interface PreparedAIInput {
   readonly truncated: boolean;
 }
 
+export interface AIReviewContextInput {
+  readonly title: string;
+  readonly description?: string;
+  readonly deterministicFindings: string;
+  readonly files: readonly AIReviewPatch[];
+}
+
+export interface PreparedAIReviewContext extends PreparedAIInput {
+  readonly title: string;
+  readonly description?: string;
+  readonly deterministicFindings: string;
+}
+
 const MAX_PATCH_CHARACTERS = 30_000;
 const MAX_TOTAL_CHARACTERS = 120_000;
+const MAX_TITLE_CHARACTERS = 500;
+const MAX_DESCRIPTION_CHARACTERS = 10_000;
+const MAX_FINDINGS_CHARACTERS = 30_000;
+const MAX_PATH_CHARACTERS = 1_000;
 const PRIVATE_KEY_PATTERN = /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g;
 const ASSIGNMENT_SECRET_PATTERN = /\b(api[_-]?key|token|secret|password|authorization|database[_-]?url)\b(["']?\s*[:=]\s*["']?)([^\s"',;}]+)/gi;
 const BEARER_PATTERN = /\bBearer\s+[A-Za-z0-9._~+/=-]+/gi;
@@ -31,10 +48,11 @@ export function prepareAIReviewDiff(
     }
 
     const redacted = redactPatch(file.patch);
-    redactedValues += redacted.count;
+    const path = prepareText(file.path, MAX_PATH_CHARACTERS);
+    redactedValues += redacted.count + path.redactedValues;
     const limitedPatch = redacted.value.slice(0, MAX_PATCH_CHARACTERS);
-    truncated = truncated || limitedPatch.length < redacted.value.length;
-    sections.push(`FILE: ${file.path}\n${limitedPatch}`);
+    truncated = truncated || limitedPatch.length < redacted.value.length || path.truncated;
+    sections.push(`FILE: ${path.value}\n${limitedPatch}`);
   }
 
   const combined = sections.join("\n\n");
@@ -46,6 +64,36 @@ export function prepareAIReviewDiff(
     omittedFiles,
     redactedValues,
     truncated,
+  };
+}
+
+/** Applies the outbound AI data policy to every external string field. */
+export function prepareAIReviewContext(
+  input: AIReviewContextInput,
+): PreparedAIReviewContext {
+  const preparedDiff = prepareAIReviewDiff(input.files);
+  const title = prepareText(input.title, MAX_TITLE_CHARACTERS);
+  const description = input.description === undefined
+    ? undefined
+    : prepareText(input.description, MAX_DESCRIPTION_CHARACTERS);
+  const deterministicFindings = prepareText(
+    input.deterministicFindings,
+    MAX_FINDINGS_CHARACTERS,
+  );
+
+  return {
+    ...preparedDiff,
+    title: title.value,
+    description: description?.value,
+    deterministicFindings: deterministicFindings.value,
+    redactedValues: preparedDiff.redactedValues
+      + title.redactedValues
+      + (description?.redactedValues ?? 0)
+      + deterministicFindings.redactedValues,
+    truncated: preparedDiff.truncated
+      || title.truncated
+      || (description?.truncated ?? false)
+      || deterministicFindings.truncated,
   };
 }
 
@@ -65,4 +113,21 @@ function redactPatch(source: string): { readonly value: string; readonly count: 
     },
   );
   return { value, count };
+}
+
+function prepareText(
+  source: string,
+  maximumCharacters: number,
+): {
+  readonly value: string;
+  readonly redactedValues: number;
+  readonly truncated: boolean;
+} {
+  const redacted = redactPatch(source);
+  const value = redacted.value.slice(0, maximumCharacters);
+  return {
+    value,
+    redactedValues: redacted.count,
+    truncated: value.length < redacted.value.length,
+  };
 }
