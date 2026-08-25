@@ -1,8 +1,12 @@
-import { analyzeFilesWithWarnings } from "../analyzer";
-import { ReactEngine } from "../react/engine";
-import type { ReviewFinding, ReviewWarning } from "../review/types";
+import {
+  BUILT_IN_ANALYZER_ORDER,
+  createDeterministicAnalyzerAdapter,
+  createReactAnalyzerContribution,
+  type AnalyzerContribution,
+} from "../analyzer";
+import type { ReviewFinding, ReviewWarning } from "../domain/review";
 import type { PluginRegistry } from "./registry";
-import type { PluginSourceFile } from "./types";
+import type { PluginRegistrySnapshot, PluginSourceFile } from "./types";
 
 export interface PluginAnalysisResult {
   readonly findings: ReviewFinding[];
@@ -14,29 +18,40 @@ export function analyzeWithPlugins(
   registry: PluginRegistry,
 ): PluginAnalysisResult {
   const snapshot = registry.snapshot();
-  const coreAnalysis = analyzeFilesWithWarnings(files, snapshot.astRules);
-  const contributedAnalyses = snapshot.analyzers.map((analyzer) =>
-    analyzer.analyze(files));
-  const reactAnalyses = snapshot.reactPlugins.length === 0
-    ? []
-    : files
-      .filter((file) => /\.(tsx|jsx)$/.test(file.path))
-      .map((file) => new ReactEngine().analyzeWithWarnings({
-        file: file.path,
-        source: file.content,
-        plugins: snapshot.reactPlugins,
-      }));
+  const contributions = createPluginAnalyzerContributions(snapshot);
+  const analysis = createDeterministicAnalyzerAdapter({
+    astRules: snapshot.astRules,
+    contributions,
+  }).analyze(files);
 
   return {
-    findings: [
-      ...coreAnalysis.findings,
-      ...contributedAnalyses.flatMap((analysis) => analysis.findings),
-      ...reactAnalyses.flatMap((analysis) => analysis.findings),
-    ],
-    warnings: [
-      ...coreAnalysis.warnings,
-      ...contributedAnalyses.flatMap((analysis) => analysis.warnings ?? []),
-      ...reactAnalyses.flatMap((analysis) => analysis.warnings),
-    ],
+    findings: [...analysis.findings],
+    warnings: [...analysis.warnings],
   };
+}
+
+export function createPluginAnalyzerContributions(
+  snapshot: PluginRegistrySnapshot,
+): readonly AnalyzerContribution[] {
+  const contributions: AnalyzerContribution[] = snapshot.analyzers.map(
+    (analyzer) => ({
+      id: analyzer.id,
+      order: BUILT_IN_ANALYZER_ORDER.pluginAnalyzer,
+      analyze(sourceFiles) {
+        const analysis = analyzer.analyze(sourceFiles);
+        return {
+          findings: analysis.findings,
+          warnings: analysis.warnings ?? [],
+        };
+      },
+    }),
+  );
+  if (snapshot.reactPlugins.length > 0) {
+    contributions.push(createReactAnalyzerContribution(
+      "plugin.react",
+      BUILT_IN_ANALYZER_ORDER.pluginReact,
+      () => snapshot.reactPlugins,
+    ));
+  }
+  return contributions;
 }

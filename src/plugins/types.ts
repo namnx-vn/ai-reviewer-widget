@@ -5,7 +5,7 @@ import type {
   ReviewFinding,
   ReviewResult,
   ReviewWarning,
-} from "../review/types";
+} from "../domain/review";
 
 export interface PluginMetadata {
   readonly id: string;
