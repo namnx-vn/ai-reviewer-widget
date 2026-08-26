@@ -2,7 +2,7 @@ import { Octokit } from "@octokit/rest";
 
 import type {
   ReviewResult,
-} from "../review/types";
+} from "../domain/review";
 
 export async function createCheckRun(
   octokit: Octokit,

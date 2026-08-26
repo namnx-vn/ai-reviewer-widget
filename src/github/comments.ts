@@ -1,6 +1,6 @@
 import { Octokit } from "@octokit/rest";
 
-import type { ReviewFinding } from "../review/types";
+import type { ReviewFinding } from "../domain/review";
 
 export interface InlineComment {
   path: string;

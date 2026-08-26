@@ -1,7 +1,7 @@
 import { existsSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { reviewFiles } from "../review/reviewer";
-import type { ReviewFinding, ReviewResult } from "../review/types";
+import { createDefaultReviewUseCases } from "../application/review";
+import type { ReviewFinding, ReviewResult } from "../domain/review";
 import { parseCliArgs } from "./args";
 import { collectDiffFiles, collectTargetFiles, collectWorkspaceFiles } from "./files";
 
@@ -36,7 +36,7 @@ export function runCli(args: readonly string[], io: CliIO): number {
           return 0;
         }
 
-        const result = reviewFiles(files);
+        const result = createDefaultReviewUseCases().reviewFiles(files);
         io.stdout(formatReviewResult(result));
         return result.decision === "FAIL" ? 1 : 0;
       }

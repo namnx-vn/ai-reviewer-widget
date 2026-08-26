@@ -1,21 +1,21 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { relative, resolve } from "node:path";
-import type { ReviewFile } from "../review/reviewer";
+import type { SourceFile } from "../application/review";
 
 const SOURCE_FILE_PATTERN = /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/;
 const IGNORED_DIRECTORIES = new Set([".git", "dist", "node_modules", "coverage"]);
 
-export function collectWorkspaceFiles(cwd: string): ReviewFile[] {
+export function collectWorkspaceFiles(cwd: string): SourceFile[] {
   return collectPathFiles(cwd, cwd);
 }
 
-export function collectTargetFiles(cwd: string, targetPath: string): ReviewFile[] {
+export function collectTargetFiles(cwd: string, targetPath: string): SourceFile[] {
   const absolutePath = resolve(cwd, targetPath);
   return collectPathFiles(absolutePath, cwd);
 }
 
-export function collectDiffFiles(cwd: string): ReviewFile[] {
+export function collectDiffFiles(cwd: string): SourceFile[] {
   const output = execFileSync(
     "git",
     ["diff", "--name-only", "--diff-filter=ACMR", "HEAD", "--"],
@@ -29,7 +29,7 @@ export function collectDiffFiles(cwd: string): ReviewFile[] {
     .map((path) => readReviewFile(resolve(cwd, path), cwd));
 }
 
-function collectPathFiles(path: string, cwd: string): ReviewFile[] {
+function collectPathFiles(path: string, cwd: string): SourceFile[] {
   const stats = statSync(path);
   if (stats.isFile()) {
     return SOURCE_FILE_PATTERN.test(path) ? [readReviewFile(path, cwd)] : [];
@@ -42,7 +42,7 @@ function collectPathFiles(path: string, cwd: string): ReviewFile[] {
     .flatMap((entry) => collectPathFiles(resolve(path, entry.name), cwd));
 }
 
-function readReviewFile(path: string, cwd: string): ReviewFile {
+function readReviewFile(path: string, cwd: string): SourceFile {
   return {
     path: normalizePath(relative(cwd, path)),
     content: readFileSync(path, "utf-8"),

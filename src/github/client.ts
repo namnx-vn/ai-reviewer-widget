@@ -3,7 +3,7 @@ import { Octokit } from "@octokit/rest";
 import { createCheckRun } from "./check-run";
 import { createPullRequestReview } from "./comments";
 import type { PullRequestContext, PullRequestFile } from "./pull-request";
-import type { ReviewFinding, ReviewResult } from "../review/types";
+import type { ReviewFinding, ReviewResult } from "../domain/review";
 
 export class GitHubClient {
   private readonly octokit: Octokit;
