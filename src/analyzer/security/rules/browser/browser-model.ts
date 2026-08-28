@@ -9,6 +9,24 @@ import type {
 } from "../../flow";
 import type { SecuritySinkKind } from "../../model/types";
 
+import {
+  argumentAt,
+  isJavascriptUrl,
+  memberPath,
+  normalizeAttributeName,
+  propertyName,
+  staticString,
+  visit,
+} from "./browser-syntax";
+import {
+  buildModelState,
+  callableIdentity,
+  isWindowLike,
+  resolveGlobal,
+  type BrowserModelState,
+  type ImportedCallable,
+} from "./browser-state";
+
 export type BrowserFlowTarget =
   | "inner-html"
   | "outer-html"
@@ -25,26 +43,6 @@ export interface BrowserStructuralMatch {
   readonly sinkKind: SecuritySinkKind;
 }
 
-type BrowserGlobal =
-  | "window"
-  | "document"
-  | "location"
-  | "localStorage"
-  | "sessionStorage";
-
-interface ImportedCallable {
-  readonly module: string;
-  readonly imported: string;
-}
-
-interface BrowserModelState {
-  readonly shadowedGlobals: ReadonlySet<string>;
-  readonly globalAliases: ReadonlyMap<string, BrowserGlobal>;
-  readonly namespaces: ReadonlyMap<string, string>;
-  readonly callables: ReadonlyMap<string, ImportedCallable>;
-  readonly messageBindings: ReadonlySet<string>;
-}
-
 const BROWSER_TAINT_KINDS: readonly TaintKind[] = [
   "html",
   "url",
@@ -52,19 +50,6 @@ const BROWSER_TAINT_KINDS: readonly TaintKind[] = [
   "window-open",
   "origin",
 ];
-const TRACKED_GLOBALS = new Set([
-  "window",
-  "document",
-  "location",
-  "localStorage",
-  "sessionStorage",
-  "parent",
-  "top",
-  "opener",
-  "open",
-  "postMessage",
-  "DOMPurify",
-]);
 const URL_PROPERTIES = new Set(["href", "src", "action", "formAction"]);
 const HTML_MODULES = new Set(["dompurify", "sanitize-html", "xss"]);
 const URL_SANITIZER_MODULE = "@braintree/sanitize-url";
@@ -578,126 +563,6 @@ function javascriptUrlSink(
   return undefined;
 }
 
-function buildModelState(ast: TSESTree.Program): BrowserModelState {
-  const declarations = new Map<string, number>();
-  const namespaces = new Map<string, string>();
-  const callables = new Map<string, ImportedCallable>();
-
-  visit(ast, (node) => {
-    collectDeclarations(node, declarations);
-
-    if (node.type !== "ImportDeclaration") {
-      return;
-    }
-
-    const module = stringLiteralValue(node.source);
-    if (module === undefined) {
-      return;
-    }
-
-    for (const specifier of node.specifiers) {
-      if (specifier.type === "ImportNamespaceSpecifier") {
-        namespaces.set(specifier.local.name, module);
-        continue;
-      }
-
-      if (specifier.type === "ImportDefaultSpecifier") {
-        namespaces.set(specifier.local.name, module);
-        callables.set(specifier.local.name, { module, imported: "default" });
-        continue;
-      }
-
-      const imported = nodeName(specifier.imported);
-      if (imported !== undefined) {
-        callables.set(specifier.local.name, { module, imported });
-      }
-    }
-  });
-
-  const shadowedGlobals = new Set(
-    [...declarations.keys()].filter((name) => TRACKED_GLOBALS.has(name)),
-  );
-  const globalAliases = new Map<string, BrowserGlobal>();
-  const messageBindings = new Set<string>();
-  const provisional: BrowserModelState = {
-    shadowedGlobals,
-    globalAliases,
-    namespaces,
-    callables,
-    messageBindings,
-  };
-
-  visit(ast, (node) => {
-    if (
-      node.type === "VariableDeclarator" &&
-      node.id.type === "Identifier" &&
-      node.init !== null &&
-      (declarations.get(node.id.name) ?? 0) === 1
-    ) {
-      const global = resolveGlobal(node.init, provisional);
-      if (global !== undefined) {
-        globalAliases.set(node.id.name, global);
-      }
-    }
-
-    collectMessageBinding(node, provisional, messageBindings);
-  });
-
-  return provisional;
-}
-
-function collectMessageBinding(
-  node: TSESTree.Node,
-  state: BrowserModelState,
-  output: Set<string>,
-): void {
-  if (node.type === "CallExpression") {
-    const eventType = argumentAt(node, 0);
-    const callback = argumentAt(node, 1);
-    if (
-      staticString(eventType ?? node) === "message" &&
-      callback !== undefined &&
-      isFunction(callback) &&
-      isMessageListenerCallee(node.callee, state)
-    ) {
-      const first = callback.params[0];
-      if (first?.type === "Identifier") {
-        output.add(first.name);
-      }
-    }
-  }
-
-  if (
-    node.type === "AssignmentExpression" &&
-    node.left.type === "MemberExpression" &&
-    propertyName(node.left.property, node.left.computed) === "onmessage" &&
-    isWindowLike(node.left.object, state) &&
-    isFunction(node.right)
-  ) {
-    const first = node.right.params[0];
-    if (first?.type === "Identifier") {
-      output.add(first.name);
-    }
-  }
-}
-
-function isMessageListenerCallee(
-  node: TSESTree.Node,
-  state: BrowserModelState,
-): boolean {
-  if (node.type === "Identifier") {
-    return (
-      node.name === "addEventListener" && !state.shadowedGlobals.has(node.name)
-    );
-  }
-
-  return (
-    node.type === "MemberExpression" &&
-    propertyName(node.property, node.computed) === "addEventListener" &&
-    isWindowLike(node.object, state)
-  );
-}
-
 function isPostMessageCall(
   node: TSESTree.CallExpression,
   state: BrowserModelState,
@@ -801,78 +666,6 @@ function isLocationAssignmentTarget(
   );
 }
 
-function isWindowLike(node: TSESTree.Node, state: BrowserModelState): boolean {
-  const expression = unwrapChain(node);
-  if (resolveGlobal(expression, state) === "window") {
-    return true;
-  }
-
-  return (
-    expression.type === "Identifier" &&
-    new Set(["parent", "top", "opener"]).has(expression.name) &&
-    !state.shadowedGlobals.has(expression.name)
-  );
-}
-
-function resolveGlobal(
-  node: TSESTree.Node,
-  state: BrowserModelState,
-): BrowserGlobal | undefined {
-  const expression = unwrapChain(node);
-
-  if (expression.type === "Identifier") {
-    const alias = state.globalAliases.get(expression.name);
-    if (alias !== undefined) {
-      return alias;
-    }
-
-    if (state.shadowedGlobals.has(expression.name)) {
-      return undefined;
-    }
-
-    if (
-      expression.name === "window" ||
-      expression.name === "document" ||
-      expression.name === "location" ||
-      expression.name === "localStorage" ||
-      expression.name === "sessionStorage"
-    ) {
-      return expression.name;
-    }
-
-    if (
-      expression.name === "parent" ||
-      expression.name === "top" ||
-      expression.name === "opener"
-    ) {
-      return "window";
-    }
-
-    return undefined;
-  }
-
-  if (expression.type !== "MemberExpression") {
-    return undefined;
-  }
-
-  const owner = resolveGlobal(expression.object, state);
-  const property = propertyName(expression.property, expression.computed);
-  if (owner !== "window" || property === undefined) {
-    return undefined;
-  }
-
-  if (
-    property === "document" ||
-    property === "location" ||
-    property === "localStorage" ||
-    property === "sessionStorage"
-  ) {
-    return property;
-  }
-
-  return undefined;
-}
-
 function isDomPurifySanitizer(
   identity: ImportedCallable | undefined,
   path: readonly string[] | undefined,
@@ -922,34 +715,6 @@ function isHtmlSanitizerIdentity(
   return false;
 }
 
-function callableIdentity(
-  node: TSESTree.Node,
-  state: BrowserModelState,
-): ImportedCallable | undefined {
-  const expression = unwrapChain(node);
-  if (expression.type === "Identifier") {
-    return state.callables.get(expression.name);
-  }
-
-  if (expression.type !== "MemberExpression") {
-    return undefined;
-  }
-
-  const path = memberPath(expression);
-  if (path === undefined || path.length < 2) {
-    return undefined;
-  }
-
-  const root = path[0];
-  const imported = path[path.length - 1];
-  if (root === undefined || imported === undefined) {
-    return undefined;
-  }
-
-  const module = state.namespaces.get(root);
-  return module === undefined ? undefined : { module, imported };
-}
-
 function argumentSink(
   node: TSESTree.CallExpression,
   index: number,
@@ -959,207 +724,4 @@ function argumentSink(
 ): readonly TaintSink[] {
   const value = argumentAt(node, index);
   return value === undefined ? [] : [{ family, node, value, label, sinkKind }];
-}
-
-function argumentAt(
-  node: TSESTree.CallExpression,
-  index: number,
-): TSESTree.Node | undefined {
-  const argument = node.arguments[index];
-  return argument === undefined || argument.type === "SpreadElement"
-    ? undefined
-    : argument;
-}
-
-function normalizeAttributeName(value: string): string {
-  return value === "formaction" ? "formAction" : value.toLowerCase();
-}
-
-function isJavascriptUrl(node: TSESTree.Node): boolean {
-  const value = staticString(node);
-  return (
-    value !== undefined &&
-    value.trimStart().toLowerCase().startsWith("javascript:")
-  );
-}
-
-function staticString(node: TSESTree.Node): string | undefined {
-  const expression = unwrapChain(node);
-  if (expression.type === "Literal") {
-    return typeof expression.value === "string" ? expression.value : undefined;
-  }
-
-  if (
-    expression.type === "TemplateLiteral" &&
-    expression.expressions.length === 0
-  ) {
-    return expression.quasis
-      .map((quasi) => quasi.value.cooked ?? quasi.value.raw)
-      .join("");
-  }
-
-  if (expression.type === "BinaryExpression" && expression.operator === "+") {
-    const left = staticString(expression.left);
-    const right = staticString(expression.right);
-    return left === undefined || right === undefined ? undefined : left + right;
-  }
-
-  return undefined;
-}
-
-function collectDeclarations(
-  node: TSESTree.Node,
-  declarations: Map<string, number>,
-): void {
-  if (node.type === "VariableDeclarator") {
-    collectPatternNames(node.id, declarations);
-  }
-  if (node.type === "FunctionDeclaration" && node.id !== null) {
-    addDeclaration(node.id.name, declarations);
-  }
-  if (node.type === "ClassDeclaration" && node.id !== null) {
-    addDeclaration(node.id.name, declarations);
-  }
-  if (node.type === "ImportDeclaration") {
-    for (const specifier of node.specifiers) {
-      addDeclaration(specifier.local.name, declarations);
-    }
-  }
-  if (node.type === "CatchClause" && node.param !== null) {
-    collectPatternNames(node.param, declarations);
-  }
-  if (isFunction(node)) {
-    for (const parameter of node.params) {
-      collectPatternNames(parameter, declarations);
-    }
-  }
-}
-
-function collectPatternNames(
-  pattern: TSESTree.Node,
-  declarations: Map<string, number>,
-): void {
-  switch (pattern.type) {
-    case "Identifier":
-      addDeclaration(pattern.name, declarations);
-      return;
-    case "AssignmentPattern":
-      collectPatternNames(pattern.left, declarations);
-      return;
-    case "RestElement":
-      collectPatternNames(pattern.argument, declarations);
-      return;
-    case "ArrayPattern":
-      for (const element of pattern.elements) {
-        if (element !== null) {
-          collectPatternNames(element, declarations);
-        }
-      }
-      return;
-    case "ObjectPattern":
-      for (const property of pattern.properties) {
-        if (property.type === "RestElement") {
-          collectPatternNames(property.argument, declarations);
-        } else {
-          collectPatternNames(property.value, declarations);
-        }
-      }
-      return;
-  }
-}
-
-function addDeclaration(name: string, declarations: Map<string, number>): void {
-  declarations.set(name, (declarations.get(name) ?? 0) + 1);
-}
-
-function memberPath(node: TSESTree.Node): readonly string[] | undefined {
-  const expression = unwrapChain(node);
-  if (expression.type === "Identifier") {
-    return [expression.name];
-  }
-  if (expression.type !== "MemberExpression") {
-    return undefined;
-  }
-
-  const object = memberPath(expression.object);
-  const property = propertyName(expression.property, expression.computed);
-  return object === undefined || property === undefined
-    ? undefined
-    : [...object, property];
-}
-
-function propertyName(
-  node: TSESTree.Node,
-  computed: boolean,
-): string | undefined {
-  if (!computed && node.type === "Identifier") {
-    return node.name;
-  }
-  return stringLiteralValue(node);
-}
-
-function nodeName(node: TSESTree.Node): string | undefined {
-  return node.type === "Identifier" ? node.name : stringLiteralValue(node);
-}
-
-function stringLiteralValue(node: TSESTree.Node): string | undefined {
-  return node.type === "Literal" && typeof node.value === "string"
-    ? node.value
-    : undefined;
-}
-
-function unwrapChain(node: TSESTree.Node): TSESTree.Node {
-  return node.type === "ChainExpression" ? node.expression : node;
-}
-
-function isFunction(
-  node: TSESTree.Node,
-): node is
-  | TSESTree.FunctionExpression
-  | TSESTree.ArrowFunctionExpression
-  | TSESTree.FunctionDeclaration {
-  return (
-    node.type === "FunctionExpression" ||
-    node.type === "ArrowFunctionExpression" ||
-    node.type === "FunctionDeclaration"
-  );
-}
-
-function visit(
-  node: TSESTree.Node,
-  visitor: (node: TSESTree.Node) => void,
-): void {
-  visitor(node);
-
-  const children: TSESTree.Node[] = [];
-  for (const value of Object.values(node)) {
-    if (isNode(value)) {
-      children.push(value);
-    } else if (Array.isArray(value)) {
-      for (const item of value) {
-        if (isNode(item)) {
-          children.push(item);
-        }
-      }
-    }
-  }
-
-  children.sort(
-    (left, right) =>
-      (left.range?.[0] ?? Number.MAX_SAFE_INTEGER) -
-      (right.range?.[0] ?? Number.MAX_SAFE_INTEGER),
-  );
-
-  for (const child of children) {
-    visit(child, visitor);
-  }
-}
-
-function isNode(value: unknown): value is TSESTree.Node {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "type" in value &&
-    typeof value.type === "string"
-  );
 }
