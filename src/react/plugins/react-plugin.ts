@@ -6,6 +6,13 @@ import { reactHooksMissingDepsRule } from "../rules/hooks/missing-deps";
 import { reactHooksStaleClosureRule } from "../rules/hooks/stale-closure";
 import { reactHooksUnnecessaryEffectRule } from "../rules/hooks/unnecessary-effect";
 import {
+  reactPerformanceExpensiveRenderWorkRule,
+  reactPerformanceRepeatedDerivedComputationRule,
+  reactPerformanceRenderTimeConstructionRule,
+  reactPerformanceTrivialUseMemoRule,
+  reactPerformanceUnboundedListRenderRule,
+} from "../rules/performance";
+import {
   reactRenderingCallbackMisuseRule,
   reactRenderingKeyMisuseRule,
   reactRenderingMemoBoundaryRule,
@@ -23,7 +30,7 @@ import {
 export const reactPlugin: ReactPlugin = {
   id: "react",
   name: "React",
-  version: "3.4.5",
+  version: "3.4.6",
   rules: [
     reactHooksMissingDepsRule,
     reactHooksStaleClosureRule,
@@ -41,5 +48,10 @@ export const reactPlugin: ReactPlugin = {
     reactStateDerivedStateRule,
     reactStateRedundantStateRule,
     reactStateSynchronizationRule,
+    reactPerformanceExpensiveRenderWorkRule,
+    reactPerformanceUnboundedListRenderRule,
+    reactPerformanceTrivialUseMemoRule,
+    reactPerformanceRepeatedDerivedComputationRule,
+    reactPerformanceRenderTimeConstructionRule,
   ],
 };
