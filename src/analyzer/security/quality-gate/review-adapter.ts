@@ -1,4 +1,4 @@
-import type { ReviewFinding } from "../../../review/types";
+import type { ReviewFinding } from "../../../domain/review";
 import type { SecurityConfidence } from "../model/types";
 import { evaluateSecurityQualityGate } from "./quality-gate";
 import type {

@@ -1,4 +1,4 @@
-import type { ReviewResult } from "./types";
+import type { ReviewResult } from "../domain/review";
 
 export function formatReviewComment(result: ReviewResult): string {
   const { score, stats } = result;

@@ -6,7 +6,7 @@ import type {
   ReviewFinding,
   ReviewResult,
   ReviewWarning,
-} from "../review/types";
+} from "../domain/review";
 
 import {
   mergeFindings,
@@ -26,7 +26,7 @@ import {
 
 import {
   aggregateReview,
-} from "../review/aggregator";
+} from "../domain/review";
 
 import {
   normalizeAIFindings,

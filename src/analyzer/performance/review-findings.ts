@@ -1,4 +1,4 @@
-import type { ReviewFinding } from "../../review/types";
+import type { ReviewFinding } from "../../domain/review";
 import { parseSource } from "../ast/parser";
 import { PerformanceAnalysisEngine } from "./engine/performance-analysis-engine";
 import { createPerformanceRepositoryContext } from "./engine/repository-context";

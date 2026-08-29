@@ -1,4 +1,4 @@
-import type { ReviewFinding } from "../review/types";
+import type { ReviewFinding } from "../domain/review";
 
 export interface MicroFrontendSourceFile {
   readonly path: string;

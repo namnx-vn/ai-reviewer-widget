@@ -1,4 +1,4 @@
-import { ReviewFinding } from "../review/types";
+import { ReviewFinding } from "../domain/review";
 
 export interface PipelineContext {
   deterministicFindings: ReviewFinding[];

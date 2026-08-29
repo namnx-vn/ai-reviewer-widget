@@ -1,5 +1,5 @@
 import type { TSESTree } from "@typescript-eslint/typescript-estree";
-import type { ReviewFinding } from "../../review/types";
+import type { ReviewFinding } from "../../domain/review";
 import type { HookContext } from "../semantic/hook-context";
 import type { DependencyHookConfiguration } from "../semantic/dependency-hooks";
 

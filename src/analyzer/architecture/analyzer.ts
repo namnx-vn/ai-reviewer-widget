@@ -1,5 +1,5 @@
 import { parseSource } from "../ast/parser";
-import type { ReviewFinding } from "../../review/types";
+import type { ReviewFinding } from "../../domain/review";
 import type { ArchitectureRule, DependencyGraph, ImportEdge, SourceFile } from "./types";
 
 const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"];

@@ -1,7 +1,7 @@
 import type {
   ReviewFinding,
   Severity,
-} from "../review/types";
+} from "../domain/review";
 
 function downgrade(
   severity: Severity,

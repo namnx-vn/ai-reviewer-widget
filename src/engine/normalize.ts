@@ -4,7 +4,7 @@ import type {
 
 import type {
   ReviewFinding,
-} from "../review/types";
+} from "../domain/review";
 
 export function normalizeAIFindings(
   result: AIReviewResult,

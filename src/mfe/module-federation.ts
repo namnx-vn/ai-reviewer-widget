@@ -1,7 +1,7 @@
 import type { TSESTree } from "@typescript-eslint/typescript-estree";
 
 import { parseSource } from "../analyzer/ast/parser";
-import type { ReviewFinding } from "../review/types";
+import type { ReviewFinding } from "../domain/review";
 import type { MicroFrontendSourceFile } from "./types";
 
 const SHARED_REACT_PACKAGES = ["react", "react-dom"] as const;

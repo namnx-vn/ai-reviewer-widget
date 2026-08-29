@@ -5,7 +5,7 @@ import {
   classifySensitiveDataName,
   classifySensitiveDataNode,
 } from "../../../analyzer/security/rules/data";
-import type { ReviewFinding, Severity } from "../../../review/types";
+import type { ReviewFinding, Severity } from "../../../domain/review";
 import {
   getJSXAttribute,
   getJSXElementName,

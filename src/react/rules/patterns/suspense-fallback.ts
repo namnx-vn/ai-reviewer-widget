@@ -6,7 +6,7 @@ import {
   getJSXExpression,
   getJSXName,
 } from "../../ast/jsx-utils";
-import type { ReviewFinding } from "../../../review/types";
+import type { ReviewFinding } from "../../../domain/review";
 import type { ReactRule } from "../../engine/react-rule";
 import {
   collectLazyComponentNames,

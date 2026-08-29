@@ -1,6 +1,6 @@
 import { TSESTree } from "@typescript-eslint/typescript-estree";
 import { parseSource } from "../../analyzer/ast/parser";
-import type { ReviewFinding, ReviewWarning } from "../../review/types";
+import type { ReviewFinding, ReviewWarning } from "../../domain/review";
 import {
   createReactAnalysisContext,
   type ReactAnalysisContext,

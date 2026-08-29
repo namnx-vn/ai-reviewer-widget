@@ -4,7 +4,7 @@ import type {
 } from "../model/types";
 import { isSecurityFinding } from "../model/validation";
 import type { SecurityRuleRegistry } from "../registry/security-rule-registry";
-import type { ReviewWarning } from "../../../review/types";
+import type { ReviewWarning } from "../../../domain/review";
 
 export interface SecurityAnalysisResult {
   readonly findings: readonly SecurityFinding[];

@@ -1,6 +1,6 @@
 import { parseSource } from "./parser";
 import type { ASTRule } from "./rules";
-import type { ReviewFinding } from "../../review/types";
+import type { ReviewFinding } from "../../domain/review";
 
 export function analyzeAST(
   source: string,

@@ -1,6 +1,6 @@
 import type {
   Severity,
-} from "../review/types";
+} from "../domain/review";
 
 export type AIReviewAgentId =
   | "security"

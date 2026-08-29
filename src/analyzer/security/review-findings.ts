@@ -1,5 +1,5 @@
-import type { ReviewFinding } from "../../review/types";
-import type { ReviewWarning } from "../../review/types";
+import type { ReviewFinding } from "../../domain/review";
+import type { ReviewWarning } from "../../domain/review";
 
 import { parseSource } from "../ast/parser";
 import {

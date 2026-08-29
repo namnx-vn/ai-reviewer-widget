@@ -1,7 +1,7 @@
 import type { TSESTree } from "@typescript-eslint/typescript-estree";
 
 import { visit } from "../../ast/component-utils";
-import type { ReviewFinding } from "../../../review/types";
+import type { ReviewFinding } from "../../../domain/review";
 import type { ReactRule } from "../../engine/react-rule";
 import { getReactQueryApiName } from "./library-context";
 

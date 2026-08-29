@@ -1,6 +1,6 @@
 import type { TSESTree } from "@typescript-eslint/typescript-estree";
 
-import type { ReviewFinding, Severity } from "../../../review/types";
+import type { ReviewFinding, Severity } from "../../../domain/review";
 import type { ReactRule, ReactRuleContext } from "../../engine/react-rule";
 import { getJSXAttributeName } from "../../ast/jsx-utils";
 
