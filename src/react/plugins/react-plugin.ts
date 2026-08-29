@@ -13,11 +13,17 @@ import {
   reactRenderingUnnecessaryRerenderRule,
   reactRenderingUnstablePropsRule,
 } from "../rules/rendering";
+import {
+  reactStateDerivedStateRule,
+  reactStateMutationRule,
+  reactStateRedundantStateRule,
+  reactStateSynchronizationRule,
+} from "../rules/state";
 
 export const reactPlugin: ReactPlugin = {
   id: "react",
   name: "React",
-  version: "3.4.4",
+  version: "3.4.5",
   rules: [
     reactHooksMissingDepsRule,
     reactHooksStaleClosureRule,
@@ -31,5 +37,9 @@ export const reactPlugin: ReactPlugin = {
     reactRenderingUnstablePropsRule,
     reactRenderingMemoMisuseRule,
     reactRenderingMemoBoundaryRule,
+    reactStateMutationRule,
+    reactStateDerivedStateRule,
+    reactStateRedundantStateRule,
+    reactStateSynchronizationRule,
   ],
 };
