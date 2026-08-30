@@ -18,7 +18,11 @@ export type TaintKind =
   | "header"
   | "ldap"
   | "xpath"
-  | "graphql";
+  | "graphql"
+  | "html"
+  | "url"
+  | "navigation"
+  | "window-open";
 
 export interface TaintStep {
   readonly kind: "source" | "propagation" | "sanitizer";
@@ -50,7 +54,7 @@ export interface TaintSanitizer {
 
 export interface TaintSink {
   readonly family: TaintKind;
-  readonly node: TSESTree.CallExpression;
+  readonly node: TSESTree.Node;
   readonly value: TSESTree.Node;
   readonly label: string;
   readonly sinkKind: SecuritySinkKind;
@@ -59,7 +63,7 @@ export interface TaintSink {
 export interface TaintFlowAdapter {
   matchSource(node: TSESTree.Node): TaintSource | undefined;
   matchSanitizer(node: TSESTree.CallExpression): TaintSanitizer | undefined;
-  matchSinks(node: TSESTree.CallExpression): readonly TaintSink[];
+  matchSinks(node: TSESTree.Node): readonly TaintSink[];
 }
 
 export interface TaintFlowMatch {
