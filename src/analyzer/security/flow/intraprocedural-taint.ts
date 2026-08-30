@@ -27,6 +27,7 @@ const TAINT_KIND_ORDER: readonly TaintKind[] = [
   "url",
   "navigation",
   "window-open",
+  "origin",
 ];
 
 type Environment = Map<string, TaintState>;
