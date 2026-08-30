@@ -303,6 +303,8 @@ function evaluateNode(
       return evaluateNode(node.right, environment, file, adapter);
 
     case "AwaitExpression":
+      return evaluateNode(node.argument, environment, file, adapter);
+
     case "ChainExpression":
     case "TSAsExpression":
     case "TSNonNullExpression":
