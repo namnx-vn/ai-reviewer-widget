@@ -22,7 +22,8 @@ export type TaintKind =
   | "html"
   | "url"
   | "navigation"
-  | "window-open";
+  | "window-open"
+  | "origin";
 
 export interface TaintStep {
   readonly kind: "source" | "propagation" | "sanitizer";
