@@ -443,6 +443,7 @@ function buildModelState(ast: TSESTree.Program): ModelState {
         }
 
         if (specifier.type === "ImportDefaultSpecifier") {
+          namespaces.set(specifier.local.name, module);
           callables.set(specifier.local.name, { module, imported: "default" });
           continue;
         }
