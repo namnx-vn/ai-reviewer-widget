@@ -3,6 +3,7 @@ export { SecurityAnalysisEngine } from "./engine/security-analysis-engine";
 export { analyzeIntraproceduralTaint } from "./flow";
 export { SecurityRuleRegistry } from "./registry/security-rule-registry";
 export { dangerousExecutionRules } from "./rules/dangerous-execution";
+export { browserSecurityRules } from "./rules/browser";
 export { injectionRules } from "./rules/injection";
 export type {
   TaintFlowAdapter,
