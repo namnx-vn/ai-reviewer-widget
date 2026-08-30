@@ -66,13 +66,16 @@ npm run review:pr
 ```text
 src/
   ai/          AI provider, prompt, parsing, normalization
-  analyzer/    AST, architecture, and security analysis
-  components/  Browser presentation components
-  engine/      Review orchestration
+  analyzer/    Ordered deterministic composition and analyzer subsystems
+  application/ Review use cases, ports, and composition root
+  domain/      Pure review contracts, scoring, decisions, aggregation
+  engine/      Finding merge/normalization and optional AI execution
   github/      GitHub PR/diff/check/review integration
   mfe/         Micro-frontend intelligence
+  plugins/     Extension registry and application-pipeline composition
   react/       React-specific semantic analysis and rules
-  review/      Review domain models, aggregation, reviewer pipeline
+  review/      Public compatibility facades
+  ui/          Browser fixtures and presentation
 scripts/       Executable repository workflows such as review-pr.ts
 e2e/           Playwright tests
 docs/          Current-state documentation

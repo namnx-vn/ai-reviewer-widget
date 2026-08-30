@@ -5,10 +5,10 @@
 AI Reviewer Widget uses a layered review architecture in which deterministic analysis is executed before optional AI review and before GitHub output. Domain findings are normalized so infrastructure concerns do not leak into analyzer or UI code.
 
 ```text
-GitHub PR / local files
+GitHub PR / local files / plugin composition
         |
         v
-Source collection + parseability checks
+Application review use cases + injected ports
         |
         v
 Deterministic analysis
@@ -42,7 +42,11 @@ Browser UI currently renders demo ReviewResult data only.
 
 ### `src/analyzer/`
 
-Owns deterministic source analysis. `src/analyzer/index.ts` is the generic analyzer entry point; AST, architecture, and security concerns live under dedicated subdirectories. The analyzer boundary must not call an LLM.
+Owns deterministic source analysis. `src/analyzer/composition/` defines ordered
+analyzer contributions, an immutable registry, source preparation, and the
+shared adapter used by application and plugin entry points. AST, architecture,
+security, performance, MFE, supply-chain, and React stages remain in their
+owning subsystems. The analyzer boundary must not call an LLM or GitHub.
 
 ### `src/analyzer/security/`
 
@@ -50,7 +54,10 @@ A first-class security subsystem containing an engine, registry, typed security 
 
 ### `src/react/`
 
-Owns React-specific semantic analysis and rule execution. `src/review/reviewer.ts` invokes the React engine only for `.tsx`/`.jsx` files. Next.js plugins are enabled when the file path matches an App Router entry pattern such as `app/**/page.tsx` or `layout.tsx`.
+Owns React-specific semantic analysis and rule execution. The application
+composition root registers React as an explicit analyzer contribution for
+`.tsx`/`.jsx` files. Next.js plugins are enabled when the file path matches an
+App Router entry pattern such as `app/**/page.tsx` or `layout.tsx`.
 
 ### `src/mfe/`
 
@@ -64,28 +71,47 @@ Owns AI provider construction, prompt/input handling, parsing, validation, and A
 
 Owns review orchestration after findings exist. `ReviewEngine` coordinates deterministic findings, warnings, optional AI review, and the final review result. Provider-specific implementation should not be placed here.
 
+### `src/domain/review/`
+
+Owns framework-independent review contracts, scoring, decisions, and
+aggregation. It has no imports from application, analyzers, AI, GitHub, plugins,
+CLI, or UI. Legacy review and decision modules are compatibility re-exports.
+
+### `src/application/review/`
+
+Owns `reviewFiles` and `reviewPullRequest` use cases plus ports for source files,
+deterministic analysis, AI review, quality gates, clocks, pipelines, and
+publishers. The use cases depend only on ports and the review domain; concrete
+adapters are assembled in `composition-root.ts`.
+
 ### `src/review/`
 
-Owns review-domain models and the high-level reviewer pipeline. `reviewPullRequest` collects deterministic findings and delegates final execution to `ReviewEngine`; `reviewFiles` supports deterministic local review.
+Provides compatibility exports for the former public review paths. New
+production imports use `src/domain/review` and `src/application/review`.
 
 ### `src/github/`
 
-Owns GitHub infrastructure: pull-request retrieval, file content, diff/changed-line handling, Check Runs, and PR reviews. GitHub calls must remain outside analyzers and UI components.
+Owns GitHub infrastructure: pull-request retrieval, file content,
+diff/changed-line handling, Check Runs, and PR reviews.
+`review-pull-request.ts` converts GitHub data to application contracts and
+publishes results. GitHub calls remain outside analyzers and UI components.
 
-### `src/components/` and `src/App.tsx`
+### `src/ui/`
 
-Own presentation. The current app is a demonstration surface and does not fetch GitHub data or invoke the analyzer pipeline.
+Owns browser fixtures and presentation. `src/App.tsx` and `src/components/*`
+are compatibility exports. The demo does not fetch GitHub data or invoke the
+review pipeline.
 
 ## Dependency direction
 
 Preferred direction follows the engineering contract:
 
 ```text
-presentation
+ui / cli / GitHub / plugin entry points
     |
 application / review orchestration
     |
-engine + review domain
+engine + domain
     |
 analysis/domain contracts
 
@@ -100,8 +126,8 @@ Infrastructure should be passed into orchestration rather than imported through 
 ### Browser lifecycle
 
 1. Vite starts the React application through `src/main.tsx`.
-2. `src/App.tsx` constructs a static demo `ReviewResult`.
-3. Presentation components render score and finding cards.
+2. `src/App.tsx` delegates to `src/ui/App.tsx`.
+3. The UI composes a static fixture with review-dashboard components.
 
 No authentication, routing, server persistence, or live API state is currently confirmed in the browser path.
 
@@ -109,15 +135,17 @@ No authentication, routing, server persistence, or live API state is currently c
 
 1. GitHub Actions runs quality gates and executes `npm run review:pr`.
 2. `scripts/review-pr.ts` validates `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, and `PR_NUMBER`.
-3. `GitHubClient` loads PR metadata and reviewable files at the PR head SHA.
-4. Deleted files and non-JS/TS-family files are excluded.
-5. `reviewPullRequest` checks whether source files can be parsed.
-6. Generic deterministic analysis runs for parseable files.
-7. React analysis additionally runs for JSX/TSX files.
-8. If configured, the AI provider receives the PR context plus deterministic findings.
-9. `ReviewEngine` produces the final `ReviewResult`.
-10. Changed-line information is extracted from patches and findings are filtered for inline review output.
-11. GitHub receives a Check Run and PR review.
+3. `reviewGitHubPullRequest` loads PR metadata and converts reviewable head/base
+   files to application `SourceFile` contracts.
+4. Application review use cases run the ordered deterministic adapter; malformed
+   sources become warnings while manifests still reach supply-chain analysis.
+5. React analysis runs as an explicit contribution for JSX/TSX files.
+6. If configured, the AI provider receives redacted, budgeted patch context and
+   serialized deterministic findings.
+7. `ReviewEngine` and domain policies produce the final `ReviewResult` and the
+   application applies the optional security quality gate.
+8. The GitHub adapter filters inline findings to changed lines and publishes a
+   Check Run and PR review.
 
 ## Error handling
 
@@ -144,4 +172,6 @@ No database or persistent repository layer is currently present. GitHub is the p
 - No persistent server-side application is implemented.
 - Source-language coverage is JS/TS-family oriented.
 - Static analysis is heuristic and rule-based; security coverage must not be represented as certification or proof of absence of vulnerabilities.
-- Planned Phase 3.7 and 3.8 architecture should not be documented as current behavior until implemented.
+- Runtime behavior and false-positive rates still require profiling against
+  representative repositories even though the performance and plugin phases
+  are implemented.

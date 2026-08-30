@@ -29,22 +29,29 @@ On pull-request events, installs dependencies, validates the repository, and run
 
 ### Browser user
 
-Can view the current demo review UI. The current `src/App.tsx` uses static demo data; there is no implemented live browser-to-GitHub review workflow.
+Can view the current demo review UI. `src/ui/App.tsx` composes a static fixture
+with presentation components; there is no implemented live browser-to-GitHub
+review workflow.
 
 ## Current modules
 
 | Module | Responsibility |
 | --- | --- |
 | `src/analyzer/ast/` | Parsing and generic AST-oriented analysis. |
+| `src/analyzer/composition/` | Ordered built-in/plugin analyzer contributions and immutable registry. |
 | `src/analyzer/architecture/` | Deterministic architecture checks. |
 | `src/analyzer/security/` | Security engine, rules, taint flow, interprocedural analysis, supply-chain analysis, compliance, policies, and quality gates. |
 | `src/react/` | React semantic analysis and React/Next.js-specific rules. |
 | `src/mfe/` | Micro-frontend intelligence and boundary analysis. |
 | `src/ai/` | AI-provider abstraction, prompt/input handling, parsing and normalization. |
-| `src/engine/` | Review orchestration, confidence/severity/deduplication/scoring decisions. |
-| `src/review/` | Review-domain types, aggregation, and the deterministic + AI review pipeline. |
+| `src/domain/review/` | Pure review contracts, scoring, decisions, and aggregation. |
+| `src/application/review/` | Review use cases, ports, and default composition. |
+| `src/engine/` | Finding normalization, merge, confidence, severity, deduplication, and optional AI execution. |
+| `src/review/` | Compatibility exports for established review APIs. |
 | `src/github/` | GitHub PR retrieval, diff utilities, comments/reviews, and Check Runs. |
-| `src/components/` | Browser presentation components. |
+| `src/plugins/` | Typed extension registry and shared-pipeline plugin composition. |
+| `src/ui/` | Browser demo fixture and presentation components. |
+| `src/components/` | Compatibility exports for UI components. |
 | `scripts/review-pr.ts` | Executable GitHub PR review workflow. |
 
 ## Current scope
@@ -71,8 +78,6 @@ The following are not confirmed as implemented current behavior:
 - user authentication for the browser UI;
 - a live browser dashboard connected to GitHub;
 - a standalone deployment target for the web app beyond Vite build output;
-- Phase 3.7 Performance Intelligence;
-- Phase 3.8 Plugin SDK.
 
 ## Source of truth
 

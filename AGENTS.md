@@ -131,7 +131,7 @@ Detailed plans are maintained in `/plans`.
 | 3.6    | ✅ Complete    | [Security](./plans/phase-3/3.6-security-intelligence/README.md)                        |
 | 3.7    | ✅ Complete    | [Performance](./plans/phase-3/3.7-performance-intelligence/README.md)                  |
 | 3.8    | ✅ Complete    | [Plugin SDK](./plans/phase-3/3.8-plugin-sdk.md)                                        |
-| R1     | 📌 Next        | [Source Architecture Refactor](./plans/source-architecture-refactor.md)                |
+| R1     | ✅ Complete    | [Source Architecture Refactor](./plans/source-architecture-refactor.md)                |
 
 ## Plan Execution Rule
 

@@ -44,4 +44,8 @@ Deterministic findings normally use confidence `1`. AI confidence must be explic
 
 ## Evidence in current implementation
 
-`src/review/reviewer.ts` computes deterministic findings first and supplies them to `ReviewEngine`. When an AI provider is present, the deterministic findings are also serialized into the AI input. `AGENTS.md` defines the same deterministic-first trust model and requires validation of AI output.
+`src/application/review` computes deterministic findings through the ordered
+analyzer adapter before supplying them to `ReviewEngine`. When an AI provider is
+present, deterministic findings are also serialized into the budgeted AI input.
+`src/review/reviewer.ts` remains a compatibility facade. `AGENTS.md` defines the
+same deterministic-first trust model and requires validation of AI output.

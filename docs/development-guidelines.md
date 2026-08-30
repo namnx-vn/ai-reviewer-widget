@@ -21,10 +21,13 @@ Keep new code inside an existing architectural boundary whenever possible:
 - `src/react/` for React-specific semantics/rules;
 - `src/mfe/` for micro-frontend intelligence;
 - `src/ai/` for provider/prompt/AI-output concerns;
-- `src/engine/` for orchestration, scoring, confidence, severity, and decisions;
-- `src/review/` for review-domain models and aggregation;
+- `src/domain/review/` for review contracts and pure policies;
+- `src/application/review/` for review use cases and ports;
+- `src/engine/` for finding normalization, AI execution, confidence, and severity;
+- `src/review/` only for established compatibility exports;
 - `src/github/` for GitHub API behavior;
-- `src/components/` for presentation only.
+- `src/plugins/` for extension contracts and composition;
+- `src/ui/` for presentation, with `src/components/` kept as compatibility exports.
 
 Do not create unrelated top-level directories.
 

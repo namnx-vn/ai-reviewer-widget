@@ -2,7 +2,7 @@
 
 > Engineering contract: [`../AGENTS.md`](../AGENTS.md)
 
-Status: 📌 Next
+Status: ✅ Complete
 
 ---
 
@@ -25,12 +25,13 @@ TypeScript/Vite/React project and keeps the current analyzer-first review model.
 ```text
 src/main.tsx
   -> src/App.tsx
-  -> src/components/ScoreCard.tsx
-  -> src/components/FindingCard.tsx
+  -> src/ui/App.tsx
+  -> src/ui/fixtures/demo-review-result.ts
+  -> src/ui/review-dashboard/*
 ```
 
-`src/App.tsx` currently constructs a static `ReviewResult` demo object and does
-not call GitHub, the analyzer pipeline, or an AI provider.
+`src/App.tsx` is a compatibility bootstrap. Static demo data and presentation
+live under `src/ui/`; the browser does not call GitHub, analyzers, or AI.
 
 ### Local CLI path
 
@@ -39,47 +40,40 @@ scripts/ai-reviewer.ts
   -> src/cli/run.ts
   -> src/cli/args.ts
   -> src/cli/files.ts
-  -> src/review/reviewer.ts reviewFiles()
-  -> src/analyzer/index.ts analyzeFilesWithWarnings()
-  -> src/react/engine/react-engine.ts for JSX/TSX files
-  -> src/review/aggregator.ts
+  -> src/application/review createDefaultReviewUseCases()
+  -> src/analyzer/composition deterministic adapter
+  -> src/domain/review aggregation
 ```
 
-The CLI adapter already keeps process IO mostly outside the review logic, but
-`src/cli/files.ts` imports `ReviewFile` from `src/review/reviewer.ts`, coupling
-file collection to the high-level reviewer module.
+CLI file collection returns the application `SourceFile` contract and process
+IO remains in the CLI adapter.
 
 ### GitHub PR review path
 
 ```text
 scripts/review-pr.ts
   -> src/github/client.ts
-  -> src/github/diff.ts
-  -> src/review/reviewer.ts reviewPullRequest()
-  -> src/analyzer/index.ts
-  -> src/react/engine/react-engine.ts
-  -> src/ai/input-policy.ts
-  -> src/engine/review-engine.ts
-  -> src/analyzer/security/quality-gate
-  -> src/github/check-run.ts + src/github/comments.ts
+  -> src/github/review-pull-request.ts
+  -> src/application/review reviewPullRequest()
+  -> src/analyzer/composition
+  -> src/engine/review-engine.ts + src/domain/review
+  -> GitHub Check Run + filtered inline review
 ```
 
-`reviewPullRequest()` is the current application orchestrator. It performs
-parseability checks, deterministic analyzer selection, React plugin selection,
-AI input preparation, review-engine execution, and security quality gate
-application in one module.
+The GitHub adapter owns retrieval and publication. The application use case owns
+review sequencing and quality-gate composition through injected ports.
 
 ### Plugin analysis path
 
 ```text
 src/plugins/runtime.ts
-  -> src/analyzer/index.ts
-  -> contributed plugin analyzers
-  -> src/react/engine/react-engine.ts
+  -> src/analyzer/composition
+  -> immutable AnalyzerContributionRegistry
+  -> built-in + contributed analyzers and React plugins
 ```
 
-Plugin runtime already acts like a composition layer, but it duplicates part of
-the deterministic analyzer orchestration that also exists in `review/reviewer.ts`.
+`createPluginReviewUseCases()` supplies plugin contributions to the same
+application and deterministic analyzer pipeline used by CLI and GitHub review.
 
 ---
 
@@ -89,22 +83,19 @@ the deterministic analyzer orchestration that also exists in `review/reviewer.ts
 src/
 ├── domain/
 │   └── review/
-│       ├── finding.ts
-│       ├── result.ts
-│       ├── warning.ts
+│       ├── contracts.ts
 │       ├── scoring.ts
 │       ├── decision.ts
 │       ├── aggregation.ts
 │       └── index.ts
 ├── application/
 │   └── review/
-│       ├── ports/
-│       ├── services/
-│       ├── use-cases/
+│       ├── ports.ts
+│       ├── use-cases.ts
 │       ├── composition-root.ts
 │       └── index.ts
 ├── analyzer/
-│   ├── shared/
+│   ├── composition/
 │   ├── ast/
 │   ├── architecture/
 │   ├── security/
@@ -112,9 +103,9 @@ src/
 ├── react/
 ├── mfe/
 ├── ai/
-│   ├── providers/
-│   ├── parsing/
-│   └── prompts/
+│   ├── provider adapters
+│   ├── parsing and input policy
+│   └── prompts
 ├── github/
 ├── cli/
 ├── plugins/
@@ -166,7 +157,7 @@ the domain/application phases.
 
 ### Phase 0 — Baseline Characterization
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Scope:
 
@@ -184,7 +175,7 @@ Acceptance criteria:
 
 ### Phase 1 — Extract Review Domain
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Depends on: Phase 0
 
@@ -208,7 +199,7 @@ Acceptance criteria:
 
 ### Phase 2 — Create Application Review Use Cases
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Depends on: Phase 1
 
@@ -232,7 +223,7 @@ Acceptance criteria:
 
 ### Phase 3 — Consolidate Deterministic Analyzer Composition
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Depends on: Phase 2
 
@@ -262,7 +253,7 @@ Acceptance criteria:
 
 ### Phase 4 — Make Plugins the Single Extension Path
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Depends on: Phase 3
 
@@ -286,7 +277,7 @@ Acceptance criteria:
 
 ### Phase 5 — Adapter Boundary Cleanup
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Depends on: Phase 2 and Phase 4 for plugin-aware entry points
 
@@ -310,7 +301,7 @@ Acceptance criteria:
 
 ### Phase 6 — Browser Composition and Fixture Separation
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Depends on: Phase 2
 
@@ -332,7 +323,7 @@ Acceptance criteria:
 
 ### Phase 7 — Decompose Oversized Analyzer Modules
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Depends on: Phase 3
 
@@ -358,7 +349,7 @@ Acceptance criteria:
 
 ### Phase 8 — Compatibility Retirement and Boundary Hardening
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Depends on: Phases 4–7
 
@@ -390,6 +381,33 @@ Acceptance criteria:
 - Move one responsibility at a time, then run validation before the next phase.
 - Do not change dependencies, runtime, UI library, build tool, or AI provider
   contract as part of this refactor.
+
+The following paths remain intentionally supported public compatibility APIs:
+
+| Compatibility path | Canonical owner |
+| --- | --- |
+| `src/review/types.ts` | `src/domain/review` |
+| `src/review/scorer.ts` | `src/domain/review` |
+| `src/review/aggregator.ts` | `src/domain/review` |
+| `src/engine/decision.ts` | `src/domain/review` |
+| `src/review/reviewer.ts` | `src/application/review` |
+| `src/App.tsx`, `src/components/*` | `src/ui` |
+
+Internal production imports use the canonical owners. These facades are kept
+for downstream compatibility and can be removed only in an explicitly planned
+breaking release.
+
+## Completion Evidence
+
+- Domain and application import boundaries are enforced by source-boundary tests.
+- Built-in analyzer order and manifest/supply-chain routing are characterized.
+- Plugin contribution collisions fail during registry construction; runtime
+  contribution failures produce `ANALYZER_CONTRIBUTION_FAILED` without dropping
+  successful findings.
+- CLI, GitHub, legacy reviewer, and plugin entry points use the shared
+  application/deterministic composition path.
+- Static browser fixtures and components live under `src/ui`.
+- No production TypeScript or TSX file exceeds 800 lines; the largest is 777.
 
 ---
 
