@@ -67,7 +67,7 @@ Status: 🚧 Active
 
 ### 3.4 — React Intelligence
 
-🚧 Active
+✅ Completed
 
 [Phase 3.4](./phase-3/3.4-react-intelligence/README.md)
 
@@ -85,13 +85,13 @@ Status: 🚧 Active
 
 ### 3.7 — Performance Intelligence
 
-🚧 Active
+🚧 In Progress
 
 [Plan](./phase-3/3.7-performance-intelligence/README.md)
 
 ### 3.8 — Plugin SDK
 
-⏳ Planned
+✅ Completed
 
 [Plan](./phase-3/3.8-plugin-sdk.md)
 
