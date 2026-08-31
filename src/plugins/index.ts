@@ -1,3 +1,5 @@
+export { analyzeWithPlugins } from "./runtime";
+export type { PluginAnalysisResult } from "./runtime";
 export { createPluginRegistry, PluginRegistry } from "./registry";
 export type {
   DeterministicAnalyzerPlugin,
