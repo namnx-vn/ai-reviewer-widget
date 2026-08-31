@@ -15,7 +15,7 @@ export class PluginRegistry {
     assertPluginIdentity(plugin);
 
     if (this.pluginsById.has(plugin.id)) {
-      throw new Error(`Plugin \"${plugin.id}\" is already registered.`);
+      throw new Error(`Plugin "${plugin.id}" is already registered.`);
     }
 
     validateContributions(plugin);
@@ -104,7 +104,7 @@ function collectUnique<T>(
     assertNonEmpty("contribution id", id);
 
     if (seen.has(id)) {
-      throw new Error(`Plugin contribution \"${id}\" is registered more than once.`);
+      throw new Error(`Plugin contribution "${id}" is registered more than once.`);
     }
 
     seen.add(id);
