@@ -49,13 +49,13 @@ Probabilistic AI MUST NOT participate in performance finding detection.
 | 3.7.7 | ⏳ Planned | [Memory & Resource Safety](./3.7.7-memory-resources.md) |
 | 3.7.8 | ⏳ Planned | [CPU & Algorithmic Hotspots](./3.7.8-cpu-algorithms.md) |
 | 3.7.9 | ⏳ Planned | [Database & Persistence Efficiency](./3.7.9-database-persistence.md) |
-| 3.7.10 | ⏳ Planned | [Cache Intelligence](./3.7.10-cache.md) |
+| 3.7.10 | ✅ Complete | [Cache Intelligence](./3.7.10-cache.md) |
 | 3.7.11 | ⏳ Planned | [Transaction & Banking Critical Path](./3.7.11-banking-critical-path.md) |
-| 3.7.12 | ⏳ Planned | [Resilience, Timeout & Retry](./3.7.12-resilience-timeout-retry.md) |
+| 3.7.12 | ✅ Complete | [Resilience, Timeout & Retry](./3.7.12-resilience-timeout-retry.md) |
 | 3.7.13 | ⏳ Planned | [Backpressure & Rate Control](./3.7.13-backpressure-rate-control.md) |
 | 3.7.14 | ⏳ Planned | [Observability & Performance Telemetry](./3.7.14-observability.md) |
 | 3.7.15 | ⏳ Planned | [Frontend Banking UX Performance](./3.7.15-frontend-banking-ux.md) |
-| 3.7.16 | ⏳ Planned | [Performance Cost Propagation](./3.7.16-cost-propagation.md) |
+| 3.7.16 | ✅ Complete | [Performance Cost Propagation](./3.7.16-cost-propagation.md) |
 | 3.7.17 | ⏳ Planned | [Interprocedural Performance Analysis](./3.7.17-interprocedural.md) |
 | 3.7.18 | ⏳ Planned | [Performance Profiles](./3.7.18-performance-profiles.md) |
 | 3.7.19 | ⏳ Planned | [Performance Quality Gates](./3.7.19-quality-gates.md) |
@@ -83,6 +83,29 @@ Probabilistic AI MUST NOT participate in performance finding detection.
 ```
 
 Later phases MUST reuse the foundation, cost model, and interprocedural summaries rather than inventing alternatives.
+
+---
+
+## Wave 5 Completion
+
+Wave 5 is complete:
+
+```text
+3.7.10 Cache Intelligence                 ✅
+3.7.12 Resilience, Timeout & Retry         ✅
+3.7.16 Performance Cost Propagation        ✅
+```
+
+Validation evidence:
+
+```text
+TypeScript  ✅
+Lint        ✅
+Tests       ✅ 74 files / 602 tests
+Build       ✅
+```
+
+The `3.7.16` symbolic cost-summary contract is now the required cost-analysis boundary for Phase `3.7.17` and later consumers.
 
 ---
 
