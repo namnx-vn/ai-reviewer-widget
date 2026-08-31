@@ -16,7 +16,7 @@ function cacheVariables(context: PerformanceRuleContext): ReadonlySet<string> {
   });
   return names;
 }
-function receiverAndMethod(node: TSESTree.CallExpression): readonly [string, string] | undefined { const path = callPath(node); if (path === undefined) return undefined; const parts = path.split("."); if (parts.length < 2) return undefined; return [parts.slice(0, -1).join("."), parts.at(-1) ?? ""]; }
+function receiverAndMethod(node: TSESTree.CallExpression): readonly [string, string] | undefined { const path = callPath(node); if (path === undefined) return undefined; const parts = path.split("."); if (parts.length < 2) return undefined; return [parts.slice(0, -1).join("."), parts[parts.length - 1] ?? ""]; }
 function isCacheCall(node: TSESTree.CallExpression, caches: ReadonlySet<string>, methods: readonly string[]): boolean { const target = receiverAndMethod(node); return target !== undefined && caches.has(target[0]) && methods.includes(target[1]); }
 function expensiveCall(node: TSESTree.CallExpression, context: PerformanceRuleContext): boolean { const path = callPath(node); if (path === undefined) return false; return path === "fetch" || path.startsWith("axios.") || (context.databaseAdapters ?? []).some((adapter) => adapter.callPaths.includes(path)); }
 function collectCalls(context: PerformanceRuleContext): readonly TSESTree.CallExpression[] { const calls: TSESTree.CallExpression[] = []; visit(context.ast, (node) => { if (node.type === "CallExpression") calls.push(node); }); return calls; }
