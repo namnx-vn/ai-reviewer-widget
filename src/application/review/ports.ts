@@ -7,6 +7,7 @@ import type {
   ReviewWarning,
   Severity,
 } from "../../domain/review";
+import type { AIUsageMetadata, OperationalTelemetryPort } from "../observability";
 
 export interface SourceFile {
   readonly path: string;
@@ -55,6 +56,7 @@ export interface AIReviewResponse {
     readonly agent: "security" | "react" | "architecture";
     readonly message: string;
   }[];
+  readonly usage?: AIUsageMetadata;
 }
 
 export interface AIReviewerPort {
@@ -136,5 +138,6 @@ export interface ReviewApplicationDependencies {
     readonly files: readonly SourceFile[];
   }) => PreparedAIReviewInput;
   readonly evaluateQualityGate: QualityGateEvaluator;
+  readonly telemetry?: OperationalTelemetryPort;
   readonly now: () => number;
 }
