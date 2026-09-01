@@ -1,3 +1,4 @@
+import { recordOperationalTelemetry } from "../observability";
 import type { ReviewConfiguration, SourceFile } from "../review";
 import {
   PLATFORM_API_VERSION,
@@ -32,26 +33,53 @@ export interface PlatformReviewService {
 export function createPlatformReviewService(
   dependencies: PlatformReviewServiceDependencies,
 ): PlatformReviewService {
+  const now = dependencies.now ?? (() => performance.now());
+
   return {
     async review(request) {
       validateRequest(request);
+      const totalStartedAt = now();
       await recordTelemetry(dependencies, request, "platform.review.started");
+      recordOperationalTelemetry(dependencies.operationalTelemetry, {
+        type: "stage",
+        stage: "platform.total",
+        outcome: "started",
+        correlationId: request.run?.correlationId,
+      });
 
       try {
-        const source = await resolveSource(request, dependencies);
+        const source = await timedStage(
+          "source.collection",
+          request,
+          dependencies,
+          now,
+          () => resolveSource(request, dependencies),
+        );
         validateFiles(source.files);
         validateFiles(source.baseFiles ?? []);
-        const configuration = await resolveConfiguration(request, dependencies);
-        const result = request.review.mode === "files"
-          ? dependencies.reviewUseCases.reviewFiles(source.files, configuration)
-          : await dependencies.reviewUseCases.reviewPullRequest({
-              title: request.review.title ?? "",
-              description: request.review.description,
-              files: source.files,
-              baseFiles: source.baseFiles,
-              securityQualityGate: request.review.securityQualityGate,
-              configuration,
-            }, dependencies.aiReviewer);
+        const configuration = await timedStage(
+          "configuration.resolution",
+          request,
+          dependencies,
+          now,
+          () => resolveConfiguration(request, dependencies),
+        );
+        const result = await timedStage(
+          "review.execution",
+          request,
+          dependencies,
+          now,
+          () => request.review.mode === "files"
+            ? Promise.resolve(dependencies.reviewUseCases.reviewFiles(source.files, configuration))
+            : dependencies.reviewUseCases.reviewPullRequest({
+                title: request.review.title ?? "",
+                description: request.review.description,
+                files: source.files,
+                baseFiles: source.baseFiles,
+                securityQualityGate: request.review.securityQualityGate,
+                configuration,
+              }, dependencies.aiReviewer),
+        );
         const response: PlatformReviewResponse = {
           version: PLATFORM_API_VERSION,
           repository: request.repository,
@@ -59,11 +87,49 @@ export function createPlatformReviewService(
           result,
         };
 
-        await dependencies.persistence?.save(response);
-        await dependencies.publisher?.publish(response);
+        if (dependencies.persistence !== undefined) {
+          await timedStage(
+            "persistence.save",
+            request,
+            dependencies,
+            now,
+            () => dependencies.persistence!.save(response),
+          );
+        }
+        if (dependencies.publisher !== undefined) {
+          await timedStage(
+            "publication.publish",
+            request,
+            dependencies,
+            now,
+            () => dependencies.publisher!.publish(response),
+          );
+        }
         await recordTelemetry(dependencies, request, "platform.review.completed");
+        recordOperationalTelemetry(dependencies.operationalTelemetry, {
+          type: "stage",
+          stage: "platform.total",
+          outcome: "completed",
+          correlationId: request.run?.correlationId,
+          durationMs: now() - totalStartedAt,
+        });
         return response;
       } catch (error) {
+        recordOperationalTelemetry(dependencies.operationalTelemetry, {
+          type: "diagnostic",
+          category: classifyPlatformFailure(error),
+          outcome: "failed",
+          correlationId: request.run?.correlationId,
+          code: error instanceof PlatformReviewServiceError ? error.code : "PLATFORM_EXECUTION_FAILED",
+        });
+        recordOperationalTelemetry(dependencies.operationalTelemetry, {
+          type: "stage",
+          stage: "platform.total",
+          outcome: "failed",
+          correlationId: request.run?.correlationId,
+          durationMs: now() - totalStartedAt,
+          code: error instanceof PlatformReviewServiceError ? error.code : "PLATFORM_EXECUTION_FAILED",
+        });
         await recordTelemetry(
           dependencies,
           request,
@@ -74,6 +140,66 @@ export function createPlatformReviewService(
       }
     },
   };
+}
+
+async function timedStage<T>(
+  stage: "source.collection" | "configuration.resolution" | "review.execution" | "persistence.save" | "publication.publish",
+  request: PlatformReviewRequest,
+  dependencies: PlatformReviewServiceDependencies,
+  now: () => number,
+  execute: () => Promise<T>,
+): Promise<T> {
+  const startedAt = now();
+  recordOperationalTelemetry(dependencies.operationalTelemetry, {
+    type: "stage",
+    stage,
+    outcome: "started",
+    correlationId: request.run?.correlationId,
+  });
+  try {
+    const result = await execute();
+    recordOperationalTelemetry(dependencies.operationalTelemetry, {
+      type: "stage",
+      stage,
+      outcome: "completed",
+      correlationId: request.run?.correlationId,
+      durationMs: now() - startedAt,
+    });
+    return result;
+  } catch (error) {
+    recordOperationalTelemetry(dependencies.operationalTelemetry, {
+      type: "stage",
+      stage,
+      outcome: "failed",
+      correlationId: request.run?.correlationId,
+      durationMs: now() - startedAt,
+      code: stageFailureCode(stage),
+    });
+    throw error;
+  }
+}
+
+function stageFailureCode(stage: string): string {
+  switch (stage) {
+    case "source.collection": return "SOURCE_COLLECTION_FAILED";
+    case "configuration.resolution": return "CONFIGURATION_RESOLUTION_FAILED";
+    case "persistence.save": return "PERSISTENCE_FAILED";
+    case "publication.publish": return "PUBLICATION_FAILED";
+    default: return "REVIEW_EXECUTION_FAILED";
+  }
+}
+
+function classifyPlatformFailure(error: unknown):
+  | "configuration"
+  | "source"
+  | "publication"
+  | "persistence"
+  | "platform" {
+  if (error instanceof PlatformReviewServiceError) {
+    if (error.code === "PLATFORM_CONFIGURATION_PROVIDER_REQUIRED") return "configuration";
+    if (error.code === "PLATFORM_SOURCE_PROVIDER_REQUIRED") return "source";
+  }
+  return "platform";
 }
 
 async function resolveSource(
@@ -180,10 +306,14 @@ async function recordTelemetry(
   name: "platform.review.started" | "platform.review.completed" | "platform.review.failed",
   message?: string,
 ): Promise<void> {
-  await dependencies.telemetry?.record({
-    name,
-    correlationId: request.run?.correlationId,
-    mode: request.review.mode,
-    message,
-  });
+  try {
+    await dependencies.telemetry?.record({
+      name,
+      correlationId: request.run?.correlationId,
+      mode: request.review.mode,
+      message,
+    });
+  } catch {
+    // Legacy platform telemetry remains best-effort and must not change review behavior.
+  }
 }
