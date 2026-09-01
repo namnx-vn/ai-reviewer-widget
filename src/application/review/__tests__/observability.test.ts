@@ -52,7 +52,9 @@ describe("review observability", () => {
       deterministic: { analyze: () => ({ findings: [], warnings: [] }) },
       pipeline: {
         execute: async (input) => {
-          await input.aiReviewer?.review(input.aiInput!);
+          if (input.aiReviewer !== undefined && input.aiInput !== undefined) {
+            await input.aiReviewer.review(input.aiInput);
+          }
           return result;
         },
       },
