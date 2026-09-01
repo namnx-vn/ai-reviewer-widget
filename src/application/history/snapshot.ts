@@ -1,9 +1,11 @@
 import type { ResolvedReviewConfiguration } from "../../config";
 import type { ReviewFinding, ReviewResult } from "../../domain/review";
+import type { EffectivePolicyContextV1 } from "../governance";
 import type { PlatformRepositoryIdentity, PlatformReviewMode } from "../platform";
 import {
   REVIEW_RUN_SCHEMA_VERSION,
   type PersistedFindingSnapshot,
+  type PersistedPolicyContextV1,
   type ReviewRunSnapshot,
 } from "./contracts";
 import { createFindingIdentity } from "./finding-history";
@@ -17,6 +19,7 @@ export interface ReviewRunSnapshotInput {
     readonly commitSha?: string;
   };
   readonly configuration?: ResolvedReviewConfiguration;
+  readonly policy?: EffectivePolicyContextV1;
   readonly execution: {
     readonly mode: PlatformReviewMode;
     readonly aiProvider?: string;
@@ -34,6 +37,7 @@ export function createStartedReviewRunSnapshot(
     repository: input.repository,
     source: input.source ?? {},
     configuration: input.configuration,
+    policy: input.policy === undefined ? undefined : toPersistedPolicyContext(input.policy),
     execution: input.execution,
     startedAt: input.startedAt,
   };
@@ -86,5 +90,15 @@ export function toPersistedFinding(finding: ReviewFinding): PersistedFindingSnap
     confidence: finding.confidence,
     location: finding.location === undefined ? undefined : { ...finding.location },
     suggestion: finding.suggestion,
+  };
+}
+
+function toPersistedPolicyContext(policy: EffectivePolicyContextV1): PersistedPolicyContextV1 {
+  return {
+    schemaVersion: policy.schemaVersion,
+    organizationId: policy.organizationId,
+    policyId: policy.policyId,
+    policyVersion: policy.policyVersion,
+    provenance: policy.provenance.map((entry) => ({ ...entry })),
   };
 }
