@@ -88,21 +88,23 @@ export function createPlatformReviewService(
         };
 
         if (dependencies.persistence !== undefined) {
+          const persistence = dependencies.persistence;
           await timedStage(
             "persistence.save",
             request,
             dependencies,
             now,
-            () => dependencies.persistence!.save(response),
+            () => persistence.save(response),
           );
         }
         if (dependencies.publisher !== undefined) {
+          const publisher = dependencies.publisher;
           await timedStage(
             "publication.publish",
             request,
             dependencies,
             now,
-            () => dependencies.publisher!.publish(response),
+            () => publisher.publish(response),
           );
         }
         await recordTelemetry(dependencies, request, "platform.review.completed");
@@ -167,13 +169,21 @@ async function timedStage<T>(
     });
     return result;
   } catch (error) {
+    const code = stageFailureCode(stage);
     recordOperationalTelemetry(dependencies.operationalTelemetry, {
       type: "stage",
       stage,
       outcome: "failed",
       correlationId: request.run?.correlationId,
       durationMs: now() - startedAt,
-      code: stageFailureCode(stage),
+      code,
+    });
+    recordOperationalTelemetry(dependencies.operationalTelemetry, {
+      type: "diagnostic",
+      category: stageDiagnosticCategory(stage),
+      outcome: "failed",
+      correlationId: request.run?.correlationId,
+      code,
     });
     throw error;
   }
@@ -186,6 +196,21 @@ function stageFailureCode(stage: string): string {
     case "persistence.save": return "PERSISTENCE_FAILED";
     case "publication.publish": return "PUBLICATION_FAILED";
     default: return "REVIEW_EXECUTION_FAILED";
+  }
+}
+
+function stageDiagnosticCategory(stage: string):
+  | "configuration"
+  | "source"
+  | "publication"
+  | "persistence"
+  | "platform" {
+  switch (stage) {
+    case "source.collection": return "source";
+    case "configuration.resolution": return "configuration";
+    case "persistence.save": return "persistence";
+    case "publication.publish": return "publication";
+    default: return "platform";
   }
 }
 
