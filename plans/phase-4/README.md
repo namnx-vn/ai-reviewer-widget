@@ -31,8 +31,8 @@ Phase 4 is productization/platformization work. It must not weaken deterministic
 | Phase | Status | Scope | Plan |
 | --- | --- | --- | --- |
 | 4.1 | ✅ Complete | Local CLI | Current document |
-| 4.2 | 📌 Next | Configuration & Rule Selection | [4.2](./4.2-configuration-rule-selection.md) |
-| 4.3 | ⏳ Planned | Distributable CLI | [4.3](./4.3-distributable-cli.md) |
+| 4.2 | ✅ Complete | Configuration & Rule Selection | [4.2](./4.2-configuration-rule-selection.md) |
+| 4.3 | 📌 Next | Distributable CLI | [4.3](./4.3-distributable-cli.md) |
 | 4.4 | ⏳ Planned | CI Adapters & Portable Review Output | [4.4](./4.4-ci-adapters.md) |
 | 4.5 | ⏳ Planned | Platform API Boundary | [4.5](./4.5-platform-api-boundary.md) |
 | 4.6 | ⏳ Planned | Persistence & Review History | [4.6](./4.6-persistence-review-history.md) |
@@ -48,7 +48,7 @@ Recommended critical path:
 ```text
 4.1 Local CLI ✅
        ↓
-4.2 Configuration & Rule Selection
+4.2 Configuration & Rule Selection ✅
        ↓
 4.3 Distributable CLI ───────┐
        ↓                     │
@@ -115,7 +115,7 @@ npm run review:local -- init
 
 ## 4.2 — Configuration & Rule Selection
 
-Status: 📌 Next
+Status: ✅ Complete
 
 Define a typed/versioned `.ai-reviewer.json`, deterministic defaults, include/exclude behavior, rule selection, severity/profile overrides, and shared configuration semantics across adapters.
 
@@ -188,7 +188,7 @@ Define organization/repository policy contracts, deterministic policy precedence
 Phase 4 is complete when:
 
 - [ ] local and distributable CLI paths use the same application review pipeline
-- [ ] configuration/rule selection semantics are typed, versioned, deterministic, and shared across adapters
+- [x] configuration/rule selection semantics are typed, versioned, deterministic, and shared across adapters
 - [ ] CI execution has stable portable result/output contracts
 - [ ] a transport-neutral platform API boundary exists without framework coupling
 - [ ] review history can be persisted through application ports with policy/configuration provenance

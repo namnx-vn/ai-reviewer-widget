@@ -8,6 +8,8 @@ import {
   type AnalyzerContribution,
 } from "../../analyzer";
 import type { ASTRule } from "../../analyzer/ast/rules";
+import { DEFAULT_REVIEW_CONFIGURATION } from "../../config";
+import type { ResolvedReviewConfiguration } from "../../config";
 import { evaluateSecurityReviewQualityGate } from "../../analyzer/security/quality-gate";
 import { ReviewEngine } from "../../engine/review-engine";
 import { nextjsPlugin, reactPlugin } from "../../react";
@@ -23,6 +25,7 @@ import { createReviewUseCases, type ReviewUseCases } from "./use-cases";
 export interface DefaultReviewCompositionOptions {
   readonly astRules?: readonly ASTRule[];
   readonly analyzerContributions?: readonly AnalyzerContribution[];
+  readonly configuration?: ResolvedReviewConfiguration;
 }
 
 export function createDefaultReviewUseCases(
@@ -35,8 +38,9 @@ function createDefaultDependencies(
   options: DefaultReviewCompositionOptions,
 ): ReviewApplicationDependencies {
   return {
+    configuration: options.configuration ?? DEFAULT_REVIEW_CONFIGURATION,
     deterministic: {
-      analyze: (files) => analyzeDeterministicFiles(files, options),
+      analyze: (files, selection) => analyzeDeterministicFiles(files, options, selection),
     },
     pipeline: {
       execute: (input) => new ReviewEngine().execute({
@@ -65,6 +69,7 @@ function toAIProvider(reviewer: AIReviewerPort): AIProvider {
 function analyzeDeterministicFiles(
   files: readonly SourceFile[],
   options: DefaultReviewCompositionOptions,
+  selection?: Parameters<ReturnType<typeof createDeterministicAnalyzerAdapter>["analyze"]>[1],
 ): DeterministicReviewResult {
   return createDeterministicAnalyzerAdapter({
     astRules: options.astRules,
@@ -76,7 +81,7 @@ function analyzeDeterministicFiles(
       ),
       ...(options.analyzerContributions ?? []),
     ],
-  }).analyze(files);
+  }).analyze(files, selection);
 }
 
 function getReactPlugins(path: string): readonly ReactPlugin[] {

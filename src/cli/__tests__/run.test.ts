@@ -61,6 +61,60 @@ describe("local review CLI", () => {
     expect(runCli(["unknown"], output.io)).toBe(2);
     expect(output.stderr.join("")).toContain("Unknown command");
   });
+
+  it("returns a configuration error code and does not review invalid configuration", () => {
+    const directory = createTemporaryDirectory();
+    writeFileSync(resolve(directory, ".ai-reviewer.json"), JSON.stringify({
+      version: 1,
+      rules: { disabled: ["unknown.rule"] },
+    }), "utf-8");
+    const output = createIO(directory);
+
+    expect(runCli(["review"], output.io)).toBe(2);
+    expect(output.stderr.join("")).toContain("CONFIG_UNKNOWN_RULE");
+  });
+
+  it("applies path and rule selection from the repository configuration", () => {
+    const directory = createTemporaryDirectory();
+    mkdirSync(resolve(directory, "src"));
+    writeFileSync(resolve(directory, "src/included.ts"), 'console.log("input");', "utf-8");
+    writeFileSync(resolve(directory, "src/excluded.ts"), 'console.log("input");', "utf-8");
+    writeFileSync(resolve(directory, ".ai-reviewer.json"), JSON.stringify({
+      version: 1,
+      include: ["src/**"],
+      exclude: ["src/excluded.ts"],
+      rules: { disabled: ["quality.no-console"] },
+    }), "utf-8");
+    const output = createIO(directory);
+
+    expect(runCli(["review"], output.io)).toBe(0);
+    expect(output.stdout.join("")).toContain("Findings: 0");
+  });
+
+  it("keeps quality and security rule-family selection independent", () => {
+    const directory = createTemporaryDirectory();
+    mkdirSync(resolve(directory, "src"));
+    writeFileSync(resolve(directory, "src/example.ts"), 'console.log("debug"); eval("input");', "utf-8");
+    writeFileSync(resolve(directory, ".ai-reviewer.json"), JSON.stringify({
+      version: 1,
+      rules: { disabledFamilies: ["quality"] },
+    }), "utf-8");
+    const qualityDisabled = createIO(directory);
+
+    expect(runCli(["review"], qualityDisabled.io)).toBe(1);
+    expect(qualityDisabled.stdout.join("")).not.toContain("quality.no-console");
+    expect(qualityDisabled.stdout.join("")).toContain("security.no-eval");
+
+    writeFileSync(resolve(directory, ".ai-reviewer.json"), JSON.stringify({
+      version: 1,
+      rules: { disabledFamilies: ["security"] },
+    }), "utf-8");
+    const securityDisabled = createIO(directory);
+
+    expect(runCli(["review"], securityDisabled.io)).toBe(0);
+    expect(securityDisabled.stdout.join("")).toContain("quality.no-console");
+    expect(securityDisabled.stdout.join("")).not.toContain("security.no-eval");
+  });
 });
 
 function createTemporaryDirectory(): string {

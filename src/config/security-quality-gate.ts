@@ -18,8 +18,9 @@ const PROFILE_IDS: readonly SecurityProfileId[] = [
 export function createPullRequestSecurityGateConfig(
   environment: Readonly<Record<string, string | undefined>>,
   evaluatedAt: string,
+  defaultProfile: SecurityProfileId = "security/banking",
 ): PullRequestSecurityGateConfig {
-  const profileValue = environment.SECURITY_GATE_PROFILE?.trim() || "security/banking";
+  const profileValue = environment.SECURITY_GATE_PROFILE?.trim() || defaultProfile;
   if (!isSecurityProfileId(profileValue)) {
     throw new Error(`Unsupported SECURITY_GATE_PROFILE: ${profileValue}`);
   }

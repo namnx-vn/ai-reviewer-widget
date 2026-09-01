@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { ReviewResult } from "../../domain/review";
 import type { AIReviewerPort, ReviewUseCases } from "../../application/review";
+import { DEFAULT_RULE_CATALOG, resolveReviewConfiguration } from "../../config";
 import {
   loadPullRequestReviewFiles,
   reviewGitHubPullRequest,
@@ -121,6 +122,21 @@ describe("GitHub pull request review adapter", () => {
     expect(client.getFileContent).toHaveBeenCalledTimes(3);
   });
 
+  it("applies repository path selection before loading pull request file content", async () => {
+    const client = createClient();
+    const pullRequest = await client.getPullRequest("acme", "widget", 17);
+    const configuration = resolveReviewConfiguration({
+      version: 1,
+      include: ["src/**"],
+      exclude: ["src/new.tsx"],
+    }, DEFAULT_RULE_CATALOG);
+
+    const converted = await loadPullRequestReviewFiles(client, pullRequest, configuration);
+
+    expect(converted.files.map((file) => file.path)).toEqual(["src/changed.ts"]);
+    expect(client.getFileContent).toHaveBeenCalledTimes(2);
+  });
+
   it("fetches, reviews, filters inline findings, and publishes both GitHub outputs", async () => {
     const client = createClient();
     const result = createResult();
@@ -131,6 +147,11 @@ describe("GitHub pull request review adapter", () => {
       review: vi.fn().mockResolvedValue({ findings: [] }),
     };
     const onPullRequestLoaded = vi.fn();
+    const configuration = resolveReviewConfiguration({
+      version: 1,
+      include: ["src/**"],
+      qualityGate: { securityProfile: "security/strict" },
+    }, DEFAULT_RULE_CATALOG);
 
     const output = await reviewGitHubPullRequest(
       { owner: "acme", repo: "widget", pullRequestNumber: 17 },
@@ -141,6 +162,7 @@ describe("GitHub pull request review adapter", () => {
         environment: { SECURITY_GATE_PROFILE: "security/strict" },
         now: () => "2026-09-01T00:00:00.000Z",
         onPullRequestLoaded,
+        configuration,
       },
     );
 
@@ -155,6 +177,7 @@ describe("GitHub pull request review adapter", () => {
         profile: "security/strict",
         evaluatedAt: "2026-09-01T00:00:00.000Z",
       }),
+      configuration,
     }), aiReviewer);
     expect(client.createCheckRun).toHaveBeenCalledWith(
       "acme", "widget", "head-sha", result,

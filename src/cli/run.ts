@@ -4,6 +4,7 @@ import { createDefaultReviewUseCases } from "../application/review";
 import type { ReviewFinding, ReviewResult } from "../domain/review";
 import { parseCliArgs } from "./args";
 import { collectDiffFiles, collectTargetFiles, collectWorkspaceFiles } from "./files";
+import { loadReviewConfiguration } from "./config-file";
 
 export interface CliIO {
   readonly cwd: string;
@@ -25,6 +26,7 @@ export function runCli(args: readonly string[], io: CliIO): number {
       case "init":
         return initializeConfig(io);
       case "review": {
+        const configuration = loadReviewConfiguration(io.cwd);
         const files = command.target.kind === "workspace"
           ? collectWorkspaceFiles(io.cwd)
           : command.target.kind === "diff"
@@ -36,7 +38,7 @@ export function runCli(args: readonly string[], io: CliIO): number {
           return 0;
         }
 
-        const result = createDefaultReviewUseCases().reviewFiles(files);
+        const result = createDefaultReviewUseCases().reviewFiles(files, configuration);
         io.stdout(formatReviewResult(result));
         return result.decision === "FAIL" ? 1 : 0;
       }

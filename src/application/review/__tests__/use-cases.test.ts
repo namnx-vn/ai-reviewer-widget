@@ -7,6 +7,7 @@ import type {
   ReviewPipelinePort,
 } from "../ports";
 import { createReviewUseCases } from "../use-cases";
+import { DEFAULT_RULE_CATALOG, resolveReviewConfiguration } from "../../../config";
 
 const finding: ReviewFinding = {
   id: "deterministic-1",
@@ -113,6 +114,27 @@ describe("application review use cases", () => {
         deterministicFindings: "[REDACTED] findings",
       },
     }));
+  });
+
+  it("rejects a reviewer that does not match the configured provider", async () => {
+    const useCases = createReviewUseCases({
+      deterministic: { analyze: () => ({ findings: [], warnings: [] }) },
+      pipeline: unusedPipeline(),
+      prepareAIInput: () => preparedInput(),
+      evaluateQualityGate: () => { throw new Error("not requested"); },
+      now: () => 0,
+    });
+    const configuration = resolveReviewConfiguration({
+      version: 1,
+      ai: { mode: "enabled", provider: "configured-ai" },
+    }, DEFAULT_RULE_CATALOG);
+
+    await expect(useCases.reviewPullRequest({
+      title: "Provider selection",
+      files: [],
+      configuration,
+    }, { name: "other-ai", review: async () => ({ findings: [] }) }))
+      .rejects.toThrow('Configured AI provider "configured-ai" is unavailable.');
   });
 });
 

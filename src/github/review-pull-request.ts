@@ -1,8 +1,10 @@
 import type {
   AIReviewerPort,
+  ReviewConfiguration,
   ReviewUseCases,
   SourceFile,
 } from "../application/review";
+import { isPathIncluded } from "../config";
 import { createPullRequestSecurityGateConfig } from "../config/security-quality-gate";
 import type { ReviewFinding, ReviewResult } from "../domain/review";
 import { filterFindingsForChangedLines } from "./comments";
@@ -41,6 +43,7 @@ export interface GitHubPullRequestReviewDependencies {
   readonly environment: Readonly<Record<string, string | undefined>>;
   readonly now: () => string;
   readonly onPullRequestLoaded?: (pullRequest: PullRequestContext) => void;
+  readonly configuration?: ReviewConfiguration;
 }
 
 export interface PullRequestReviewFiles {
@@ -58,8 +61,11 @@ export interface GitHubPullRequestReviewOutput {
 export async function loadPullRequestReviewFiles(
   client: GitHubPullRequestClient,
   pullRequest: PullRequestContext,
+  configuration?: ReviewConfiguration,
 ): Promise<PullRequestReviewFiles> {
-  const reviewableFiles = pullRequest.files.filter(isReviewableFile);
+  const reviewableFiles = pullRequest.files
+    .filter(isReviewableFile)
+    .filter((file) => configuration === undefined || isPathIncluded(file.filename, configuration));
   const files = await Promise.all(
     reviewableFiles.map(async (file): Promise<SourceFile> => ({
       path: file.filename,
@@ -100,7 +106,11 @@ export async function reviewGitHubPullRequest(
     input.pullRequestNumber,
   );
   dependencies.onPullRequestLoaded?.(pullRequest);
-  const converted = await loadPullRequestReviewFiles(dependencies.client, pullRequest);
+  const converted = await loadPullRequestReviewFiles(
+    dependencies.client,
+    pullRequest,
+    dependencies.configuration,
+  );
   const result = await dependencies.review.reviewPullRequest({
     title: pullRequest.title,
     description: pullRequest.body,
@@ -109,7 +119,9 @@ export async function reviewGitHubPullRequest(
     securityQualityGate: createPullRequestSecurityGateConfig(
       dependencies.environment,
       dependencies.now(),
+      dependencies.configuration?.qualityGate.securityProfile ?? "security/banking",
     ),
+    configuration: dependencies.configuration,
   }, dependencies.aiReviewer);
   const changedLinesByFile = new Map(
     converted.files.map((file) => [file.path, new Set(file.changedLines)]),

@@ -1,4 +1,4 @@
-import type { ReviewFinding, ReviewWarning } from "../../domain/review";
+import type { ReviewFinding, ReviewWarning, Severity } from "../../domain/review";
 
 export interface AnalyzerSourceFile {
   readonly path: string;
@@ -18,5 +18,14 @@ export interface AnalyzerContribution {
 }
 
 export interface DeterministicAnalyzerAdapter {
-  analyze(files: readonly AnalyzerSourceFile[]): AnalyzerContributionResult;
+  analyze(
+    files: readonly AnalyzerSourceFile[],
+    selection?: AnalyzerSelection,
+  ): AnalyzerContributionResult;
+}
+
+export interface AnalyzerSelection {
+  readonly disabledContributionIds: readonly string[];
+  readonly disabledRuleIds: readonly string[];
+  readonly severityOverrides: Readonly<Record<string, Severity>>;
 }

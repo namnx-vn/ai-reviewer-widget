@@ -7,9 +7,11 @@ import type { ReviewOutputAdapter } from "../types";
 import {
   analyzeWithPlugins,
   createPluginRegistry,
+  createPluginRuleCatalog,
   createPluginReviewUseCases,
 } from "..";
 import type { ReviewerPlugin } from "../types";
+import { resolveReviewConfiguration } from "../../config";
 
 const astRule: ASTRule = {
   id: "example.no-marker",
@@ -163,6 +165,37 @@ describe("PluginRegistry", () => {
     const ruleIds = result.findings.map((finding) => finding.ruleId);
     expect(ruleIds).toContain("example.no-marker");
     expect(ruleIds.at(-1)).toBe("example.files");
+  });
+
+  it("selects plugin rule IDs through the same resolved configuration", () => {
+    const registry = createPluginRegistry([plugin]);
+    const catalog = createPluginRuleCatalog(registry);
+    const configuration = resolveReviewConfiguration({
+      version: 1,
+      rules: { disabled: ["example.no-marker"] },
+    }, catalog);
+
+    const result = createPluginReviewUseCases(registry, configuration).reviewFiles([
+      { path: "example.ts", content: "export const value = 1;" },
+    ]);
+
+    expect(result.findings.some(({ ruleId }) => ruleId === "example.no-marker")).toBe(false);
+    expect(result.findings.some(({ ruleId }) => ruleId === "example.files")).toBe(true);
+  });
+
+  it("disables a known plugin analyzer without unregistering unrelated plugin rules", () => {
+    const registry = createPluginRegistry([plugin]);
+    const configuration = resolveReviewConfiguration({
+      version: 1,
+      rules: { disabled: ["example.files"] },
+    }, createPluginRuleCatalog(registry));
+
+    const result = createPluginReviewUseCases(registry, configuration).reviewFiles([
+      { path: "example.ts", content: "export const value = 1;" },
+    ]);
+
+    expect(result.findings.some(({ ruleId }) => ruleId === "example.files")).toBe(false);
+    expect(result.findings.some(({ ruleId }) => ruleId === "example.no-marker")).toBe(true);
   });
 
   it("preserves core output and appends contributed findings in registration order", () => {

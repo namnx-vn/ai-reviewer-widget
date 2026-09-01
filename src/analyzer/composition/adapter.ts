@@ -22,9 +22,9 @@ export function createDeterministicAnalyzerAdapter(
   ]);
 
   return {
-    analyze(files) {
+    analyze(files, selection) {
       const prepared = prepareAnalyzerFiles(files);
-      const analysis = runAnalyzerContributions(prepared.files, registry);
+      const analysis = runAnalyzerContributions(prepared.files, registry, selection);
       return {
         findings: analysis.findings,
         warnings: [...prepared.warnings, ...analysis.warnings],

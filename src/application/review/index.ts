@@ -10,6 +10,7 @@ export type {
   ReviewApplicationDependencies,
   ReviewPipelinePort,
   ReviewPublisherPort,
+  ReviewConfiguration,
   SecurityProfileId,
   SecurityQualityGateRequest,
   SecurityQualityGateSuppression,

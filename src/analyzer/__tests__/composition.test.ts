@@ -83,4 +83,20 @@ describe("deterministic analyzer composition", () => {
     }]);
     expect(result.warnings[0]?.message).not.toContain("secret failure detail");
   });
+
+  it("selects families and rule IDs and applies severity at the composition boundary", () => {
+    const registry = AnalyzerContributionRegistry.empty()
+      .register(contribution("core.quality", 10, "quality.first"))
+      .register(contribution("core.security", 20, "security.second"));
+
+    const result = runAnalyzerContributions([], registry, {
+      disabledContributionIds: ["core.quality"],
+      disabledRuleIds: [],
+      severityOverrides: { "security.second": "critical" },
+    });
+
+    expect(result.findings).toEqual([
+      expect.objectContaining({ ruleId: "security.second", severity: "critical" }),
+    ]);
+  });
 });

@@ -106,8 +106,8 @@ Status: 🚧 In Progress
 | Phase | Status | Scope |
 | --- | --- | --- |
 | 4.1 | ✅ Complete | Local CLI |
-| 4.2 | 📌 Next | [Configuration & Rule Selection](./phase-4/4.2-configuration-rule-selection.md) |
-| 4.3 | ⏳ Planned | [Distributable CLI](./phase-4/4.3-distributable-cli.md) |
+| 4.2 | ✅ Complete | [Configuration & Rule Selection](./phase-4/4.2-configuration-rule-selection.md) |
+| 4.3 | 📌 Next | [Distributable CLI](./phase-4/4.3-distributable-cli.md) |
 | 4.4 | ⏳ Planned | [CI Adapters & Portable Review Output](./phase-4/4.4-ci-adapters.md) |
 | 4.5 | ⏳ Planned | [Platform API Boundary](./phase-4/4.5-platform-api-boundary.md) |
 | 4.6 | ⏳ Planned | [Persistence & Review History](./phase-4/4.6-persistence-review-history.md) |

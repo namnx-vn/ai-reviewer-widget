@@ -1,3 +1,5 @@
+import type { AnalyzerSelection } from "../../analyzer";
+import type { ResolvedReviewConfiguration } from "../../config";
 import type {
   ReviewFinding,
   ReviewResult,
@@ -19,7 +21,10 @@ export interface DeterministicReviewResult {
 }
 
 export interface DeterministicReviewPort {
-  analyze(files: readonly SourceFile[]): DeterministicReviewResult;
+  analyze(
+    files: readonly SourceFile[],
+    selection?: AnalyzerSelection,
+  ): DeterministicReviewResult;
 }
 
 export interface AIReviewRequest {
@@ -74,6 +79,8 @@ export interface ReviewPipelineInput {
   readonly warnings: readonly ReviewWarning[];
 }
 
+export type ReviewConfiguration = ResolvedReviewConfiguration;
+
 export interface ReviewPipelinePort {
   execute(input: ReviewPipelineInput): Promise<ReviewResult>;
 }
@@ -119,6 +126,7 @@ export interface QualityGateInput extends SecurityQualityGateRequest {
 export type QualityGateEvaluator = (input: QualityGateInput) => QualityGateEvaluation;
 
 export interface ReviewApplicationDependencies {
+  readonly configuration?: ReviewConfiguration;
   readonly deterministic: DeterministicReviewPort;
   readonly pipeline: ReviewPipelinePort;
   readonly prepareAIInput: (input: {

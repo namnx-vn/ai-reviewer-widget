@@ -24,7 +24,7 @@ export function analyzePerformanceFindings(
 export function analyzePerformanceFiles(
   files: readonly PerformanceSourceFile[],
 ): readonly ReviewFinding[] {
-  const registry = createDefaultRegistry();
+  const registry = createPerformanceRuleRegistry();
   const sourceFiles = files.filter((file) => isSourceFile(file.path));
   const baseRepository = createPerformanceRepositoryContext(files);
   const repository = {
@@ -49,7 +49,7 @@ export function analyzePerformanceFiles(
     .sort((left, right) => left.id.localeCompare(right.id));
 }
 
-function createDefaultRegistry(): PerformanceRuleRegistry {
+export function createPerformanceRuleRegistry(): PerformanceRuleRegistry {
   const registry = new PerformanceRuleRegistry();
   DEFAULT_RULES.forEach((rule) => registry.register(rule));
   return registry;

@@ -16,6 +16,7 @@ import { isSourceFile } from "./source-files";
 
 export const BUILT_IN_ANALYZER_ORDER = Object.freeze({
   ast: 100,
+  securityAst: 110,
   security: 200,
   performance: 300,
   architecture: 400,
@@ -31,11 +32,19 @@ export function createBuiltInAnalyzerContributions(
 ): readonly AnalyzerContribution[] {
   return [
     {
-      id: "core.ast",
+      id: "core.quality",
       order: BUILT_IN_ANALYZER_ORDER.ast,
       analyze(files) {
         return result(sourceFiles(files).flatMap(({ path, content }) =>
-          analyzeAST(content, path, [noConsoleRule, noEvalRule, ...astRules])));
+          analyzeAST(content, path, [noConsoleRule, ...astRules])));
+      },
+    },
+    {
+      id: "core.security.ast",
+      order: BUILT_IN_ANALYZER_ORDER.securityAst,
+      analyze(files) {
+        return result(sourceFiles(files).flatMap(({ path, content }) =>
+          analyzeAST(content, path, [noEvalRule])));
       },
     },
     {
