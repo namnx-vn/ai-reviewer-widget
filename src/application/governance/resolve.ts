@@ -40,7 +40,7 @@ export function resolveOrganizationPolicy(
   }];
   let effective = cloneConfiguration(input.builtInConfiguration);
 
-  if (input.policy.defaultProfile !== undefined && input.repositoryConfiguration === undefined) {
+  if (input.policy.defaultProfile !== undefined) {
     effective = { ...effective, profile: input.policy.defaultProfile };
     provenance.push({
       path: "profile",
@@ -50,11 +50,12 @@ export function resolveOrganizationPolicy(
   }
 
   if (input.repositoryConfiguration !== undefined) {
+    assertRepositoryOverridePermissions(effective, input.repositoryConfiguration, input.policy.overrides);
     effective = cloneConfiguration(input.repositoryConfiguration);
     provenance.push({
       path: "$",
       source: "repository",
-      reason: "Repository resolved configuration applied before organization constraints.",
+      reason: "Allowed repository configuration applied before mandatory organization constraints.",
     });
   }
 
@@ -70,6 +71,37 @@ export function resolveOrganizationPolicy(
     effectiveConfiguration: freezeConfiguration(effective),
     provenance: Object.freeze(provenance.map((entry) => Object.freeze({ ...entry }))),
   };
+}
+
+function assertRepositoryOverridePermissions(
+  organizationBase: ResolvedReviewConfiguration,
+  repository: ResolvedReviewConfiguration,
+  permissions: OrganizationPolicyResolutionInput["policy"]["overrides"],
+): void {
+  if (!permissions.profile && repository.profile !== organizationBase.profile) {
+    throwOverrideForbidden("repository", "profile");
+  }
+  if (!permissions.ruleFamilies && !sameStrings(repository.rules.disabledFamilies, organizationBase.rules.disabledFamilies)) {
+    throwOverrideForbidden("repository", "rules.disabledFamilies");
+  }
+  if (!permissions.rules && !sameStrings(repository.rules.disabled, organizationBase.rules.disabled)) {
+    throwOverrideForbidden("repository", "rules.disabled");
+  }
+  if (!permissions.severity && !sameRecord(repository.rules.severity, organizationBase.rules.severity)) {
+    throwOverrideForbidden("repository", "rules.severity");
+  }
+  if (!permissions.aiMode && repository.ai.mode !== organizationBase.ai.mode) {
+    throwOverrideForbidden("repository", "ai.mode");
+  }
+  if (!permissions.aiProvider && repository.ai.provider !== organizationBase.ai.provider) {
+    throwOverrideForbidden("repository", "ai.provider");
+  }
+  if (
+    !permissions.qualityGate
+    && repository.qualityGate.securityProfile !== organizationBase.qualityGate.securityProfile
+  ) {
+    throwOverrideForbidden("repository", "qualityGate.securityProfile");
+  }
 }
 
 function applyInvocationOverrides(
@@ -216,12 +248,28 @@ function enforceOrganizationConstraints(
 }
 
 function requirePermission(allowed: boolean, path: string): void {
-  if (!allowed) {
-    throw new GovernancePolicyError(
-      "GOVERNANCE_OVERRIDE_FORBIDDEN",
-      `Organization policy does not allow invocation override for ${path}.`,
-    );
-  }
+  if (!allowed) throwOverrideForbidden("invocation", path);
+}
+
+function throwOverrideForbidden(source: "repository" | "invocation", path: string): never {
+  throw new GovernancePolicyError(
+    "GOVERNANCE_OVERRIDE_FORBIDDEN",
+    `Organization policy does not allow ${source} override for ${path}.`,
+  );
+}
+
+function sameStrings(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function sameRecord(
+  left: Readonly<Record<string, Severity>>,
+  right: Readonly<Record<string, Severity>>,
+): boolean {
+  const leftEntries = Object.entries(left);
+  const rightEntries = Object.entries(right);
+  return leftEntries.length === rightEntries.length
+    && leftEntries.every(([key, value]) => right[key] === value);
 }
 
 function severityRank(value: Severity): number {
