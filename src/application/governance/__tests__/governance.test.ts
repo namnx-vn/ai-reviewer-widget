@@ -25,12 +25,12 @@ const policy: OrganizationPolicy = {
   ai: { allowedModes: ["enabled"], allowedProviders: ["openai"] },
   overrides: {
     profile: true,
-    ruleFamilies: false,
-    rules: false,
+    ruleFamilies: true,
+    rules: true,
     severity: true,
     aiMode: false,
-    aiProvider: false,
-    qualityGate: false,
+    aiProvider: true,
+    qualityGate: true,
   },
 };
 
@@ -64,10 +64,27 @@ describe("organization governance", () => {
     expect(context.effectiveConfiguration.rules.severity["security.no-eval"]).toBe("critical");
     expect(context.provenance.map((entry) => entry.source)).toEqual(expect.arrayContaining([
       "built-in",
+      "organization",
       "repository",
       "invocation",
       "organization-enforced",
     ]));
+  });
+
+  it("enforces repository-level override permissions", () => {
+    const lockedPolicy: OrganizationPolicy = {
+      ...policy,
+      overrides: { ...policy.overrides, profile: false },
+    };
+    expectPolicyError(() => resolveOrganizationPolicy({
+      organization: { id: "org-1" },
+      policy: lockedPolicy,
+      builtInConfiguration: DEFAULT_REVIEW_CONFIGURATION,
+      repositoryConfiguration: {
+        ...DEFAULT_REVIEW_CONFIGURATION,
+        profile: "default",
+      },
+    }), "GOVERNANCE_OVERRIDE_FORBIDDEN");
   });
 
   it("rejects repository or invocation attempts that weaken mandatory controls", () => {
