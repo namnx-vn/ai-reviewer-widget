@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: 22
 
-      - run: npm install --no-package-lock
+      - run: npm install
 
       - name: Dependency audit
         run: npm audit --audit-level=high
@@ -60,7 +60,7 @@ jobs:
         with:
           node-version: 22
 
-      - run: npm install --no-package-lock
+      - run: npm install
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
