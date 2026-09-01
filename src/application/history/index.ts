@@ -5,6 +5,7 @@ export type {
   HistoricalFindingMatch,
   HistoricalFindingState,
   PersistedFindingSnapshot,
+  PersistedPolicyContextV1,
   PersistedReviewResultSnapshot,
   ReviewHistoryQuery,
   ReviewRunExecutionMetadata,
