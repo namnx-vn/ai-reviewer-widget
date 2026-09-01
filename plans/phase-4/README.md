@@ -37,7 +37,7 @@ Phase 4 is productization/platformization work. It must not weaken deterministic
 | 4.5 | ✅ Complete | Platform API Boundary | [4.5](./4.5-platform-api-boundary.md) |
 | 4.6 | ✅ Complete | Persistence & Review History | [4.6](./4.6-persistence-review-history.md) |
 | 4.7 | ✅ Complete | Observability & Operational Diagnostics | [4.7](./4.7-observability.md) |
-| 4.8 | ⏳ Planned | Organization Platform & Policy Governance | [4.8](./4.8-organization-platform.md) |
+| 4.8 | ✅ Complete | Organization Platform & Policy Governance | [4.8](./4.8-organization-platform.md) |
 
 ---
 
@@ -59,14 +59,15 @@ Recommended critical path:
 4.6 Persistence ✅  4.7 Observability ✅
        └──────┬───────┘
               ↓
-4.8 Organization Platform
+4.8 Organization Platform ✅
 ```
 
 Notes:
 
 - 4.5 may begin after 4.2 once configuration semantics are stable; it does not need to wait for every CLI/CI packaging detail.
 - 4.6 and 4.7 may progress in parallel after the platform API/application boundary is stable.
-- 4.8 should remain last because organization governance depends on stable configuration, platform contracts, and persisted policy provenance.
+- 4.8 depends on stable configuration, platform contracts, persisted policy provenance, and operational diagnostics.
+- Phase 4 remains in progress until 4.4 CI adapters and portable review output are completed.
 
 ---
 
@@ -181,9 +182,11 @@ The implementation is validated by CI across TypeScript, lint, coverage tests, p
 
 ## 4.8 — Organization Platform & Policy Governance
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
-Define organization/repository policy contracts, deterministic policy precedence, mandatory gate controls, configuration provenance, and historical policy snapshots while keeping provider identity and tenancy concerns in adapters.
+Introduces versioned organization policy contracts, deterministic built-in → organization → repository → invocation precedence, explicit repository/invocation override permissions, mandatory security/AI governance controls, typed provenance, historical policy context, and a governed platform façade that delegates to the existing platform review service.
+
+The implementation is validated by CI across TypeScript, lint, coverage tests, production build, dependency/security gates, and Playwright E2E.
 
 [Detailed plan](./4.8-organization-platform.md)
 
@@ -199,9 +202,9 @@ Phase 4 is complete when:
 - [x] a transport-neutral platform API boundary exists without framework coupling
 - [x] review history can be persisted through application ports with policy/configuration provenance
 - [x] review execution exposes sanitized vendor-neutral operational telemetry
-- [ ] organization policy resolution is deterministic and cannot silently weaken mandatory gates
-- [ ] no adapter duplicates analyzer, scoring, decision, AI orchestration, or quality-gate logic
-- [ ] dependency boundaries continue to satisfy R1 architecture rules
+- [x] organization policy resolution is deterministic and cannot silently weaken mandatory gates
+- [x] no completed platform adapter duplicates analyzer, scoring, decision, AI orchestration, or quality-gate logic
+- [x] completed Phase 4 work continues to satisfy R1 dependency-boundary rules
 - [ ] all Phase 4 sub-plan acceptance criteria are complete
 - [x] `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build` pass
 
