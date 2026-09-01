@@ -1,14 +1,19 @@
+import type { AnalyzerSelection } from "../../analyzer";
+import { isPathIncluded } from "../../config";
 import { aggregateReview } from "../../domain/review";
 import type { ReviewFinding, ReviewResult, ReviewWarning } from "../../domain/review";
+import {
+  categoryForReviewWarning,
+  recordOperationalTelemetry,
+} from "../observability";
 import type {
   AIReviewerPort,
+  DeterministicReviewResult,
   ReviewApplicationDependencies,
+  ReviewConfiguration,
   SecurityQualityGateRequest,
   SourceFile,
 } from "./ports";
-import type { ReviewConfiguration } from "./ports";
-import { isPathIncluded } from "../../config";
-import type { AnalyzerSelection } from "../../analyzer";
 
 export interface PullRequestReviewInput {
   readonly title: string;
@@ -34,7 +39,8 @@ export function createReviewUseCases(
     reviewFiles(files, configuration = dependencies.configuration) {
       const startedAt = dependencies.now();
       const includedFiles = filterConfiguredFiles(files, configuration);
-      const analysis = dependencies.deterministic.analyze(includedFiles, configuredSelection(configuration));
+      const analysis = analyzeDeterministic(includedFiles, configuration, dependencies);
+      emitWarningDiagnostics(analysis.warnings, dependencies);
       return applyConfiguredSeverity(aggregateReview(
         [...analysis.findings],
         dependencies.now() - startedAt,
@@ -46,7 +52,7 @@ export function createReviewUseCases(
       const configuration = input.configuration ?? dependencies.configuration;
       assertConfiguredAIProvider(configuration, aiReviewer);
       const includedFiles = filterConfiguredFiles(input.files, configuration);
-      const analysis = dependencies.deterministic.analyze(includedFiles, configuredSelection(configuration));
+      const analysis = analyzeDeterministic(includedFiles, configuration, dependencies);
       const aiEnabled = aiReviewer !== undefined && configuration?.ai.mode !== "disabled";
       const preparedAIInput = dependencies.prepareAIInput({
         title: input.title,
@@ -54,16 +60,15 @@ export function createReviewUseCases(
         deterministicFindings: JSON.stringify(analysis.findings),
         files: includedFiles,
       });
-      const warnings = buildReviewWarnings(
-        analysis.warnings,
-        preparedAIInput,
-        aiEnabled,
-      );
+      const warnings = buildReviewWarnings(analysis.warnings, preparedAIInput, aiEnabled);
+      emitWarningDiagnostics(warnings, dependencies);
 
       const result = await dependencies.pipeline.execute({
         deterministicFindings: [...analysis.findings],
         warnings,
-        aiReviewer: aiEnabled ? aiReviewer : undefined,
+        aiReviewer: aiEnabled && aiReviewer !== undefined
+          ? instrumentAIReviewer(aiReviewer, dependencies)
+          : undefined,
         aiInput: aiEnabled && preparedAIInput.diff !== undefined
           ? {
               pullRequestTitle: preparedAIInput.title,
@@ -85,6 +90,89 @@ export function createReviewUseCases(
       }, dependencies);
     },
   };
+}
+
+function analyzeDeterministic(
+  files: readonly SourceFile[],
+  configuration: ReviewConfiguration | undefined,
+  dependencies: ReviewApplicationDependencies,
+): DeterministicReviewResult {
+  const startedAt = dependencies.now();
+  recordOperationalTelemetry(dependencies.telemetry, {
+    type: "stage",
+    stage: "deterministic.analysis",
+    outcome: "started",
+  });
+  try {
+    const result = dependencies.deterministic.analyze(files, configuredSelection(configuration));
+    recordOperationalTelemetry(dependencies.telemetry, {
+      type: "stage",
+      stage: "deterministic.analysis",
+      outcome: "completed",
+      durationMs: dependencies.now() - startedAt,
+    });
+    return result;
+  } catch (error) {
+    recordOperationalTelemetry(dependencies.telemetry, {
+      type: "stage",
+      stage: "deterministic.analysis",
+      outcome: "failed",
+      durationMs: dependencies.now() - startedAt,
+      code: "ANALYZER_EXECUTION_FAILED",
+    });
+    throw error;
+  }
+}
+
+function instrumentAIReviewer(
+  reviewer: AIReviewerPort,
+  dependencies: ReviewApplicationDependencies,
+): AIReviewerPort {
+  return {
+    name: reviewer.name,
+    async review(input) {
+      const startedAt = dependencies.now();
+      recordOperationalTelemetry(dependencies.telemetry, {
+        type: "stage",
+        stage: "ai.review",
+        outcome: "started",
+      });
+      try {
+        const response = await reviewer.review(input);
+        recordOperationalTelemetry(dependencies.telemetry, {
+          type: "stage",
+          stage: "ai.review",
+          outcome: "completed",
+          durationMs: dependencies.now() - startedAt,
+          usage: response.usage,
+        });
+        return response;
+      } catch (error) {
+        recordOperationalTelemetry(dependencies.telemetry, {
+          type: "stage",
+          stage: "ai.review",
+          outcome: "failed",
+          durationMs: dependencies.now() - startedAt,
+          code: "AI_PROVIDER_FAILED",
+        });
+        throw error;
+      }
+    },
+  };
+}
+
+function emitWarningDiagnostics(
+  warnings: readonly ReviewWarning[],
+  dependencies: ReviewApplicationDependencies,
+): void {
+  for (const warning of warnings) {
+    recordOperationalTelemetry(dependencies.telemetry, {
+      type: "diagnostic",
+      category: categoryForReviewWarning(warning.code),
+      outcome: "warning",
+      code: warning.code,
+    });
+  }
 }
 
 function assertConfiguredAIProvider(
@@ -167,43 +255,66 @@ function applyQualityGate(
 ): ReviewResult {
   const request = input.securityQualityGate;
   if (request === undefined) return result;
-
-  const baseFindings = input.baseFiles === undefined
-    ? []
-    : dependencies.deterministic.analyze(input.baseFiles, configuredSelection(input.configuration)).findings;
-  const qualityGate = dependencies.evaluateQualityGate({
-    findings: result.findings,
-    profile: request.profile ?? input.configuration?.qualityGate.securityProfile ?? "security/banking",
-    evaluatedAt: request.evaluatedAt,
-    baselineFindingIds: [
-      ...(request.baselineFindingIds ?? []),
-      ...findUnchangedSecurityFindingIds(result.findings, input.files, baseFindings),
-    ],
-    suppressions: request.suppressions,
+  const startedAt = dependencies.now();
+  recordOperationalTelemetry(dependencies.telemetry, {
+    type: "stage",
+    stage: "quality-gate.evaluation",
+    outcome: "started",
   });
-  const acceptedIds = new Set(
-    qualityGate.findings
-      .filter((finding) => finding.state !== "new")
-      .map((finding) => finding.findingId),
-  );
-  const policyDecision = aggregateReview(
-    result.findings.filter((finding) => !acceptedIds.has(finding.id)),
-    result.durationMs,
-    result.warnings,
-  ).decision;
-  const securityAnalyzerFailed = result.warnings.some(
-    (warning) => warning.code === "SECURITY_RULE_FAILED",
-  );
 
-  return {
-    ...result,
-    decision: securityAnalyzerFailed || qualityGate.decision === "fail"
-      ? "FAIL"
-      : qualityGate.decision === "warn" && policyDecision === "PASS"
-        ? "WARN"
-        : policyDecision,
-    securityQualityGate: qualityGate,
-  };
+  try {
+    const baseFindings = input.baseFiles === undefined
+      ? []
+      : analyzeDeterministic(input.baseFiles, input.configuration, dependencies).findings;
+    const qualityGate = dependencies.evaluateQualityGate({
+      findings: result.findings,
+      profile: request.profile ?? input.configuration?.qualityGate.securityProfile ?? "security/banking",
+      evaluatedAt: request.evaluatedAt,
+      baselineFindingIds: [
+        ...(request.baselineFindingIds ?? []),
+        ...findUnchangedSecurityFindingIds(result.findings, input.files, baseFindings),
+      ],
+      suppressions: request.suppressions,
+    });
+    const acceptedIds = new Set(
+      qualityGate.findings
+        .filter((finding) => finding.state !== "new")
+        .map((finding) => finding.findingId),
+    );
+    const policyDecision = aggregateReview(
+      result.findings.filter((finding) => !acceptedIds.has(finding.id)),
+      result.durationMs,
+      result.warnings,
+    ).decision;
+    const securityAnalyzerFailed = result.warnings.some(
+      (warning) => warning.code === "SECURITY_RULE_FAILED",
+    );
+    recordOperationalTelemetry(dependencies.telemetry, {
+      type: "stage",
+      stage: "quality-gate.evaluation",
+      outcome: "completed",
+      durationMs: dependencies.now() - startedAt,
+    });
+
+    return {
+      ...result,
+      decision: securityAnalyzerFailed || qualityGate.decision === "fail"
+        ? "FAIL"
+        : qualityGate.decision === "warn" && policyDecision === "PASS"
+          ? "WARN"
+          : policyDecision,
+      securityQualityGate: qualityGate,
+    };
+  } catch (error) {
+    recordOperationalTelemetry(dependencies.telemetry, {
+      type: "stage",
+      stage: "quality-gate.evaluation",
+      outcome: "failed",
+      durationMs: dependencies.now() - startedAt,
+      code: "QUALITY_GATE_FAILED",
+    });
+    throw error;
+  }
 }
 
 function configuredSelection(
