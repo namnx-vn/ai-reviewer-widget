@@ -35,8 +35,8 @@ export interface ReferencedPlatformSource {
 
 export type PlatformSource = InlinePlatformSource | ReferencedPlatformSource;
 
-export interface PlatformReviewRequest {
-  readonly version: PlatformApiVersion;
+export interface PlatformReviewRequestV1 {
+  readonly version: 1;
   readonly repository?: PlatformRepositoryIdentity;
   readonly source: PlatformSource;
   readonly configuration?: ReviewConfiguration;
@@ -50,9 +50,15 @@ export interface PlatformReviewRequest {
   readonly run?: PlatformRunMetadata;
 }
 
-export interface PlatformReviewResponse {
-  readonly version: PlatformApiVersion;
+export interface PlatformReviewResponseV1 {
+  readonly version: 1;
   readonly repository?: PlatformRepositoryIdentity;
   readonly correlationId?: string;
   readonly result: ReviewResult;
 }
+
+// Public aliases intentionally point at the latest supported contract. A future
+// breaking API change adds V2 interfaces and widens these aliases rather than
+// mutating the V1 shape in place.
+export type PlatformReviewRequest = PlatformReviewRequestV1;
+export type PlatformReviewResponse = PlatformReviewResponseV1;
