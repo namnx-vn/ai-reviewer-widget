@@ -9,6 +9,7 @@ import {
   createGovernedPlatformReviewService,
   GovernancePolicyError,
   resolveOrganizationPolicy,
+  type GovernancePolicyErrorCode,
   type OrganizationPolicy,
 } from "..";
 
@@ -70,7 +71,7 @@ describe("organization governance", () => {
   });
 
   it("rejects repository or invocation attempts that weaken mandatory controls", () => {
-    expect(() => resolveOrganizationPolicy({
+    expectPolicyError(() => resolveOrganizationPolicy({
       organization: { id: "org-1" },
       policy,
       builtInConfiguration: DEFAULT_REVIEW_CONFIGURATION,
@@ -83,9 +84,9 @@ describe("organization governance", () => {
         ai: { mode: "enabled", provider: "openai" },
         qualityGate: { securityProfile: "security/strict" },
       },
-    })).toThrowError(GovernancePolicyError);
+    }), "GOVERNANCE_REQUIRED_FAMILY_DISABLED");
 
-    expect(() => resolveOrganizationPolicy({
+    expectPolicyError(() => resolveOrganizationPolicy({
       organization: { id: "org-1" },
       policy,
       builtInConfiguration: {
@@ -94,7 +95,7 @@ describe("organization governance", () => {
         qualityGate: { securityProfile: "security/strict" },
       },
       invocationOverrides: { aiMode: "disabled" },
-    })).toMatchObjectError("GOVERNANCE_OVERRIDE_FORBIDDEN");
+    }), "GOVERNANCE_OVERRIDE_FORBIDDEN");
   });
 
   it("rejects weak severity, forbidden providers, and weak security gates explicitly", () => {
@@ -104,7 +105,7 @@ describe("organization governance", () => {
       qualityGate: { securityProfile: "security/strict" as const },
     };
 
-    expect(() => resolveOrganizationPolicy({
+    expectPolicyError(() => resolveOrganizationPolicy({
       organization: { id: "org-1" },
       policy,
       builtInConfiguration: base,
@@ -112,21 +113,21 @@ describe("organization governance", () => {
         ...base,
         rules: { ...base.rules, severity: { "security.no-eval": "low" } },
       },
-    })).toMatchObjectError("GOVERNANCE_SEVERITY_TOO_LOW");
+    }), "GOVERNANCE_SEVERITY_TOO_LOW");
 
-    expect(() => resolveOrganizationPolicy({
+    expectPolicyError(() => resolveOrganizationPolicy({
       organization: { id: "org-1" },
       policy,
       builtInConfiguration: base,
       repositoryConfiguration: { ...base, ai: { mode: "enabled", provider: "other" } },
-    })).toMatchObjectError("GOVERNANCE_AI_PROVIDER_FORBIDDEN");
+    }), "GOVERNANCE_AI_PROVIDER_FORBIDDEN");
 
-    expect(() => resolveOrganizationPolicy({
+    expectPolicyError(() => resolveOrganizationPolicy({
       organization: { id: "org-1" },
       policy,
       builtInConfiguration: base,
       repositoryConfiguration: { ...base, qualityGate: { securityProfile: "security/default" } },
-    })).toMatchObjectError("GOVERNANCE_QUALITY_GATE_TOO_WEAK");
+    }), "GOVERNANCE_QUALITY_GATE_TOO_WEAK");
   });
 
   it("feeds the effective configuration into the existing platform review service", async () => {
@@ -192,26 +193,14 @@ describe("organization governance", () => {
   });
 });
 
-expect.extend({
-  toMatchObjectError(received: () => unknown, code: string) {
-    try {
-      received();
-      return { pass: false, message: () => `Expected function to throw ${code}.` };
-    } catch (error) {
-      const pass = error instanceof GovernancePolicyError && error.code === code;
-      return {
-        pass,
-        message: () => `Expected GovernancePolicyError with code ${code}.`,
-      };
+function expectPolicyError(execute: () => unknown, code: GovernancePolicyErrorCode): void {
+  try {
+    execute();
+    throw new Error(`Expected GovernancePolicyError with code ${code}.`);
+  } catch (error) {
+    expect(error).toBeInstanceOf(GovernancePolicyError);
+    if (error instanceof GovernancePolicyError) {
+      expect(error.code).toBe(code);
     }
-  },
-});
-
-declare module "vitest" {
-  interface Assertion<T = unknown> {
-    toMatchObjectError(code: string): T;
-  }
-  interface AsymmetricMatchersContaining {
-    toMatchObjectError(code: string): unknown;
   }
 }
