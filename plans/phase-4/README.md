@@ -34,7 +34,7 @@ Phase 4 is productization/platformization work. It must not weaken deterministic
 | 4.2 | ✅ Complete | Configuration & Rule Selection | [4.2](./4.2-configuration-rule-selection.md) |
 | 4.3 | ✅ Complete | Distributable CLI | [4.3](./4.3-distributable-cli.md) |
 | 4.4 | 📌 Next | CI Adapters & Portable Review Output | [4.4](./4.4-ci-adapters.md) |
-| 4.5 | ⏳ Planned | Platform API Boundary | [4.5](./4.5-platform-api-boundary.md) |
+| 4.5 | ✅ Complete | Platform API Boundary | [4.5](./4.5-platform-api-boundary.md) |
 | 4.6 | ⏳ Planned | Persistence & Review History | [4.6](./4.6-persistence-review-history.md) |
 | 4.7 | ⏳ Planned | Observability & Operational Diagnostics | [4.7](./4.7-observability.md) |
 | 4.8 | ⏳ Planned | Organization Platform & Policy Governance | [4.8](./4.8-organization-platform.md) |
@@ -54,7 +54,7 @@ Recommended critical path:
        ↓                     │
 4.4 CI Adapters              │
                              │
-4.5 Platform API Boundary ◀──┘
+4.5 Platform API Boundary ✅ ◀┘
        ↓              ↓
 4.6 Persistence   4.7 Observability
        └──────┬───────┘
@@ -145,9 +145,11 @@ Define portable CI result contracts, reusable GitHub Actions integration, JSON/S
 
 ## 4.5 — Platform API Boundary
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
-Introduce transport-neutral request/result contracts and application ports so future hosted/network adapters can invoke the same review use cases without selecting a server framework prematurely.
+Introduces explicit V1 transport-neutral request/result contracts, injected platform ports, safe source mapping, and an application review service that delegates to the existing review use cases without selecting a network framework.
+
+The implementation is validated by CI across TypeScript, lint, coverage tests, production build, dependency/security gates, and Playwright E2E.
 
 [Detailed plan](./4.5-platform-api-boundary.md)
 
@@ -190,7 +192,7 @@ Phase 4 is complete when:
 - [x] local and distributable CLI paths use the same application review pipeline
 - [x] configuration/rule selection semantics are typed, versioned, deterministic, and shared across adapters
 - [ ] CI execution has stable portable result/output contracts
-- [ ] a transport-neutral platform API boundary exists without framework coupling
+- [x] a transport-neutral platform API boundary exists without framework coupling
 - [ ] review history can be persisted through application ports with policy/configuration provenance
 - [ ] review execution exposes sanitized vendor-neutral operational telemetry
 - [ ] organization policy resolution is deterministic and cannot silently weaken mandatory gates
