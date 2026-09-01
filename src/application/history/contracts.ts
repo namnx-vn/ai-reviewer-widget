@@ -6,6 +6,7 @@ import type {
   ReviewStats,
   ReviewWarning,
 } from "../../domain/review";
+import type { EffectivePolicyContextV1, PolicyProvenanceEntry } from "../governance";
 import type { PlatformRepositoryIdentity, PlatformReviewMode } from "../platform";
 
 export const REVIEW_RUN_SCHEMA_VERSION = 1 as const;
@@ -22,6 +23,14 @@ export interface ReviewRunSourceIdentity {
 export interface ReviewRunExecutionMetadata {
   readonly mode: PlatformReviewMode;
   readonly aiProvider?: string;
+}
+
+export interface PersistedPolicyContextV1 {
+  readonly schemaVersion: EffectivePolicyContextV1["schemaVersion"];
+  readonly organizationId: string;
+  readonly policyId: string;
+  readonly policyVersion: string;
+  readonly provenance: readonly PolicyProvenanceEntry[];
 }
 
 export interface PersistedFindingSnapshot {
@@ -57,6 +66,7 @@ export interface ReviewRunSnapshotV1 {
   readonly repository?: Readonly<PlatformRepositoryIdentity>;
   readonly source: Readonly<ReviewRunSourceIdentity>;
   readonly configuration?: ResolvedReviewConfiguration;
+  readonly policy?: PersistedPolicyContextV1;
   readonly execution: Readonly<ReviewRunExecutionMetadata>;
   readonly startedAt: string;
   readonly completedAt?: string;
