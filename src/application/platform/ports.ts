@@ -1,3 +1,4 @@
+import type { OperationalTelemetryPort } from "../observability";
 import type { AIReviewerPort, ReviewConfiguration, SourceFile } from "../review";
 import type {
   PlatformRepositoryIdentity,
@@ -48,4 +49,6 @@ export interface PlatformReviewServiceDependencies {
   readonly publisher?: PlatformReviewPublisherPort;
   readonly persistence?: PlatformRunPersistencePort;
   readonly telemetry?: PlatformTelemetryPort;
+  readonly operationalTelemetry?: OperationalTelemetryPort;
+  readonly now?: () => number;
 }
