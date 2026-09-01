@@ -24,6 +24,13 @@ describe("local review CLI", () => {
     expect(rules.stdout.join("")).toContain("security");
   });
 
+  it("prints an injected package version deterministically", () => {
+    const output = createIO(createTemporaryDirectory());
+
+    expect(runCli(["--version"], output.io, { version: "1.2.3" })).toBe(0);
+    expect(output.stdout).toEqual(["1.2.3\n"]);
+  });
+
   it("reviews a selected source file and returns a failing exit code for critical findings", () => {
     const directory = createTemporaryDirectory();
     mkdirSync(resolve(directory, "src"));
@@ -35,11 +42,35 @@ describe("local review CLI", () => {
     expect(output.stdout.join("")).toContain("security.no-eval");
   });
 
+  it("emits versioned JSON without terminal text", () => {
+    const directory = createTemporaryDirectory();
+    mkdirSync(resolve(directory, "src"));
+    writeFileSync(resolve(directory, "src/example.ts"), 'eval("input");', "utf-8");
+    const output = createIO(directory);
+
+    expect(runCli(["review", "--file", "src/example.ts", "--format", "json"], output.io)).toBe(1);
+    const document = JSON.parse(output.stdout.join(""));
+    expect(document.schemaVersion).toBe(1);
+    expect(document.result.decision).toBe("FAIL");
+    expect(document.result.findings[0].ruleId).toBe("security.no-eval");
+    expect(document.result).not.toHaveProperty("durationMs");
+  });
+
   it("reports an empty workspace without treating it as an error", () => {
     const output = createIO(createTemporaryDirectory());
 
     expect(runCli(["review"], output.io)).toBe(0);
     expect(output.stdout).toEqual(["No reviewable source files found.\n"]);
+  });
+
+  it("keeps JSON output machine-readable for an empty workspace", () => {
+    const output = createIO(createTemporaryDirectory());
+
+    expect(runCli(["review", "--format", "json"], output.io)).toBe(0);
+    expect(JSON.parse(output.stdout.join(""))).toMatchObject({
+      schemaVersion: 1,
+      result: { decision: "PASS", score: 100, findings: [] },
+    });
   });
 
   it("initializes configuration once and reports duplicate initialization", () => {

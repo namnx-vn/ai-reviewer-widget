@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react-swc'
 export default defineConfig({
   plugins: [react()],
   test: {
-    exclude: ['**/node_modules/**', 'e2e/**'],
+    exclude: ['**/node_modules/**', 'e2e/**', 'package-tests/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

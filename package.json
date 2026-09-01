@@ -1,16 +1,25 @@
 {
   "name": "ai-reviewer-widget",
-  "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
+  "files": [
+    "dist/cli"
+  ],
+  "bin": {
+    "ai-reviewer": "dist/cli/ai-reviewer.js"
+  },
+  "exports": {
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && vite build --config vite.cli.config.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:package": "npm run build && vitest run --config vite.package-test.config.ts",
     "test:watch": "vitest",
     "security:secrets": "tsx scripts/secret-scan.ts",
     "review:pr": "tsx scripts/review-pr.ts",

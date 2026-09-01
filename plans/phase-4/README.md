@@ -32,8 +32,8 @@ Phase 4 is productization/platformization work. It must not weaken deterministic
 | --- | --- | --- | --- |
 | 4.1 | ✅ Complete | Local CLI | Current document |
 | 4.2 | ✅ Complete | Configuration & Rule Selection | [4.2](./4.2-configuration-rule-selection.md) |
-| 4.3 | 📌 Next | Distributable CLI | [4.3](./4.3-distributable-cli.md) |
-| 4.4 | ⏳ Planned | CI Adapters & Portable Review Output | [4.4](./4.4-ci-adapters.md) |
+| 4.3 | ✅ Complete | Distributable CLI | [4.3](./4.3-distributable-cli.md) |
+| 4.4 | 📌 Next | CI Adapters & Portable Review Output | [4.4](./4.4-ci-adapters.md) |
 | 4.5 | ⏳ Planned | Platform API Boundary | [4.5](./4.5-platform-api-boundary.md) |
 | 4.6 | ⏳ Planned | Persistence & Review History | [4.6](./4.6-persistence-review-history.md) |
 | 4.7 | ⏳ Planned | Observability & Operational Diagnostics | [4.7](./4.7-observability.md) |
@@ -50,7 +50,7 @@ Recommended critical path:
        ↓
 4.2 Configuration & Rule Selection ✅
        ↓
-4.3 Distributable CLI ───────┐
+4.3 Distributable CLI ✅ ────┐
        ↓                     │
 4.4 CI Adapters              │
                              │
@@ -125,7 +125,7 @@ Define a typed/versioned `.ai-reviewer.json`, deterministic defaults, include/ex
 
 ## 4.3 — Distributable CLI
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Turn the proven repository-local CLI into a stable executable/package surface with deterministic help/version behavior, JSON output, package exports, and packed-artifact validation.
 
@@ -135,7 +135,7 @@ Turn the proven repository-local CLI into a stable executable/package surface wi
 
 ## 4.4 — CI Adapters & Portable Review Output
 
-Status: ⏳ Planned
+Status: 📌 Next
 
 Define portable CI result contracts, reusable GitHub Actions integration, JSON/SARIF formatters, stable CI exit behavior, and clear separation between analysis failures and publication failures.
 
@@ -187,7 +187,7 @@ Define organization/repository policy contracts, deterministic policy precedence
 
 Phase 4 is complete when:
 
-- [ ] local and distributable CLI paths use the same application review pipeline
+- [x] local and distributable CLI paths use the same application review pipeline
 - [x] configuration/rule selection semantics are typed, versioned, deterministic, and shared across adapters
 - [ ] CI execution has stable portable result/output contracts
 - [ ] a transport-neutral platform API boundary exists without framework coupling

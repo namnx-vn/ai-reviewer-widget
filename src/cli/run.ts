@@ -5,6 +5,7 @@ import type { ReviewFinding, ReviewResult } from "../domain/review";
 import { parseCliArgs } from "./args";
 import { collectDiffFiles, collectTargetFiles, collectWorkspaceFiles } from "./files";
 import { loadReviewConfiguration } from "./config-file";
+import { formatJsonReviewResult } from "./output-format";
 
 export interface CliIO {
   readonly cwd: string;
@@ -12,13 +13,24 @@ export interface CliIO {
   readonly stderr: (message: string) => void;
 }
 
-export function runCli(args: readonly string[], io: CliIO): number {
+export interface CliRuntimeMetadata {
+  readonly version: string;
+}
+
+export function runCli(
+  args: readonly string[],
+  io: CliIO,
+  metadata: CliRuntimeMetadata = { version: "0.0.0" },
+): number {
   try {
     const command = parseCliArgs(args);
 
     switch (command.kind) {
       case "help":
         io.stdout(helpText());
+        return 0;
+      case "version":
+        io.stdout(`${metadata.version}\n`);
         return 0;
       case "rules":
         io.stdout(rulesText());
@@ -33,13 +45,15 @@ export function runCli(args: readonly string[], io: CliIO): number {
             ? collectDiffFiles(io.cwd)
             : collectTargetFiles(io.cwd, command.target.path);
 
-        if (files.length === 0) {
+        if (files.length === 0 && command.format === "text") {
           io.stdout("No reviewable source files found.\n");
           return 0;
         }
 
         const result = createDefaultReviewUseCases().reviewFiles(files, configuration);
-        io.stdout(formatReviewResult(result));
+        io.stdout(command.format === "json"
+          ? formatJsonReviewResult(result)
+          : formatReviewResult(result));
         return result.decision === "FAIL" ? 1 : 0;
       }
     }
@@ -98,8 +112,10 @@ function helpText(): string {
     "  ai-reviewer review",
     "  ai-reviewer review --diff",
     "  ai-reviewer review --file <path>",
+    "  ai-reviewer review [--diff | --file <path>] --format <text|json>",
     "  ai-reviewer rules",
     "  ai-reviewer init",
+    "  ai-reviewer --version",
     "",
   ].join("\n");
 }

@@ -61,6 +61,30 @@ npm run test:watch
 npm run review:pr
 ```
 
+## CLI
+
+The package exposes one executable, `ai-reviewer`. From this repository the
+same process adapter can be run with `npm run review:local -- <arguments>`.
+
+```bash
+ai-reviewer review
+ai-reviewer review --diff
+ai-reviewer review --file src/example.ts
+ai-reviewer review --format json
+ai-reviewer rules
+ai-reviewer init
+ai-reviewer --version
+```
+
+Review output defaults to `--format text`. `--format json` emits a stable
+document with `schemaVersion: 1` and a `result` derived from the review-domain
+contract. Exit code `0` means the command succeeded and the review passed,
+`1` means a completed review failed, and `2` means invalid usage,
+configuration, or an operational error.
+
+The distribution artifact can be validated locally with `npm run test:package`.
+That command builds, packs, extracts, and invokes the published executable.
+
 ## High-level structure
 
 ```text

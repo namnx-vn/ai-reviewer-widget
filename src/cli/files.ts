@@ -37,9 +37,15 @@ function collectPathFiles(path: string, cwd: string): SourceFile[] {
 
   if (!stats.isDirectory()) return [];
 
-  return readdirSync(path, { withFileTypes: true })
+  return sortDirectoryEntries(readdirSync(path, { withFileTypes: true }))
     .filter((entry) => !(entry.isDirectory() && IGNORED_DIRECTORIES.has(entry.name)))
     .flatMap((entry) => collectPathFiles(resolve(path, entry.name), cwd));
+}
+
+export function sortDirectoryEntries<TEntry extends { readonly name: string }>(
+  entries: readonly TEntry[],
+): TEntry[] {
+  return [...entries].sort((left, right) => left.name < right.name ? -1 : left.name > right.name ? 1 : 0);
 }
 
 function readReviewFile(path: string, cwd: string): SourceFile {
