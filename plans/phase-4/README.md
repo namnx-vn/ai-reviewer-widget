@@ -35,7 +35,7 @@ Phase 4 is productization/platformization work. It must not weaken deterministic
 | 4.3 | ✅ Complete | Distributable CLI | [4.3](./4.3-distributable-cli.md) |
 | 4.4 | 📌 Next | CI Adapters & Portable Review Output | [4.4](./4.4-ci-adapters.md) |
 | 4.5 | ✅ Complete | Platform API Boundary | [4.5](./4.5-platform-api-boundary.md) |
-| 4.6 | ⏳ Planned | Persistence & Review History | [4.6](./4.6-persistence-review-history.md) |
+| 4.6 | ✅ Complete | Persistence & Review History | [4.6](./4.6-persistence-review-history.md) |
 | 4.7 | ⏳ Planned | Observability & Operational Diagnostics | [4.7](./4.7-observability.md) |
 | 4.8 | ⏳ Planned | Organization Platform & Policy Governance | [4.8](./4.8-organization-platform.md) |
 
@@ -56,7 +56,7 @@ Recommended critical path:
                              │
 4.5 Platform API Boundary ✅ ◀┘
        ↓              ↓
-4.6 Persistence   4.7 Observability
+4.6 Persistence ✅  4.7 Observability
        └──────┬───────┘
               ↓
 4.8 Organization Platform
@@ -157,9 +157,11 @@ The implementation is validated by CI across TypeScript, lint, coverage tests, p
 
 ## 4.6 — Persistence & Review History
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
-Define versioned review-run snapshots, persistence ports, deterministic historical finding identity/matching policy, configuration provenance, and strict source-data minimization before selecting a storage vendor.
+Introduces schema-versioned review-run snapshots, application-owned persistence ports, deterministic historical finding identity/matching, source-data minimization, explicit lifecycle failure behavior, repository history queries, and a minimal in-memory adapter without selecting a production database vendor.
+
+The implementation is validated by CI across TypeScript, lint, coverage tests, production build, dependency/security gates, and Playwright E2E.
 
 [Detailed plan](./4.6-persistence-review-history.md)
 
@@ -193,7 +195,7 @@ Phase 4 is complete when:
 - [x] configuration/rule selection semantics are typed, versioned, deterministic, and shared across adapters
 - [ ] CI execution has stable portable result/output contracts
 - [x] a transport-neutral platform API boundary exists without framework coupling
-- [ ] review history can be persisted through application ports with policy/configuration provenance
+- [x] review history can be persisted through application ports with policy/configuration provenance
 - [ ] review execution exposes sanitized vendor-neutral operational telemetry
 - [ ] organization policy resolution is deterministic and cannot silently weaken mandatory gates
 - [ ] no adapter duplicates analyzer, scoring, decision, AI orchestration, or quality-gate logic
