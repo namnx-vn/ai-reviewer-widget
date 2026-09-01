@@ -99,9 +99,20 @@ Status: ✅ Completed
 
 # Phase 4 — Platform
 
-Status: ⏳ Planned
+Status: 🚧 In Progress
 
-[Phase 4](./phase-4/README.md)
+[Phase 4 Overview](./phase-4/README.md)
+
+| Phase | Status | Scope |
+| --- | --- | --- |
+| 4.1 | ✅ Complete | Local CLI |
+| 4.2 | 📌 Next | [Configuration & Rule Selection](./phase-4/4.2-configuration-rule-selection.md) |
+| 4.3 | ⏳ Planned | [Distributable CLI](./phase-4/4.3-distributable-cli.md) |
+| 4.4 | ⏳ Planned | [CI Adapters & Portable Review Output](./phase-4/4.4-ci-adapters.md) |
+| 4.5 | ⏳ Planned | [Platform API Boundary](./phase-4/4.5-platform-api-boundary.md) |
+| 4.6 | ⏳ Planned | [Persistence & Review History](./phase-4/4.6-persistence-review-history.md) |
+| 4.7 | ⏳ Planned | [Observability & Operational Diagnostics](./phase-4/4.7-observability.md) |
+| 4.8 | ⏳ Planned | [Organization Platform & Policy Governance](./phase-4/4.8-organization-platform.md) |
 
 ---
 
@@ -115,7 +126,7 @@ Status: ✅ Completed for the currently defined scope
 
 # R1 — Source Architecture Refactor
 
-Status: 📌 Next
+Status: ✅ Completed
 
 [Source Architecture Refactor](./source-architecture-refactor.md)
 
