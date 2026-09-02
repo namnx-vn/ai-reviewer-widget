@@ -77,14 +77,18 @@ The engineering contract establishes deterministic-first trust: AST/architecture
 
 ## GitHub output
 
-`src/github/review-pull-request.ts` publishes the complete review result as a
-Check Run. Inline review comments use a changed-line filter so findings are only
-posted inline when their location is part of the PR patch. The executable script
-only parses environment, constructs adapters, and logs lifecycle messages.
+`src/github/review-pull-request.ts` separates PR analysis from publication and
+keeps `reviewGitHubPullRequest()` as the compatibility composition. The complete
+result is published as a Check Run; inline review comments use a changed-line
+filter so findings are only posted when their location is part of the PR patch.
+The process adapter also derives versioned JSON, SARIF, and Markdown artifacts
+from that same result without introducing another review pipeline.
 
 ## Failure behavior
 
 - Missing/invalid PR execution environment fails fast.
+- CI results distinguish failing review decisions from sanitized analysis and
+  publication failures while retaining completed review data where available.
 - Individual parser failures degrade to warnings.
 - Individual analyzer/plugin contribution failures degrade to
   `ANALYZER_CONTRIBUTION_FAILED` warnings while successful findings remain.

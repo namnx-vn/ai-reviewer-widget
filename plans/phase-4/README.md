@@ -2,7 +2,7 @@
 
 > Engineering contract: [`../../AGENTS.md`](../../AGENTS.md)
 
-Status: 🚧 In Progress
+Status: ✅ Complete
 
 ---
 
@@ -33,7 +33,7 @@ Phase 4 is productization/platformization work. It must not weaken deterministic
 | 4.1 | ✅ Complete | Local CLI | Current document |
 | 4.2 | ✅ Complete | Configuration & Rule Selection | [4.2](./4.2-configuration-rule-selection.md) |
 | 4.3 | ✅ Complete | Distributable CLI | [4.3](./4.3-distributable-cli.md) |
-| 4.4 | 📌 Next | CI Adapters & Portable Review Output | [4.4](./4.4-ci-adapters.md) |
+| 4.4 | ✅ Complete | CI Adapters & Portable Review Output | [4.4](./4.4-ci-adapters.md) |
 | 4.5 | ✅ Complete | Platform API Boundary | [4.5](./4.5-platform-api-boundary.md) |
 | 4.6 | ✅ Complete | Persistence & Review History | [4.6](./4.6-persistence-review-history.md) |
 | 4.7 | ✅ Complete | Observability & Operational Diagnostics | [4.7](./4.7-observability.md) |
@@ -52,7 +52,7 @@ Recommended critical path:
        ↓
 4.3 Distributable CLI ✅ ────┐
        ↓                     │
-4.4 CI Adapters              │
+4.4 CI Adapters ✅           │
                              │
 4.5 Platform API Boundary ✅ ◀┘
        ↓              ↓
@@ -67,7 +67,7 @@ Notes:
 - 4.5 may begin after 4.2 once configuration semantics are stable; it does not need to wait for every CLI/CI packaging detail.
 - 4.6 and 4.7 may progress in parallel after the platform API/application boundary is stable.
 - 4.8 depends on stable configuration, platform contracts, persisted policy provenance, and operational diagnostics.
-- Phase 4 remains in progress until 4.4 CI adapters and portable review output are completed.
+- Phase 4 is complete; future platform work should be introduced through a new explicit plan.
 
 ---
 
@@ -136,7 +136,7 @@ Turn the proven repository-local CLI into a stable executable/package surface wi
 
 ## 4.4 — CI Adapters & Portable Review Output
 
-Status: 📌 Next
+Status: ✅ Complete
 
 Define portable CI result contracts, reusable GitHub Actions integration, JSON/SARIF formatters, stable CI exit behavior, and clear separation between analysis failures and publication failures.
 
@@ -198,14 +198,14 @@ Phase 4 is complete when:
 
 - [x] local and distributable CLI paths use the same application review pipeline
 - [x] configuration/rule selection semantics are typed, versioned, deterministic, and shared across adapters
-- [ ] CI execution has stable portable result/output contracts
+- [x] CI execution has stable portable result/output contracts
 - [x] a transport-neutral platform API boundary exists without framework coupling
 - [x] review history can be persisted through application ports with policy/configuration provenance
 - [x] review execution exposes sanitized vendor-neutral operational telemetry
 - [x] organization policy resolution is deterministic and cannot silently weaken mandatory gates
 - [x] no completed platform adapter duplicates analyzer, scoring, decision, AI orchestration, or quality-gate logic
 - [x] completed Phase 4 work continues to satisfy R1 dependency-boundary rules
-- [ ] all Phase 4 sub-plan acceptance criteria are complete
+- [x] all Phase 4 sub-plan acceptance criteria are complete
 - [x] `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build` pass
 
 ---

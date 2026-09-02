@@ -4,7 +4,9 @@ import type { ReviewResult } from "../../domain/review";
 import type { AIReviewerPort, ReviewUseCases } from "../../application/review";
 import { DEFAULT_RULE_CATALOG, resolveReviewConfiguration } from "../../config";
 import {
+  analyzeGitHubPullRequest,
   loadPullRequestReviewFiles,
+  publishGitHubPullRequestReview,
   reviewGitHubPullRequest,
   type GitHubPullRequestClient,
 } from "../review-pull-request";
@@ -191,5 +193,31 @@ describe("GitHub pull request review adapter", () => {
       result,
       inlineFindingCount: 1,
     });
+  });
+
+  it("keeps analysis and publication as independently callable stages", async () => {
+    const client = createClient();
+    const result = createResult();
+    const review = { reviewPullRequest: vi.fn().mockResolvedValue(result) };
+    const dependencies = {
+      client,
+      review,
+      environment: {},
+      now: () => "2026-09-01T00:00:00.000Z",
+    };
+
+    const analysis = await analyzeGitHubPullRequest(
+      { owner: "acme", repo: "widget", pullRequestNumber: 17 },
+      dependencies,
+    );
+
+    expect(client.createCheckRun).not.toHaveBeenCalled();
+    expect(client.createPullRequestReview).not.toHaveBeenCalled();
+
+    const output = await publishGitHubPullRequestReview(analysis, client);
+
+    expect(output.result).toBe(result);
+    expect(client.createCheckRun).toHaveBeenCalledOnce();
+    expect(client.createPullRequestReview).toHaveBeenCalledOnce();
   });
 });

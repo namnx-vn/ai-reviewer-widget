@@ -13,6 +13,7 @@ export default defineConfig({
         'src/ai/**/*.ts',
         'src/application/**/*.ts',
         'src/cli/**/*.ts',
+        'src/ci/**/*.ts',
         'src/config/**/*.ts',
         'src/domain/**/*.ts',
         'src/analyzer/**/*.ts',

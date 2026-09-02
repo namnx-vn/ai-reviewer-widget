@@ -99,7 +99,7 @@ Status: ✅ Completed
 
 # Phase 4 — Platform
 
-Status: 🚧 In Progress
+Status: ✅ Completed
 
 [Phase 4 Overview](./phase-4/README.md)
 
@@ -108,11 +108,11 @@ Status: 🚧 In Progress
 | 4.1 | ✅ Complete | Local CLI |
 | 4.2 | ✅ Complete | [Configuration & Rule Selection](./phase-4/4.2-configuration-rule-selection.md) |
 | 4.3 | ✅ Complete | [Distributable CLI](./phase-4/4.3-distributable-cli.md) |
-| 4.4 | 📌 Next | [CI Adapters & Portable Review Output](./phase-4/4.4-ci-adapters.md) |
-| 4.5 | ⏳ Planned | [Platform API Boundary](./phase-4/4.5-platform-api-boundary.md) |
-| 4.6 | ⏳ Planned | [Persistence & Review History](./phase-4/4.6-persistence-review-history.md) |
-| 4.7 | ⏳ Planned | [Observability & Operational Diagnostics](./phase-4/4.7-observability.md) |
-| 4.8 | ⏳ Planned | [Organization Platform & Policy Governance](./phase-4/4.8-organization-platform.md) |
+| 4.4 | ✅ Complete | [CI Adapters & Portable Review Output](./phase-4/4.4-ci-adapters.md) |
+| 4.5 | ✅ Complete | [Platform API Boundary](./phase-4/4.5-platform-api-boundary.md) |
+| 4.6 | ✅ Complete | [Persistence & Review History](./phase-4/4.6-persistence-review-history.md) |
+| 4.7 | ✅ Complete | [Observability & Operational Diagnostics](./phase-4/4.7-observability.md) |
+| 4.8 | ✅ Complete | [Organization Platform & Policy Governance](./phase-4/4.8-organization-platform.md) |
 
 ---
 

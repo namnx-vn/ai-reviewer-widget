@@ -58,6 +58,13 @@ export interface GitHubPullRequestReviewOutput {
   readonly inlineFindingCount: number;
 }
 
+export interface GitHubPullRequestAnalysis extends GitHubPullRequestReviewOutput {
+  readonly owner: string;
+  readonly repo: string;
+  readonly headSha: string;
+  readonly inlineFindings: readonly ReviewFinding[];
+}
+
 export async function loadPullRequestReviewFiles(
   client: GitHubPullRequestClient,
   pullRequest: PullRequestContext,
@@ -96,10 +103,10 @@ export async function loadPullRequestReviewFiles(
   return { files, baseFiles };
 }
 
-export async function reviewGitHubPullRequest(
+export async function analyzeGitHubPullRequest(
   input: GitHubPullRequestReviewInput,
   dependencies: GitHubPullRequestReviewDependencies,
-): Promise<GitHubPullRequestReviewOutput> {
+): Promise<GitHubPullRequestAnalysis> {
   const pullRequest = await dependencies.client.getPullRequest(
     input.owner,
     input.repo,
@@ -128,26 +135,50 @@ export async function reviewGitHubPullRequest(
   );
   const inlineFindings = filterFindingsForChangedLines(result.findings, changedLinesByFile);
 
-  await dependencies.client.createCheckRun(
-    input.owner,
-    input.repo,
-    pullRequest.headSha,
-    result,
-  );
-  await dependencies.client.createPullRequestReview(
-    input.owner,
-    input.repo,
-    pullRequest.number,
-    pullRequest.headSha,
-    inlineFindings,
-  );
-
   return {
+    owner: input.owner,
+    repo: input.repo,
+    headSha: pullRequest.headSha,
+    inlineFindings,
     pullRequestNumber: pullRequest.number,
     title: pullRequest.title,
     result,
     inlineFindingCount: inlineFindings.length,
   };
+}
+
+export async function publishGitHubPullRequestReview(
+  analysis: GitHubPullRequestAnalysis,
+  client: GitHubPullRequestClient,
+): Promise<GitHubPullRequestReviewOutput> {
+  await client.createCheckRun(
+    analysis.owner,
+    analysis.repo,
+    analysis.headSha,
+    analysis.result,
+  );
+  await client.createPullRequestReview(
+    analysis.owner,
+    analysis.repo,
+    analysis.pullRequestNumber,
+    analysis.headSha,
+    analysis.inlineFindings,
+  );
+
+  return {
+    pullRequestNumber: analysis.pullRequestNumber,
+    title: analysis.title,
+    result: analysis.result,
+    inlineFindingCount: analysis.inlineFindingCount,
+  };
+}
+
+export async function reviewGitHubPullRequest(
+  input: GitHubPullRequestReviewInput,
+  dependencies: GitHubPullRequestReviewDependencies,
+): Promise<GitHubPullRequestReviewOutput> {
+  const analysis = await analyzeGitHubPullRequest(input, dependencies);
+  return publishGitHubPullRequestReview(analysis, dependencies.client);
 }
 
 function isReviewableFile(file: PullRequestFile): boolean {

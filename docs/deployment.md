@@ -30,6 +30,12 @@ The workflow has read-only repository contents permission.
 
 `.github/workflows/ai-review.yml` runs when pull requests are opened, synchronized, or reopened. It cancels older in-progress reviews for the same PR, validates the repository, then runs `npm run review:pr`.
 
+The review step writes a versioned JSON result, SARIF 2.1.0, and a Markdown
+summary under `ai-reviewer-artifacts/`. GitHub Actions uploads that directory
+even when the completed review fails. The process uses exit `0` for PASS/WARN,
+`1` for a failing review decision, and `2` for analysis or publication failure;
+the JSON status distinguishes those operational failure stages.
+
 Required workflow permissions:
 
 - `contents: read`

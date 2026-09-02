@@ -1,35 +1,66 @@
+import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { createAIProviderFromEnv } from "../src/ai/factory";
 import { createDefaultReviewUseCases } from "../src/application/review";
+import {
+  executeCiReview,
+  publishCiExecution,
+} from "../src/ci";
 import { loadReviewConfiguration } from "../src/cli/config-file";
 import { GitHubClient } from "../src/github/client";
-import { reviewGitHubPullRequest } from "../src/github/review-pull-request";
+import {
+  analyzeGitHubPullRequest,
+  publishGitHubPullRequestReview,
+  type GitHubPullRequestAnalysis,
+} from "../src/github/review-pull-request";
 
-const token = requiredEnvironment("GITHUB_TOKEN");
-const [owner, repo] = parseRepository(requiredEnvironment("GITHUB_REPOSITORY"));
-const pullRequestNumber = parsePullRequestNumber(requiredEnvironment("PR_NUMBER"));
-const github = new GitHubClient(token);
-const configuration = loadReviewConfiguration(process.cwd());
-const aiReviewer = configuration.ai.mode === "disabled"
-  ? undefined
-  : createAIProviderFromEnv(process.env);
-const output = await reviewGitHubPullRequest(
-  { owner, repo, pullRequestNumber },
-  {
-    client: github,
-    review: createDefaultReviewUseCases({ configuration }),
-    aiReviewer,
-    environment: process.env,
-    configuration,
-    now: () => new Date().toISOString(),
-    onPullRequestLoaded: (pullRequest) => {
-      console.log(`Reviewing PR #${pullRequest.number}: ${pullRequest.title}`);
-    },
+interface GitHubCiAnalysis extends GitHubPullRequestAnalysis {
+  readonly publisher: GitHubClient;
+}
+
+const execution = await executeCiReview<GitHubCiAnalysis>({
+  analyze: async () => {
+    const token = requiredEnvironment("GITHUB_TOKEN");
+    const [owner, repo] = parseRepository(requiredEnvironment("GITHUB_REPOSITORY"));
+    const pullRequestNumber = parsePullRequestNumber(requiredEnvironment("PR_NUMBER"));
+    const configuration = loadReviewConfiguration(process.cwd());
+    const aiReviewer = configuration.ai.mode === "disabled"
+      ? undefined
+      : createAIProviderFromEnv(process.env);
+    const publisher = new GitHubClient(token);
+    const analysis = await analyzeGitHubPullRequest(
+      { owner, repo, pullRequestNumber },
+      {
+        client: publisher,
+        review: createDefaultReviewUseCases({ configuration }),
+        aiReviewer,
+        environment: process.env,
+        configuration,
+        now: () => new Date().toISOString(),
+      },
+    );
+    return { ...analysis, publisher };
   },
-);
+  publish: async (analysis) => {
+    await publishGitHubPullRequestReview(analysis, analysis.publisher);
+  },
+  metadata: safeMetadata(process.env),
+});
 
-console.log(
-  `Review completed: ${output.result.score}/100 (${output.inlineFindingCount} inline findings)`,
-);
+const publishedExecution = await publishCiExecution(execution, {
+  writeArtifact: async (artifact) => {
+    mkdirSync(dirname(artifact.path), { recursive: true });
+    writeFileSync(artifact.path, artifact.content, "utf-8");
+  },
+  appendGitHubOutput: async (content) => {
+    appendOptionalFile(process.env.GITHUB_OUTPUT, content);
+  },
+  appendStepSummary: async (content) => {
+    appendOptionalFile(process.env.GITHUB_STEP_SUMMARY, content);
+  },
+});
+console.log(`AI Reviewer status: ${publishedExecution.status}`);
+process.exitCode = publishedExecution.exitCode;
 
 function requiredEnvironment(name: string): string {
   const value = process.env[name]?.trim();
@@ -51,4 +82,24 @@ function parsePullRequestNumber(value: string): number {
     throw new Error("PR_NUMBER must be a positive integer.");
   }
   return number;
+}
+
+function appendOptionalFile(path: string | undefined, content: string): void {
+  if (path !== undefined && path.length > 0) appendFileSync(path, content, "utf-8");
+}
+
+function safeMetadata(environment: NodeJS.ProcessEnv): {
+  readonly provider: "github";
+  readonly repository?: string;
+  readonly revision?: string;
+} {
+  const repository = environment.GITHUB_REPOSITORY;
+  const revision = environment.HEAD_SHA;
+  return {
+    provider: "github",
+    ...(repository !== undefined && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)
+      ? { repository }
+      : {}),
+    ...(revision !== undefined && /^[a-fA-F0-9]{7,64}$/.test(revision) ? { revision } : {}),
+  };
 }

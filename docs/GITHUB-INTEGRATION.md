@@ -11,14 +11,17 @@ by the injected adapter in `src/github/review-pull-request.ts`.
 1. Read `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, and `PR_NUMBER` from the environment.
 2. The executable script constructs `GitHubClient`, application use cases, and
    the optional AI adapter.
-3. `reviewGitHubPullRequest` fetches PR metadata, ignores deleted/unsupported
+3. `analyzeGitHubPullRequest` fetches PR metadata, ignores deleted/unsupported
    files, and loads head content plus base content for modified files.
 4. The adapter converts files to application `SourceFile` contracts and calls
    `reviewPullRequest` with the security quality-gate configuration.
 5. Changed lines are computed from patches and inline findings are restricted
    to those lines.
-6. The adapter creates a Check Run from the full result and a PR review from
-   inline findings.
+6. `publishGitHubPullRequestReview` creates a Check Run from the full result and
+   a PR review from inline findings. `reviewGitHubPullRequest` remains the
+   compatibility wrapper that executes both stages.
+7. The CI adapter writes versioned JSON, SARIF, and summary artifacts while
+   classifying analysis, review-decision, and publication failures separately.
 
 ## Supported source extensions in the PR script
 

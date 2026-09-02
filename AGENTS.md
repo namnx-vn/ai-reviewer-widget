@@ -133,6 +133,11 @@ Detailed plans are maintained in `/plans`.
 | 3.8    | ✅ Complete    | [Plugin SDK](./plans/phase-3/3.8-plugin-sdk.md)                                        |
 | 4.2    | ✅ Complete    | [Configuration & Rule Selection](./plans/phase-4/4.2-configuration-rule-selection.md) |
 | 4.3    | ✅ Complete    | [Distributable CLI](./plans/phase-4/4.3-distributable-cli.md)                          |
+| 4.4    | ✅ Complete    | [CI Adapters & Portable Review Output](./plans/phase-4/4.4-ci-adapters.md)              |
+| 4.5    | ✅ Complete    | [Platform API Boundary](./plans/phase-4/4.5-platform-api-boundary.md)                  |
+| 4.6    | ✅ Complete    | [Persistence & Review History](./plans/phase-4/4.6-persistence-review-history.md)      |
+| 4.7    | ✅ Complete    | [Observability & Operational Diagnostics](./plans/phase-4/4.7-observability.md)        |
+| 4.8    | ✅ Complete    | [Organization Platform & Policy Governance](./plans/phase-4/4.8-organization-platform.md) |
 | R1     | ✅ Complete    | [Source Architecture Refactor](./plans/source-architecture-refactor.md)                |
 
 ## Plan Execution Rule
