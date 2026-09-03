@@ -1,4 +1,5 @@
 import type { ReviewFinding, ReviewWarning } from "../../domain/review";
+import type { RepositoryContext } from "../repository-context";
 import type {
   AnalyzerContributionResult,
   AnalyzerSelection,
@@ -14,6 +15,7 @@ export function runAnalyzerContributions(
     disabledRuleIds: [],
     severityOverrides: {},
   },
+  repositoryContext?: RepositoryContext,
 ): AnalyzerContributionResult {
   const findings: ReviewFinding[] = [];
   const warnings: ReviewWarning[] = [];
@@ -23,7 +25,7 @@ export function runAnalyzerContributions(
   for (const contribution of registry.snapshot()) {
     if (disabledContributions.has(contribution.id) || disabledRules.has(contribution.id)) continue;
     try {
-      const analysis = contribution.analyze(files);
+      const analysis = contribution.analyze(files, repositoryContext);
       findings.push(...analysis.findings
         .filter((finding) => !disabledRules.has(finding.ruleId))
         .map((finding) => {
