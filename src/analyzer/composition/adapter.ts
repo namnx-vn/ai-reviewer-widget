@@ -1,4 +1,5 @@
 import type { ASTRule } from "../ast/rules";
+import { buildRepositoryContext } from "../repository-context";
 import { createBuiltInAnalyzerContributions } from "./built-ins";
 import type {
   AnalyzerContribution,
@@ -24,7 +25,13 @@ export function createDeterministicAnalyzerAdapter(
   return {
     analyze(files, selection) {
       const prepared = prepareAnalyzerFiles(files);
-      const analysis = runAnalyzerContributions(prepared.files, registry, selection);
+      const repositoryContext = buildRepositoryContext(prepared.files);
+      const analysis = runAnalyzerContributions(
+        prepared.files,
+        registry,
+        selection,
+        repositoryContext,
+      );
       return {
         findings: analysis.findings,
         warnings: [...prepared.warnings, ...analysis.warnings],
