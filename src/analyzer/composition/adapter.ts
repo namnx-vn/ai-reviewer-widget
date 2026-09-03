@@ -23,7 +23,7 @@ export function createDeterministicAnalyzerAdapter(
   ]);
 
   return {
-    analyze(files, selection) {
+    analyze(files, selection, incrementalScope) {
       const prepared = prepareAnalyzerFiles(files);
       const repositoryContext = buildRepositoryContext(prepared.files);
       const analysis = runAnalyzerContributions(
@@ -31,6 +31,7 @@ export function createDeterministicAnalyzerAdapter(
         registry,
         selection,
         repositoryContext,
+        incrementalScope,
       );
       return {
         findings: analysis.findings,
