@@ -18,6 +18,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:evaluation": "vitest run src/evaluation/__tests__",
     "test:e2e": "playwright test",
     "test:package": "npm run build && vitest run --config vite.package-test.config.ts",
     "test:watch": "vitest",
