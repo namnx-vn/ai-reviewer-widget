@@ -52,8 +52,8 @@ These are engineering targets measured by the evaluation harness, not product gu
 | Phase | Status | Scope | Plan |
 | --- | --- | --- | --- |
 | 6.1 | ✅ Complete | Real-World Evaluation Harness | [6.1](./6.1-evaluation-harness.md) |
-| 6.2 | 📌 Next | Repository Context Intelligence | [6.2](./6.2-repository-context.md) |
-| 6.3 | ⏳ Planned | Project Profiles & Environment Detection | [6.3](./6.3-project-profiles.md) |
+| 6.2 | ✅ Complete | Repository Context Intelligence | [6.2](./6.2-repository-context.md) |
+| 6.3 | 📌 Next | Project Profiles & Environment Detection | [6.3](./6.3-project-profiles.md) |
 | 6.4 | ⏳ Planned | Incremental PR Analysis | [6.4](./6.4-incremental-pr-analysis.md) |
 | 6.5 | ⏳ Planned | Finding Quality, Suppression & Baselines | [6.5](./6.5-finding-quality-baselines.md) |
 | 6.6 | ⏳ Planned | Production GitHub Review Workflow | [6.6](./6.6-github-review-workflow.md) |
@@ -132,7 +132,7 @@ Phase 6 does not include autonomous code modification, automatic commits, model 
 Phase 6 is complete when:
 
 - [x] reviewer quality is measured objectively on a versioned evaluation corpus
-- [ ] repository-level context is available to deterministic analyzers
+- [x] repository-level context is available to deterministic analyzers
 - [ ] project profiles are deterministic and configurable
 - [ ] PRs support dependency-aware incremental analysis
 - [ ] finding identity survives ordinary line movement
