@@ -1,4 +1,4 @@
-import type { Severity } from "../domain/review";
+import type { FindingSuppression, Severity } from "../domain/review";
 import type { ProjectProfileEvidence, ProjectProfileId } from "./project-profiles";
 
 export const REVIEW_PROFILES = [
@@ -51,6 +51,9 @@ export interface ResolvedReviewConfiguration {
   };
   readonly qualityGate: {
     readonly securityProfile: ConfigurationSecurityProfileId;
+  };
+  readonly findingQuality: {
+    readonly suppressions: readonly FindingSuppression[];
   };
 }
 
