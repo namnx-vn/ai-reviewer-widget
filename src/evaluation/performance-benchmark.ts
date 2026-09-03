@@ -10,8 +10,10 @@ export interface ReviewBenchmarkResultV1 {
     readonly lines: number;
   };
   readonly durationsMs: {
+    readonly sourceParse: number;
     readonly repositoryIndex: number;
     readonly deterministicFull: number;
+    readonly totalFull: number;
     readonly incrementalScope: number;
     readonly deterministicIncremental: number;
   };
@@ -60,8 +62,10 @@ export function detectBenchmarkRegressions(
   policy: BenchmarkRegressionPolicy,
 ): readonly BenchmarkRegression[] {
   const candidates = [
+    ["durationsMs.sourceParse", current.durationsMs.sourceParse, baseline.durationsMs.sourceParse, policy.maxDurationIncreaseRatio],
     ["durationsMs.repositoryIndex", current.durationsMs.repositoryIndex, baseline.durationsMs.repositoryIndex, policy.maxDurationIncreaseRatio],
     ["durationsMs.deterministicFull", current.durationsMs.deterministicFull, baseline.durationsMs.deterministicFull, policy.maxDurationIncreaseRatio],
+    ["durationsMs.totalFull", current.durationsMs.totalFull, baseline.durationsMs.totalFull, policy.maxDurationIncreaseRatio],
     ["durationsMs.deterministicIncremental", current.durationsMs.deterministicIncremental, baseline.durationsMs.deterministicIncremental, policy.maxDurationIncreaseRatio],
     ["peakHeapBytes", current.peakHeapBytes, baseline.peakHeapBytes, policy.maxHeapIncreaseRatio],
   ] as const;
