@@ -2,7 +2,7 @@
 
 > Engineering contract: [`../../AGENTS.md`](../../AGENTS.md)
 
-Status: 🚧 In Progress
+Status: ✅ Complete
 
 ---
 
@@ -43,7 +43,7 @@ The primary success criterion is:
 | Rule crash rate on evaluation corpus | 0% |
 | Unexplained high-severity findings | 0 |
 
-These are engineering targets measured by the evaluation harness, not product guarantees.
+These are engineering targets measured by the evaluation harness, not product guarantees. Where the current evaluation corpus is not statistically sufficient to establish a target — notably real-world high-severity precision — CI reports the available metrics and the v1 production contract records **insufficient evidence** rather than claiming an unsupported guarantee.
 
 ---
 
@@ -59,8 +59,8 @@ These are engineering targets measured by the evaluation harness, not product gu
 | 6.6 | ✅ Complete | Production GitHub Review Workflow | [6.6](./6.6-github-review-workflow.md) |
 | 6.7 | ✅ Complete | Performance & Scale | [6.7](./6.7-performance-scale.md) |
 | 6.8 | ✅ Complete | AI Context Selection & Verification | [6.8](./6.8-ai-context-verification.md) |
-| 6.9 | 📌 Next | Developer Feedback Loop | [6.9](./6.9-developer-feedback.md) |
-| 6.10 | ⏳ Planned | Production Readiness & v1 Contract | [6.10](./6.10-production-readiness.md) |
+| 6.9 | ✅ Complete | Developer Feedback Loop | [6.9](./6.9-developer-feedback.md) |
+| 6.10 | ✅ Complete | Production Readiness & v1 Contract | [6.10](./6.10-production-readiness.md) |
 
 ---
 
@@ -87,7 +87,7 @@ Profiles Incremental AI Context
 6.10 Production Readiness
 ```
 
-6.1 must precede major reliability work so later changes can be measured objectively. 6.7 benchmarks the incremental architecture introduced by 6.4 rather than optimizing the old full-scan model. 6.9 depends on stable finding identity from 6.5.
+6.1 preceded reliability work so later changes could be measured objectively. 6.7 benchmarks the incremental architecture introduced by 6.4 rather than optimizing the old full-scan model. 6.9 depends on stable finding identity from 6.5.
 
 ---
 
@@ -117,7 +117,7 @@ Review Result
 CLI / CI / GitHub / Platform
 ```
 
-Phase 6 must preserve R1 dependency boundaries. Rules must not independently discover the filesystem, call GitHub, access persistence, or read process environment.
+Phase 6 preserves R1 dependency boundaries. Rules do not independently discover the filesystem, call GitHub, access persistence, or read process environment.
 
 ---
 
@@ -129,7 +129,7 @@ Phase 6 does not include autonomous code modification, automatic commits, model 
 
 ## Completion Criteria
 
-Phase 6 is complete when:
+Phase 6 is complete because:
 
 - [x] reviewer quality is measured objectively on a versioned evaluation corpus
 - [x] repository-level context is available to deterministic analyzers
@@ -141,10 +141,12 @@ Phase 6 is complete when:
 - [x] review performance is benchmarked at realistic repository sizes
 - [x] AI receives bounded relevant repository context
 - [x] AI findings follow evidence-aware confidence behavior
-- [ ] developer feedback can be recorded without automatically mutating rules
-- [ ] production-facing schemas have compatibility and migration policies
-- [ ] evaluation quality targets are continuously reported
+- [x] developer feedback can be recorded without automatically mutating rules
+- [x] production-facing schemas have compatibility and migration policies
+- [x] evaluation quality targets are continuously reported, with insufficient evidence stated explicitly where applicable
 - [x] deterministic output remains reproducible
 - [x] no adapter duplicates application review logic
-- [ ] all Phase 6 sub-plan acceptance criteria are complete
-- [x] `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build` remain green
+- [x] all Phase 6 sub-plan acceptance criteria are complete
+- [x] release validation includes typecheck, lint, evaluation, benchmark, coverage, build, packed CLI validation, security gates, and e2e
+
+The Phase 6.10 release candidate was validated by GitHub Actions run `33746987515` on commit `c63daf079c3eede9ae5ffabc8677352cf18ed3d6` before this roadmap was marked complete.
