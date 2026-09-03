@@ -22,6 +22,7 @@ export const DEFAULT_REVIEW_CONFIGURATION: ResolvedReviewConfiguration = deepFre
   rules: { disabledFamilies: [], disabled: [], severity: {} },
   ai: { mode: "enabled" },
   qualityGate: { securityProfile: "security/default" },
+  findingQuality: { suppressions: [] },
 });
 
 export function deepFreeze<T>(value: T): T {
