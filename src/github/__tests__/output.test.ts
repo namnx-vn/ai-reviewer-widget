@@ -1,11 +1,8 @@
 import { Octokit } from "@octokit/rest";
 import { describe, expect, it, vi } from "vitest";
 
-import { createCheckRun } from "../check-run";
-import {
-  createPullRequestReview,
-  findingToComment,
-} from "../comments";
+import { createCheckRun, GITHUB_CHECK_ANNOTATION_LIMIT } from "../check-run";
+import { createPullRequestReview, findingToComment } from "../comments";
 import type { ReviewFinding, ReviewResult } from "../../review/types";
 
 const finding: ReviewFinding = {
@@ -39,7 +36,7 @@ describe("GitHub review output", () => {
     expect(findingToComment({ ...finding, location: undefined })).toBeNull();
   });
 
-  it("creates a check run with decision, stats, and warnings", async () => {
+  it("creates a check run with decision, stats, warnings, and annotations", async () => {
     const octokit = new Octokit({ auth: "test" });
     const create = vi.spyOn(octokit.checks, "create").mockResolvedValue({} as never);
 
@@ -52,8 +49,41 @@ describe("GitHub review output", () => {
       conclusion: "neutral",
       output: expect.objectContaining({
         summary: expect.stringContaining("AI_REVIEW_FAILED: AI review was unavailable."),
+        annotations: [expect.objectContaining({
+          path: "src/App.ts",
+          start_line: 12,
+          annotation_level: "failure",
+        })],
       }),
     }));
+  });
+
+  it("bounds check annotations and reports omitted findings deterministically", async () => {
+    const octokit = new Octokit({ auth: "test" });
+    const create = vi.spyOn(octokit.checks, "create").mockResolvedValue({} as never);
+    const findings = Array.from({ length: GITHUB_CHECK_ANNOTATION_LIMIT + 3 }, (_, index): ReviewFinding => ({
+      ...finding,
+      id: `finding-${index}`,
+      severity: index === 0 ? "medium" : "low",
+      location: { file: "src/App.ts", line: index + 1 },
+    }));
+
+    await createCheckRun(octokit, "owner", "repo", "head-sha", {
+      ...result,
+      findings,
+    });
+
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({
+      output: expect.objectContaining({
+        summary: expect.stringContaining("**Annotations omitted by GitHub limit:** 3"),
+        annotations: expect.arrayContaining([
+          expect.objectContaining({ annotation_level: "warning" }),
+          expect.objectContaining({ annotation_level: "notice" }),
+        ]),
+      }),
+    }));
+    const call = create.mock.calls[0]?.[0];
+    expect(call?.output?.annotations).toHaveLength(GITHUB_CHECK_ANNOTATION_LIMIT);
   });
 
   it("includes an auditable security gate summary", async () => {
