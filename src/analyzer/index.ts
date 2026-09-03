@@ -7,6 +7,7 @@ import {
 
 export { analyzeFile } from "./file-analysis";
 export * from "./composition";
+export * from "./repository-context";
 
 export function analyzeFiles(
   files: readonly AnalyzerSourceFile[],
