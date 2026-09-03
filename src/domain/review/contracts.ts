@@ -15,6 +15,14 @@ export interface ReviewLocation {
   column?: number;
 }
 
+export interface ReviewFindingEvidence {
+  readonly status: "supported" | "unsupported" | "unverifiable";
+  readonly provenance: readonly {
+    readonly kind: "deterministic-finding" | "repository-file";
+    readonly reference: string;
+  }[];
+}
+
 export interface ReviewFinding {
   id: string;
   ruleId: string;
@@ -25,6 +33,7 @@ export interface ReviewFinding {
   location?: ReviewLocation;
   suggestion?: string;
   confidence: number;
+  evidence?: ReviewFindingEvidence;
 }
 
 export interface ReviewStats {
