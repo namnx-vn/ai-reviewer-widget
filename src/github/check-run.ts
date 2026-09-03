@@ -1,8 +1,8 @@
 import { Octokit } from "@octokit/rest";
 
-import type {
-  ReviewResult,
-} from "../domain/review";
+import type { ReviewFinding, ReviewResult } from "../domain/review";
+
+export const GITHUB_CHECK_ANNOTATION_LIMIT = 50;
 
 export async function createCheckRun(
   octokit: Octokit,
@@ -11,40 +11,32 @@ export async function createCheckRun(
   sha: string,
   result: ReviewResult,
 ): Promise<void> {
-  const conclusion =
-    result.decision === "PASS"
-      ? "success"
-      : result.decision ===
-          "WARN"
-        ? "neutral"
-        : "failure";
+  const conclusion = result.decision === "PASS"
+    ? "success"
+    : result.decision === "WARN"
+      ? "neutral"
+      : "failure";
+  const annotationCandidates = result.findings.filter(hasAnnotationLocation);
+  const annotations = annotationCandidates
+    .slice(0, GITHUB_CHECK_ANNOTATION_LIMIT)
+    .map(toAnnotation);
 
   await octokit.checks.create({
     owner,
-
     repo,
-
     name: "AI Reviewer",
-
     head_sha: sha,
-
     status: "completed",
-
     conclusion,
-
     output: {
-      title:
-        `AI Review · ${result.score}/100`,
-
-      summary:
-        buildSummary(result),
+      title: `AI Review · ${result.score}/100`,
+      summary: buildSummary(result, annotationCandidates.length - annotations.length),
+      annotations,
     },
   });
 }
 
-function buildSummary(
-  result: ReviewResult,
-): string {
+function buildSummary(result: ReviewResult, omittedAnnotations: number): string {
   const warnings = getWarnings(result);
   const securityGate = result.securityQualityGate;
   const securityGateSummary = securityGate === undefined
@@ -60,6 +52,9 @@ function buildSummary(
   const warningSummary = warnings.length === 0
     ? ""
     : `\n## Warnings\n\n${warnings.map((warning) => `- ${warning}`).join("\n")}\n`;
+  const annotationSummary = omittedAnnotations === 0
+    ? ""
+    : `\n**Annotations omitted by GitHub limit:** ${omittedAnnotations}\n`;
 
   return `
 ## 🤖 AI Reviewer
@@ -79,7 +74,30 @@ function buildSummary(
 **Findings:** ${result.findings.length}
 
 **Duration:** ${Math.round(result.durationMs)}ms
-${securityGateSummary}${warningSummary}`;
+${annotationSummary}${securityGateSummary}${warningSummary}`;
+}
+
+function hasAnnotationLocation(
+  finding: ReviewFinding,
+): finding is ReviewFinding & { readonly location: { readonly file: string; readonly line: number; readonly column?: number } } {
+  return finding.location?.file !== undefined && finding.location.line !== undefined;
+}
+
+function toAnnotation(finding: ReviewFinding & { readonly location: { readonly file: string; readonly line: number } }) {
+  return {
+    path: finding.location.file,
+    start_line: finding.location.line,
+    end_line: finding.location.line,
+    annotation_level: annotationLevel(finding.severity),
+    title: finding.title.slice(0, 255),
+    message: finding.message,
+  } as const;
+}
+
+function annotationLevel(severity: ReviewFinding["severity"]): "notice" | "warning" | "failure" {
+  if (severity === "critical" || severity === "high") return "failure";
+  if (severity === "medium") return "warning";
+  return "notice";
 }
 
 function getWarnings(result: ReviewResult): string[] {
