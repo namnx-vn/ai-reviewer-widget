@@ -1,17 +1,19 @@
 import { Octokit } from "@octokit/rest";
 
+import type { ReviewFinding, ReviewResult } from "../domain/review";
 import { createCheckRun } from "./check-run";
 import { createPullRequestReview } from "./comments";
+import {
+  parseFindingPublicationMarker,
+  type PublishedFindingComment,
+} from "./publication-lifecycle";
 import type { PullRequestContext, PullRequestFile } from "./pull-request";
-import type { ReviewFinding, ReviewResult } from "../domain/review";
 
 export class GitHubClient {
   private readonly octokit: Octokit;
 
   constructor(token: string) {
-    this.octokit = new Octokit({
-      auth: token,
-    });
+    this.octokit = new Octokit({ auth: token });
   }
 
   async getPullRequest(
@@ -24,31 +26,21 @@ export class GitHubClient {
       repo,
       pull_number: pullNumber,
     });
-
     const files = await this.getFiles(owner, repo, pullNumber);
 
     return {
       owner,
       repo,
       number: pullNumber,
-
       title: pr.title,
-
       body: pr.body ?? undefined,
-
       baseSha: pr.base.sha,
-
       headSha: pr.head.sha,
-
       files,
     };
   }
 
-  async getFiles(
-    owner: string,
-    repo: string,
-    pullNumber: number,
-  ): Promise<PullRequestFile[]> {
+  async getFiles(owner: string, repo: string, pullNumber: number): Promise<PullRequestFile[]> {
     const response = await this.octokit.paginate(this.octokit.pulls.listFiles, {
       owner,
       repo,
@@ -58,15 +50,10 @@ export class GitHubClient {
 
     return response.map((file) => ({
       filename: file.filename,
-
       status: toPullRequestFileStatus(file.status),
-
       additions: file.additions,
-
       deletions: file.deletions,
-
       changes: file.changes,
-
       patch: file.patch,
     }));
   }
@@ -85,30 +72,49 @@ export class GitHubClient {
     await createPullRequestReview(this.octokit, owner, repo, pullNumber, commitId, findings);
   }
 
+  async listPublishedFindingComments(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+  ): Promise<readonly PublishedFindingComment[]> {
+    const comments = await this.octokit.paginate(this.octokit.pulls.listReviewComments, {
+      owner,
+      repo,
+      pull_number: pullNumber,
+      per_page: 100,
+    });
+    return comments
+      .filter((comment) => parseFindingPublicationMarker(comment.body) !== undefined)
+      .map((comment) => ({ id: comment.id, body: comment.body }));
+  }
+
+  async updatePublishedFindingComment(
+    owner: string,
+    repo: string,
+    commentId: number,
+    body: string,
+  ): Promise<void> {
+    await this.octokit.pulls.updateReviewComment({
+      owner,
+      repo,
+      comment_id: commentId,
+      body,
+    });
+  }
+
   async getFileContent(
     owner: string,
     repo: string,
     path: string,
     ref: string,
   ): Promise<string> {
-    const { data } = await this.octokit.repos.getContent({
-      owner,
-      repo,
-      path,
-      ref,
-    });
-
+    const { data } = await this.octokit.repos.getContent({ owner, repo, path, ref });
     if (Array.isArray(data) || data.type !== "file") {
       throw new Error(`Unable to read file: ${path}`);
     }
-
-    if (!data.content) {
-      return "";
-    }
-
+    if (!data.content) return "";
     return Buffer.from(data.content, "base64").toString("utf8");
   }
-
 }
 
 function toPullRequestFileStatus(status: string): PullRequestFile["status"] {
