@@ -35,6 +35,9 @@ export function normalizeAIFindings(
       suggestion:
         finding.suggestion,
 
+      evidence:
+        finding.evidence,
+
       location:
         finding.file
           ? {
