@@ -57,7 +57,7 @@ export function calculateIncrementalAnalysisScope(
     .map((entry) => `${entry.from}#${entry.exportedName}`));
   const impactedPackages = uniqueSorted(repositoryContext.packages
     .filter((pkg) => impactedFiles.some((file) => isWithin(file, pkg.root)))
-    .map((pkg) => pkg.name ?? pkg.root || "."));
+    .map((pkg) => pkg.name ?? (pkg.root || ".")));
 
   return {
     changedFiles,
