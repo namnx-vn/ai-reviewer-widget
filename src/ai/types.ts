@@ -1,4 +1,5 @@
 import type {
+  ReviewFindingEvidence,
   Severity,
 } from "../domain/review";
 
@@ -43,6 +44,8 @@ export interface AIReviewFinding {
   line?: number;
 
   agent?: AIReviewAgentId;
+
+  evidence?: ReviewFindingEvidence;
 }
 
 export interface AIReviewWarning {
