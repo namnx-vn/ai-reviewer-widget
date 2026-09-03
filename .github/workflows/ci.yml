@@ -44,6 +44,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Evaluation smoke corpus
+        run: npm run test:evaluation
+
       - name: Tests and coverage
         run: npm run test:coverage
 
