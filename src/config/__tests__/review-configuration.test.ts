@@ -22,6 +22,7 @@ describe("review configuration", () => {
       rules: { disabledFamilies: [], disabled: [], severity: {} },
       ai: { mode: "enabled" },
       qualityGate: { securityProfile: "security/default" },
+      findingQuality: { suppressions: [] },
     });
     expect(Object.isFrozen(resolved)).toBe(true);
   });
@@ -128,6 +129,40 @@ describe("review configuration", () => {
 
     expect(resolved.projectProfiles).toEqual([]);
     expect(resolved.projectProfileEvidence).toEqual([]);
+  });
+
+  it("resolves explicit finding suppressions with rule, scope and reason", () => {
+    const resolved = resolveReviewConfiguration({
+      version: 1,
+      findingQuality: {
+        suppressions: [{
+          ruleId: "security.no-eval",
+          scope: "src/legacy/**",
+          reason: "Migration tracked by SEC-42",
+        }],
+      },
+    }, DEFAULT_RULE_CATALOG);
+
+    expect(resolved.findingQuality.suppressions).toEqual([{
+      ruleId: "security.no-eval",
+      scope: "src/legacy/**",
+      reason: "Migration tracked by SEC-42",
+    }]);
+  });
+
+  it("rejects suppressions for unknown rules or missing governance fields", () => {
+    expect(() => resolveReviewConfiguration({
+      version: 1,
+      findingQuality: {
+        suppressions: [{ ruleId: "unknown.rule", scope: "src/**", reason: "No" }],
+      },
+    }, DEFAULT_RULE_CATALOG)).toThrow(ConfigurationError);
+    expect(() => resolveReviewConfiguration({
+      version: 1,
+      findingQuality: {
+        suppressions: [{ ruleId: "security.no-eval", scope: "src/**" }],
+      },
+    }, DEFAULT_RULE_CATALOG)).toThrow(ConfigurationError);
   });
 
   it("matches normalized include and exclude glob patterns deterministically", () => {
