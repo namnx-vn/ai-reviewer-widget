@@ -70,7 +70,7 @@ export class ReviewEngine {
           );
         const verified = verifyAIFindings(aiResult.findings, {
           deterministicFindings: input.deterministicFindings,
-          knownFiles: input.aiKnownFiles ?? [],
+          knownFiles: input.aiKnownFiles ?? extractInputFiles(input.aiInput.diff),
         });
 
         aiFindings =
@@ -122,4 +122,12 @@ export class ReviewEngine {
       warnings,
     );
   }
+}
+
+function extractInputFiles(diff: string): readonly string[] {
+  return diff
+    .split("\n")
+    .filter((line) => line.startsWith("FILE: "))
+    .map((line) => line.slice("FILE: ".length).trim())
+    .filter((path) => path.length > 0);
 }
