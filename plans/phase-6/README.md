@@ -55,8 +55,8 @@ These are engineering targets measured by the evaluation harness, not product gu
 | 6.2 | ✅ Complete | Repository Context Intelligence | [6.2](./6.2-repository-context.md) |
 | 6.3 | ✅ Complete | Project Profiles & Environment Detection | [6.3](./6.3-project-profiles.md) |
 | 6.4 | ✅ Complete | Incremental PR Analysis | [6.4](./6.4-incremental-pr-analysis.md) |
-| 6.5 | 📌 Next | Finding Quality, Suppression & Baselines | [6.5](./6.5-finding-quality-baselines.md) |
-| 6.6 | ⏳ Planned | Production GitHub Review Workflow | [6.6](./6.6-github-review-workflow.md) |
+| 6.5 | ✅ Complete | Finding Quality, Suppression & Baselines | [6.5](./6.5-finding-quality-baselines.md) |
+| 6.6 | 📌 Next | Production GitHub Review Workflow | [6.6](./6.6-github-review-workflow.md) |
 | 6.7 | ⏳ Planned | Performance & Scale | [6.7](./6.7-performance-scale.md) |
 | 6.8 | ⏳ Planned | AI Context Selection & Verification | [6.8](./6.8-ai-context-verification.md) |
 | 6.9 | ⏳ Planned | Developer Feedback Loop | [6.9](./6.9-developer-feedback.md) |
@@ -135,8 +135,8 @@ Phase 6 is complete when:
 - [x] repository-level context is available to deterministic analyzers
 - [x] project profiles are deterministic and configurable
 - [x] PRs support dependency-aware incremental analysis
-- [ ] finding identity survives ordinary line movement
-- [ ] baseline and suppression workflows exist
+- [x] finding identity survives ordinary line movement
+- [x] baseline and suppression workflows exist
 - [ ] GitHub output has stable lifecycle behavior across repeated pushes
 - [ ] review performance is benchmarked at realistic repository sizes
 - [ ] AI receives bounded relevant repository context
