@@ -1,4 +1,4 @@
-import type { AnalyzerSelection } from "../../analyzer";
+import type { AnalyzerSelection, IncrementalAnalysisScope } from "../../analyzer";
 import type { ResolvedReviewConfiguration } from "../../config";
 import type {
   ReviewFinding,
@@ -25,6 +25,7 @@ export interface DeterministicReviewPort {
   analyze(
     files: readonly SourceFile[],
     selection?: AnalyzerSelection,
+    incrementalScope?: IncrementalAnalysisScope,
   ): DeterministicReviewResult;
 }
 
