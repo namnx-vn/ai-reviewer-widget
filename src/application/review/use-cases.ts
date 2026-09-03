@@ -1,4 +1,4 @@
-import type { AnalyzerSelection } from "../../analyzer";
+import type { AnalyzerSelection, IncrementalAnalysisScope } from "../../analyzer";
 import { isPathIncluded } from "../../config";
 import { aggregateReview } from "../../domain/review";
 import type { ReviewFinding, ReviewResult, ReviewWarning } from "../../domain/review";
@@ -20,12 +20,17 @@ export interface PullRequestReviewInput {
   readonly description?: string;
   readonly files: readonly SourceFile[];
   readonly baseFiles?: readonly SourceFile[];
+  readonly incrementalScope?: IncrementalAnalysisScope;
   readonly securityQualityGate?: SecurityQualityGateRequest;
   readonly configuration?: ReviewConfiguration;
 }
 
 export interface ReviewUseCases {
-  reviewFiles(files: readonly SourceFile[], configuration?: ReviewConfiguration): ReviewResult;
+  reviewFiles(
+    files: readonly SourceFile[],
+    configuration?: ReviewConfiguration,
+    incrementalScope?: IncrementalAnalysisScope,
+  ): ReviewResult;
   reviewPullRequest(
     input: PullRequestReviewInput,
     aiReviewer?: AIReviewerPort,
@@ -36,10 +41,10 @@ export function createReviewUseCases(
   dependencies: ReviewApplicationDependencies,
 ): ReviewUseCases {
   return {
-    reviewFiles(files, configuration = dependencies.configuration) {
+    reviewFiles(files, configuration = dependencies.configuration, incrementalScope) {
       const startedAt = dependencies.now();
       const includedFiles = filterConfiguredFiles(files, configuration);
-      const analysis = analyzeDeterministic(includedFiles, configuration, dependencies);
+      const analysis = analyzeDeterministic(includedFiles, configuration, dependencies, incrementalScope);
       emitWarningDiagnostics(analysis.warnings, dependencies);
       return applyConfiguredSeverity(aggregateReview(
         [...analysis.findings],
@@ -52,7 +57,12 @@ export function createReviewUseCases(
       const configuration = input.configuration ?? dependencies.configuration;
       assertConfiguredAIProvider(configuration, aiReviewer);
       const includedFiles = filterConfiguredFiles(input.files, configuration);
-      const analysis = analyzeDeterministic(includedFiles, configuration, dependencies);
+      const analysis = analyzeDeterministic(
+        includedFiles,
+        configuration,
+        dependencies,
+        input.incrementalScope,
+      );
       const aiEnabled = aiReviewer !== undefined && configuration?.ai.mode !== "disabled";
       const preparedAIInput = dependencies.prepareAIInput({
         title: input.title,
@@ -96,6 +106,7 @@ function analyzeDeterministic(
   files: readonly SourceFile[],
   configuration: ReviewConfiguration | undefined,
   dependencies: ReviewApplicationDependencies,
+  incrementalScope?: IncrementalAnalysisScope,
 ): DeterministicReviewResult {
   const startedAt = dependencies.now();
   recordOperationalTelemetry(dependencies.telemetry, {
@@ -104,7 +115,11 @@ function analyzeDeterministic(
     outcome: "started",
   });
   try {
-    const result = dependencies.deterministic.analyze(files, configuredSelection(configuration));
+    const result = dependencies.deterministic.analyze(
+      files,
+      configuredSelection(configuration),
+      incrementalScope,
+    );
     recordOperationalTelemetry(dependencies.telemetry, {
       type: "stage",
       stage: "deterministic.analysis",
