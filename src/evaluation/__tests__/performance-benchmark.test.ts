@@ -13,8 +13,10 @@ function result(duration: number, heap: number): ReviewBenchmarkResultV1 {
     benchmarkClass: "small",
     dataset: { files: 100, lines: 3000 },
     durationsMs: {
+      sourceParse: duration,
       repositoryIndex: duration,
       deterministicFull: duration,
+      totalFull: duration * 3,
       incrementalScope: duration / 10,
       deterministicIncremental: duration,
     },
@@ -44,8 +46,10 @@ describe("performance benchmark contracts", () => {
     });
 
     expect(regressions.map(({ metric }) => metric)).toEqual([
+      "durationsMs.sourceParse",
       "durationsMs.repositoryIndex",
       "durationsMs.deterministicFull",
+      "durationsMs.totalFull",
       "durationsMs.deterministicIncremental",
       "peakHeapBytes",
     ]);
