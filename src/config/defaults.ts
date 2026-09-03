@@ -14,6 +14,9 @@ export const DEFAULT_RULE_CATALOG: RuleCatalog = Object.freeze({
 export const DEFAULT_REVIEW_CONFIGURATION: ResolvedReviewConfiguration = deepFreeze({
   version: 1,
   profile: "default",
+  projectProfiles: [],
+  projectProfileMode: "legacy",
+  projectProfileEvidence: [],
   include: ["**/*"],
   exclude: ["node_modules/**", "dist/**", "coverage/**", ".git/**"],
   rules: { disabledFamilies: [], disabled: [], severity: {} },
