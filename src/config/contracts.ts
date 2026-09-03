@@ -1,4 +1,5 @@
 import type { Severity } from "../domain/review";
+import type { ProjectProfileEvidence, ProjectProfileId } from "./project-profiles";
 
 export const REVIEW_PROFILES = [
   "default",
@@ -32,7 +33,11 @@ export interface RuleCatalog {
 
 export interface ResolvedReviewConfiguration {
   readonly version: 1;
+  /** Legacy review strictness preset. */
   readonly profile: ReviewProfileId;
+  readonly projectProfiles: readonly ProjectProfileId[];
+  readonly projectProfileMode: "auto" | "explicit" | "legacy";
+  readonly projectProfileEvidence: readonly ProjectProfileEvidence[];
   readonly include: readonly string[];
   readonly exclude: readonly string[];
   readonly rules: {
