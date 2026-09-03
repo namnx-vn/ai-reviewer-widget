@@ -2,7 +2,7 @@
 
 > Engineering contract: [`../../AGENTS.md`](../../AGENTS.md)
 
-Status: 📌 Next
+Status: 🚧 In Progress
 
 ---
 
@@ -51,8 +51,8 @@ These are engineering targets measured by the evaluation harness, not product gu
 
 | Phase | Status | Scope | Plan |
 | --- | --- | --- | --- |
-| 6.1 | 📌 Next | Real-World Evaluation Harness | [6.1](./6.1-evaluation-harness.md) |
-| 6.2 | ⏳ Planned | Repository Context Intelligence | [6.2](./6.2-repository-context.md) |
+| 6.1 | ✅ Complete | Real-World Evaluation Harness | [6.1](./6.1-evaluation-harness.md) |
+| 6.2 | 📌 Next | Repository Context Intelligence | [6.2](./6.2-repository-context.md) |
 | 6.3 | ⏳ Planned | Project Profiles & Environment Detection | [6.3](./6.3-project-profiles.md) |
 | 6.4 | ⏳ Planned | Incremental PR Analysis | [6.4](./6.4-incremental-pr-analysis.md) |
 | 6.5 | ⏳ Planned | Finding Quality, Suppression & Baselines | [6.5](./6.5-finding-quality-baselines.md) |
@@ -131,7 +131,7 @@ Phase 6 does not include autonomous code modification, automatic commits, model 
 
 Phase 6 is complete when:
 
-- [ ] reviewer quality is measured objectively on a versioned evaluation corpus
+- [x] reviewer quality is measured objectively on a versioned evaluation corpus
 - [ ] repository-level context is available to deterministic analyzers
 - [ ] project profiles are deterministic and configurable
 - [ ] PRs support dependency-aware incremental analysis
