@@ -77,14 +77,17 @@ npm run build
 npm run security:secrets
 npm audit --audit-level=high
 npm run test:evaluation
+npm run evaluation:report
 npm run benchmark:review -- medium
 ```
 
-GitHub Actions runs the security, evaluation, benchmark, coverage, build, packed-package, and e2e gates on the shared application pipeline.
+GitHub Actions runs the security, evaluation, quality-report, benchmark, coverage, build, packed-package, and e2e gates on the shared application pipeline.
 
 ## Quality Reporting
 
-Phase 6 evaluation metrics are engineering targets, not product guarantees. Precision, recall, false positives, duplicate rate, stability, severity accuracy, and runtime are represented by the evaluation harness. Performance results are stored as CI artifacts. A target that cannot be statistically supported by the current corpus must be reported as **insufficient evidence**, not claimed as passing.
+Phase 6 evaluation metrics are engineering targets, not product guarantees. Precision, recall, false positives, duplicate rate, stability, severity accuracy, and runtime are represented by the evaluation harness. Evaluation and performance results are stored as CI artifacts. A target that cannot be statistically supported by the current corpus must be reported as **insufficient evidence**, not claimed as passing.
+
+The smoke corpus currently provides deterministic pipeline/stability coverage but is not sufficient evidence for the real-world high-severity precision target. This limitation is explicit rather than converted into a misleading production guarantee.
 
 ## Known Limitations
 
@@ -96,14 +99,16 @@ Phase 6 evaluation metrics are engineering targets, not product guarantees. Prec
 
 ## v1 Release Checklist
 
-- [ ] `develop` release candidate CI is fully green.
-- [ ] dependency audit contains no critical/high vulnerabilities.
-- [ ] secret scan passes.
-- [ ] evaluation smoke passes and quality metrics are reported without unsupported claims.
-- [ ] medium benchmark completes below the current Phase 6 target and artifact is retained.
-- [ ] packed CLI installation/package test passes.
-- [ ] GitHub publication tests cover lifecycle and partial failure behavior.
-- [ ] persisted/external schema guards reject unsupported versions.
-- [ ] known limitations are reviewed for the release notes.
-- [ ] no adapter bypasses the shared application review pipeline.
-- [ ] Phase 6 plan and roadmap are marked complete only after the release-validation CI run passes.
+Validated by GitHub Actions run `33746987515` on commit `c63daf079c3eede9ae5ffabc8677352cf18ed3d6`:
+
+- [x] `develop` release candidate CI is fully green.
+- [x] dependency audit contains no critical/high vulnerabilities.
+- [x] secret scan passes.
+- [x] evaluation smoke passes and quality metrics are reported without unsupported claims.
+- [x] medium benchmark completes below the current Phase 6 target and artifact is retained.
+- [x] packed CLI installation/package test passes on the release CI environment.
+- [x] GitHub publication tests cover lifecycle and partial failure behavior.
+- [x] persisted/external schema guards reject unsupported versions.
+- [x] known limitations are documented for release notes.
+- [x] no adapter bypasses the shared application review pipeline.
+- [x] Phase 6.10 implementation passed the release-validation CI before Phase 6 was marked complete.
