@@ -47,6 +47,15 @@ jobs:
       - name: Evaluation smoke corpus
         run: npm run test:evaluation
 
+      - name: Medium review benchmark
+        run: npm run benchmark:review -- medium > benchmark-medium.json
+
+      - name: Upload review benchmark
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-benchmark-medium
+          path: benchmark-medium.json
+
       - name: Tests and coverage
         run: npm run test:coverage
 
