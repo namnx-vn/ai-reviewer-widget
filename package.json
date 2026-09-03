@@ -24,7 +24,8 @@
     "test:watch": "vitest",
     "security:secrets": "tsx scripts/secret-scan.ts",
     "review:pr": "tsx scripts/review-pr.ts",
-    "review:local": "tsx scripts/ai-reviewer.ts"
+    "review:local": "tsx scripts/ai-reviewer.ts",
+    "benchmark:review": "tsx scripts/benchmark-review.ts"
   },
   "dependencies": {
     "@octokit/rest": "^22.0.1",
