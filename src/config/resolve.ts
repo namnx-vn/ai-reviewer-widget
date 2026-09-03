@@ -216,9 +216,9 @@ function suppressionList(
       return;
     }
     unknownFields(item, SUPPRESSION_FIELDS, path, diagnostics);
-    const ruleId = optionalNonEmptyString(item.ruleId, `${path}.ruleId`, diagnostics);
-    const scope = optionalNonEmptyString(item.scope, `${path}.scope`, diagnostics);
-    const reason = optionalNonEmptyString(item.reason, `${path}.reason`, diagnostics);
+    const ruleId = requiredNonEmptyString(item.ruleId, `${path}.ruleId`, diagnostics);
+    const scope = requiredNonEmptyString(item.scope, `${path}.scope`, diagnostics);
+    const reason = requiredNonEmptyString(item.reason, `${path}.reason`, diagnostics);
     if (ruleId !== undefined && !knownRules.has(ruleId)) {
       diagnostics.push(diagnostic("CONFIG_UNKNOWN_RULE", `${path}.ruleId`, `Unknown rule ID "${ruleId}".`));
     }
@@ -336,13 +336,21 @@ function isMember<T extends string>(value: unknown, allowed: readonly T[]): valu
   return typeof value === "string" && allowed.some((item) => item === value);
 }
 
-function optionalNonEmptyString(value: unknown, path: string, diagnostics: ConfigurationDiagnostic[]): string | undefined {
-  if (value === undefined) return undefined;
+function requiredNonEmptyString(
+  value: unknown,
+  path: string,
+  diagnostics: ConfigurationDiagnostic[],
+): string | undefined {
   if (typeof value !== "string" || value.trim().length === 0) {
     diagnostics.push(diagnostic("CONFIG_INVALID_VALUE", path, "Expected a non-empty string."));
     return undefined;
   }
   return value.trim();
+}
+
+function optionalNonEmptyString(value: unknown, path: string, diagnostics: ConfigurationDiagnostic[]): string | undefined {
+  if (value === undefined) return undefined;
+  return requiredNonEmptyString(value, path, diagnostics);
 }
 
 function unknownFields(
