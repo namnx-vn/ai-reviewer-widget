@@ -9,16 +9,18 @@ import { createPullRequestSecurityGateConfig } from "../config/security-quality-
 import type { ReviewFinding, ReviewResult } from "../domain/review";
 import { filterFindingsForChangedLines } from "./comments";
 import { getChangedLines } from "./diff";
+import {
+  markPublishedCommentResolved,
+  planFindingPublication,
+  withPublicationRetry,
+  type PublishedFindingComment,
+} from "./publication-lifecycle";
 import type { PullRequestContext, PullRequestFile } from "./pull-request";
 
 const SOURCE_FILE_PATTERN = /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/;
 
 export interface GitHubPullRequestClient {
-  getPullRequest(
-    owner: string,
-    repo: string,
-    pullRequestNumber: number,
-  ): Promise<PullRequestContext>;
+  getPullRequest(owner: string, repo: string, pullRequestNumber: number): Promise<PullRequestContext>;
   getFileContent(owner: string, repo: string, path: string, ref: string): Promise<string>;
   createCheckRun(owner: string, repo: string, sha: string, result: ReviewResult): Promise<void>;
   createPullRequestReview(
@@ -27,6 +29,17 @@ export interface GitHubPullRequestClient {
     pullRequestNumber: number,
     commitId: string,
     findings: readonly ReviewFinding[],
+  ): Promise<void>;
+  listPublishedFindingComments(
+    owner: string,
+    repo: string,
+    pullRequestNumber: number,
+  ): Promise<readonly PublishedFindingComment[]>;
+  updatePublishedFindingComment(
+    owner: string,
+    repo: string,
+    commentId: number,
+    body: string,
   ): Promise<void>;
 }
 
@@ -151,19 +164,34 @@ export async function publishGitHubPullRequestReview(
   analysis: GitHubPullRequestAnalysis,
   client: GitHubPullRequestClient,
 ): Promise<GitHubPullRequestReviewOutput> {
-  await client.createCheckRun(
+  const previousComments = await withPublicationRetry(() => client.listPublishedFindingComments(
+    analysis.owner,
+    analysis.repo,
+    analysis.pullRequestNumber,
+  ));
+  const publication = planFindingPublication(analysis.inlineFindings, previousComments);
+
+  await withPublicationRetry(() => client.createCheckRun(
     analysis.owner,
     analysis.repo,
     analysis.headSha,
     analysis.result,
-  );
-  await client.createPullRequestReview(
+  ));
+  await withPublicationRetry(() => client.createPullRequestReview(
     analysis.owner,
     analysis.repo,
     analysis.pullRequestNumber,
     analysis.headSha,
-    analysis.inlineFindings,
-  );
+    publication.create,
+  ));
+  for (const resolved of publication.resolve) {
+    await withPublicationRetry(() => client.updatePublishedFindingComment(
+      analysis.owner,
+      analysis.repo,
+      resolved.id,
+      markPublishedCommentResolved(resolved.body),
+    ));
+  }
 
   return {
     pullRequestNumber: analysis.pullRequestNumber,
