@@ -91,8 +91,9 @@ export function buildRepositoryContext(files: readonly AnalyzerSourceFile[]): Re
     }
 
     for (const starExport of sortedExports.filter((item) =>
-      item.from === normalizedFile && item.kind === "star" && item.resolvedPath !== undefined,
+      item.from === normalizedFile && item.kind === "star",
     )) {
+      if (starExport.resolvedPath === undefined) continue;
       const declaration = resolveDeclaration(starExport.resolvedPath, exportedName, visited);
       if (declaration !== undefined) return declaration;
     }
