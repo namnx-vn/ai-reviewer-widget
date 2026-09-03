@@ -1,9 +1,11 @@
 import type { ReviewFinding, ReviewWarning, Severity } from "../../domain/review";
+import type { IncrementalAnalysisScope, RuleExecutionScope } from "../incremental";
 import type { RepositoryContext } from "../repository-context";
 
 export interface AnalyzerSourceFile {
   readonly path: string;
   readonly content: string;
+  readonly changedLines?: readonly number[];
 }
 
 export interface AnalyzerContributionResult {
@@ -15,6 +17,8 @@ export interface AnalyzerContributionResult {
 export interface AnalyzerContribution {
   readonly id: string;
   readonly order: number;
+  /** Safe default is repository-wide execution when omitted. */
+  readonly executionScope?: RuleExecutionScope;
   analyze(
     files: readonly AnalyzerSourceFile[],
     repositoryContext?: RepositoryContext,
@@ -25,6 +29,7 @@ export interface DeterministicAnalyzerAdapter {
   analyze(
     files: readonly AnalyzerSourceFile[],
     selection?: AnalyzerSelection,
+    incrementalScope?: IncrementalAnalysisScope,
   ): AnalyzerContributionResult;
 }
 
