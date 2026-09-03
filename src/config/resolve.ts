@@ -10,6 +10,13 @@ import {
   type RuleFamilyId,
 } from "./contracts";
 import { deepFreeze, DEFAULT_REVIEW_CONFIGURATION } from "./defaults";
+import {
+  PROJECT_PROFILES,
+  resolveProjectProfiles,
+  type ProjectProfileId,
+  type ProjectProfileResolution,
+  type ProjectProfileSignals,
+} from "./project-profiles";
 
 const SEVERITIES: readonly Severity[] = ["critical", "high", "medium", "low", "info"];
 const SECURITY_PROFILES = [
@@ -36,6 +43,7 @@ export function parseReviewConfiguration(source: string): unknown {
 export function resolveReviewConfiguration(
   input: unknown,
   catalog: RuleCatalog,
+  projectSignals: ProjectProfileSignals = {},
 ): ResolvedReviewConfiguration {
   if (input === undefined) return DEFAULT_REVIEW_CONFIGURATION;
 
@@ -46,8 +54,10 @@ export function resolveReviewConfiguration(
   unknownFields(input, ROOT_FIELDS, "$", diagnostics);
   if (input.version !== 1) diagnostics.push(diagnostic("CONFIG_INVALID_VALUE", "version", "Expected schema version 1."));
 
-  const profile = member(input.profile ?? "default", REVIEW_PROFILES, "profile", diagnostics, "default");
-  const preset = profilePreset(profile);
+  const profileSelection = resolveProfileSelection(input.profile, diagnostics, projectSignals);
+  const profile = profileSelection.reviewProfile;
+  const projectResolution = profileSelection.projectResolution;
+  const preset = applyProjectProfilePreset(profilePreset(profile), projectResolution.profiles);
   const include = stringList(input.include, "include", diagnostics, DEFAULT_REVIEW_CONFIGURATION.include);
   const exclude = stringList(input.exclude, "exclude", diagnostics, DEFAULT_REVIEW_CONFIGURATION.exclude);
   const rules = recordSection(input.rules, "rules", RULE_FIELDS, diagnostics);
@@ -83,6 +93,12 @@ export function resolveReviewConfiguration(
   return deepFreeze({
     version: 1,
     profile,
+    projectProfiles: [...projectResolution.profiles],
+    projectProfileMode: profileSelection.mode,
+    projectProfileEvidence: projectResolution.evidence.map((item) => ({
+      profile: item.profile,
+      reasons: [...item.reasons],
+    })),
     include: [...include],
     exclude: [...exclude],
     rules: { disabledFamilies: [...disabledFamilies], disabled: [...disabled], severity: { ...severity } },
@@ -91,11 +107,78 @@ export function resolveReviewConfiguration(
   });
 }
 
-function profilePreset(profile: ReviewProfileId): {
+interface ProfilePreset {
   readonly disabledFamilies: readonly RuleFamilyId[];
   readonly securityProfile: typeof SECURITY_PROFILES[number];
   readonly severity: Readonly<Record<string, Severity>>;
+}
+
+function resolveProfileSelection(
+  value: unknown,
+  diagnostics: ConfigurationDiagnostic[],
+  signals: ProjectProfileSignals,
+): {
+  readonly reviewProfile: ReviewProfileId;
+  readonly projectResolution: ProjectProfileResolution;
+  readonly mode: "auto" | "explicit" | "legacy";
 } {
+  if (value === undefined || isMember(value, REVIEW_PROFILES)) {
+    return {
+      reviewProfile: value === undefined ? "default" : value,
+      projectResolution: { version: 1, mode: "explicit", profiles: [], evidence: [] },
+      mode: "legacy",
+    };
+  }
+  if (value === "auto") {
+    return {
+      reviewProfile: "default",
+      projectResolution: resolveProjectProfiles("auto", signals),
+      mode: "auto",
+    };
+  }
+  if (Array.isArray(value)) {
+    const profiles: ProjectProfileId[] = [];
+    for (const item of value) {
+      if (!isMember(item, PROJECT_PROFILES)) {
+        diagnostics.push(diagnostic("CONFIG_INVALID_VALUE", "profile", `Unsupported project profile "${String(item)}".`));
+      } else {
+        profiles.push(item);
+      }
+    }
+    if (new Set(profiles).size !== profiles.length) {
+      diagnostics.push(diagnostic("CONFIG_INVALID_VALUE", "profile", "Project profiles must be unique."));
+    }
+    return {
+      reviewProfile: "default",
+      projectResolution: resolveProjectProfiles(profiles),
+      mode: "explicit",
+    };
+  }
+  diagnostics.push(diagnostic(
+    "CONFIG_INVALID_VALUE",
+    "profile",
+    "Expected a review preset, \"auto\", or an array of supported project profiles.",
+  ));
+  return {
+    reviewProfile: "default",
+    projectResolution: { version: 1, mode: "explicit", profiles: [], evidence: [] },
+    mode: "legacy",
+  };
+}
+
+function applyProjectProfilePreset(base: ProfilePreset, profiles: readonly ProjectProfileId[]): ProfilePreset {
+  const securitySensitive = profiles.includes("security-sensitive");
+  const performanceSensitive = profiles.includes("performance-sensitive");
+  return {
+    disabledFamilies: base.disabledFamilies,
+    securityProfile: securitySensitive ? "security/strict" : base.securityProfile,
+    severity: performanceSensitive
+      ? { ...base.severity, "performance.large-component": "high" }
+      : base.severity,
+  };
+}
+
+function profilePreset(profile: ReviewProfileId): ProfilePreset {
   switch (profile) {
     case "strict": return {
       disabledFamilies: [], securityProfile: "security/strict", severity: { "quality.no-console": "medium" },
