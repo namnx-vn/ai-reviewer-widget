@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import type { IncrementalAnalysisScope } from "../../analyzer";
 import type { ASTRule } from "../../analyzer/ast/rules";
 import { createDefaultReviewUseCases } from "../../application/review";
 import { runEvaluationSuite } from "../runner";
@@ -61,5 +62,30 @@ describe("evaluation runner", () => {
     expect(report.summary.falsePositiveCount).toBe(0);
     expect(report.summary.falseNegativeCount).toBe(0);
     expect(report.summary.runtimeMs).toBe(5);
+  });
+
+  it("preserves evaluation-corpus findings for an incremental impacted scope", () => {
+    const fixturePath = "evaluation/fixtures/smoke/basic.ts";
+    const source = readFileSync(resolve(process.cwd(), fixturePath), "utf8");
+    const reviewUseCases = createDefaultReviewUseCases({ astRules: [smokeRule] });
+    const files = [{ path: fixturePath, content: source }];
+    const incrementalScope: IncrementalAnalysisScope = {
+      changedFiles: [fixturePath],
+      changedRanges: { [fixturePath]: [{ startLine: 1, endLine: 1 }] },
+      changedSymbols: [],
+      changedExports: [],
+      impactedFiles: [fixturePath],
+      impactedPackages: [],
+      deletedFiles: [],
+      renamedFiles: [],
+      metrics: { runtimeMs: 0, changedFileCount: 1, impactedFileCount: 1 },
+    };
+
+    const full = reviewUseCases.reviewFiles(files);
+    const incremental = reviewUseCases.reviewFiles(files, undefined, incrementalScope);
+    const key = (finding: { readonly ruleId: string; readonly id: string }): string =>
+      `${finding.ruleId}:${finding.id}`;
+
+    expect(incremental.findings.map(key).sort()).toEqual(full.findings.map(key).sort());
   });
 });
