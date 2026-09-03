@@ -25,6 +25,7 @@ const packageMetadata = parsePackageMetadata(
   JSON.parse(readFileSync(resolve(repositoryRoot, "package.json"), "utf-8")),
 );
 const temporaryRoot = mkdtempSync(resolve(tmpdir(), "ai-reviewer-package-"));
+const npmCache = mkdtempSync(resolve(tmpdir(), "ai-reviewer-package-cache-"));
 const extractedPackage = resolve(temporaryRoot, "package");
 const executable = resolve(extractedPackage, "dist/cli/ai-reviewer.js");
 
@@ -42,7 +43,7 @@ beforeAll(() => {
       "--pack-destination",
       temporaryRoot,
       "--cache",
-      "/private/tmp/ai-reviewer-phase43-cache",
+      npmCache,
     ],
     { cwd: repositoryRoot, encoding: "utf-8" },
   );
@@ -57,6 +58,7 @@ beforeAll(() => {
 
 afterAll(() => {
   rmSync(temporaryRoot, { recursive: true, force: true });
+  rmSync(npmCache, { recursive: true, force: true });
 });
 
 describe("packed ai-reviewer CLI", () => {
