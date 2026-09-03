@@ -124,6 +124,27 @@ Status: ✅ Completed for the currently defined scope
 
 ---
 
+# Phase 6 — Real-World Review Reliability
+
+Status: 📌 Next
+
+[Phase 6 Overview](./phase-6/README.md)
+
+| Phase | Status | Scope |
+| --- | --- | --- |
+| 6.1 | 📌 Next | [Real-World Evaluation Harness](./phase-6/6.1-evaluation-harness.md) |
+| 6.2 | ⏳ Planned | [Repository Context Intelligence](./phase-6/6.2-repository-context.md) |
+| 6.3 | ⏳ Planned | [Project Profiles & Environment Detection](./phase-6/6.3-project-profiles.md) |
+| 6.4 | ⏳ Planned | [Incremental PR Analysis](./phase-6/6.4-incremental-pr-analysis.md) |
+| 6.5 | ⏳ Planned | [Finding Quality, Suppression & Baselines](./phase-6/6.5-finding-quality-baselines.md) |
+| 6.6 | ⏳ Planned | [Production GitHub Review Workflow](./phase-6/6.6-github-review-workflow.md) |
+| 6.7 | ⏳ Planned | [Performance & Scale](./phase-6/6.7-performance-scale.md) |
+| 6.8 | ⏳ Planned | [AI Context Selection & Verification](./phase-6/6.8-ai-context-verification.md) |
+| 6.9 | ⏳ Planned | [Developer Feedback Loop](./phase-6/6.9-developer-feedback.md) |
+| 6.10 | ⏳ Planned | [Production Readiness & v1 Contract](./phase-6/6.10-production-readiness.md) |
+
+---
+
 # R1 — Source Architecture Refactor
 
 Status: ✅ Completed
