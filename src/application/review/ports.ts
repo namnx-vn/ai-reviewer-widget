@@ -79,6 +79,7 @@ export interface ReviewPipelineInput {
   readonly deterministicFindings: ReviewFinding[];
   readonly aiReviewer?: AIReviewerPort;
   readonly aiInput?: AIReviewRequest;
+  readonly aiKnownFiles?: readonly string[];
   readonly warnings: readonly ReviewWarning[];
 }
 
