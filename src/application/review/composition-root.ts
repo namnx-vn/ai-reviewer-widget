@@ -1,8 +1,13 @@
+import {
+  DEFAULT_AI_CONTEXT_BUDGET,
+  selectAIRepositoryContext,
+} from "../../ai/context-selector";
 import { prepareAIReviewContext } from "../../ai/input-policy";
 import type { AIProvider } from "../../ai/types";
 import { parseAIResult } from "../../ai/parser";
 import {
   BUILT_IN_ANALYZER_ORDER,
+  buildRepositoryContext,
   createDeterministicAnalyzerAdapter,
   createReactAnalyzerContribution,
   type AnalyzerContribution,
@@ -17,6 +22,7 @@ import type { ReactPlugin } from "../../react/engine";
 import type {
   AIReviewerPort,
   DeterministicReviewResult,
+  PreparedAIReviewInput,
   ReviewApplicationDependencies,
   SourceFile,
 } from "./ports";
@@ -40,7 +46,8 @@ function createDefaultDependencies(
   return {
     configuration: options.configuration ?? DEFAULT_REVIEW_CONFIGURATION,
     deterministic: {
-      analyze: (files, selection) => analyzeDeterministicFiles(files, options, selection),
+      analyze: (files, selection, incrementalScope) =>
+        analyzeDeterministicFiles(files, options, selection, incrementalScope),
     },
     pipeline: {
       execute: (input) => new ReviewEngine().execute({
@@ -48,11 +55,44 @@ function createDefaultDependencies(
         warnings: input.warnings,
         aiProvider: input.aiReviewer === undefined ? undefined : toAIProvider(input.aiReviewer),
         aiInput: input.aiInput,
+        aiKnownFiles: input.aiKnownFiles,
       }),
     },
-    prepareAIInput: prepareAIReviewContext,
+    prepareAIInput: prepareBoundedAIInput,
     evaluateQualityGate: (input) => evaluateSecurityReviewQualityGate(input),
     now: () => performance.now(),
+  };
+}
+
+function prepareBoundedAIInput(input: {
+  readonly title: string;
+  readonly description?: string;
+  readonly deterministicFindings: string;
+  readonly files: readonly SourceFile[];
+}): PreparedAIReviewInput {
+  const repositoryContext = buildRepositoryContext(input.files);
+  const changedFiles = input.files.filter((file) => file.patch !== undefined && file.patch.trim().length > 0);
+  const changedPaths = changedFiles.map((file) => file.path);
+  const context = selectAIRepositoryContext({
+    files: input.files,
+    changedPaths,
+    repositoryContext,
+    budget: DEFAULT_AI_CONTEXT_BUDGET,
+  });
+  const selectedContext = context.files.map((file) => ({
+    path: file.path,
+    patch: `REPOSITORY CONTEXT (depth ${file.dependencyDepth}):\n${file.content}`,
+  }));
+  const prepared = prepareAIReviewContext({
+    title: input.title,
+    description: input.description,
+    deterministicFindings: input.deterministicFindings,
+    files: [...changedFiles, ...selectedContext],
+  });
+  return {
+    ...prepared,
+    truncated: prepared.truncated || context.truncated,
+    omittedFiles: prepared.omittedFiles + context.omittedFiles,
   };
 }
 
@@ -70,6 +110,7 @@ function analyzeDeterministicFiles(
   files: readonly SourceFile[],
   options: DefaultReviewCompositionOptions,
   selection?: Parameters<ReturnType<typeof createDeterministicAnalyzerAdapter>["analyze"]>[1],
+  incrementalScope?: Parameters<ReturnType<typeof createDeterministicAnalyzerAdapter>["analyze"]>[2],
 ): DeterministicReviewResult {
   return createDeterministicAnalyzerAdapter({
     astRules: options.astRules,
@@ -81,7 +122,7 @@ function analyzeDeterministicFiles(
       ),
       ...(options.analyzerContributions ?? []),
     ],
-  }).analyze(files, selection);
+  }).analyze(files, selection, incrementalScope);
 }
 
 function getReactPlugins(path: string): readonly ReactPlugin[] {
