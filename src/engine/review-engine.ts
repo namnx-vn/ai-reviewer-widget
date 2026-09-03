@@ -1,6 +1,7 @@
 import type {
   AIProvider,
 } from "../ai/types";
+import { verifyAIFindings } from "../ai/verification";
 
 import type {
   ReviewFinding,
@@ -42,6 +43,8 @@ export interface ReviewEngineInput {
     AIProvider["review"]
   >[0];
 
+  aiKnownFiles?: readonly string[];
+
   warnings?: readonly ReviewWarning[];
 }
 
@@ -65,11 +68,16 @@ export class ReviewEngine {
           await input.aiProvider.review(
             input.aiInput,
           );
+        const verified = verifyAIFindings(aiResult.findings, {
+          deterministicFindings: input.deterministicFindings,
+          knownFiles: input.aiKnownFiles ?? [],
+        });
 
         aiFindings =
-          normalizeAIFindings(
-            aiResult,
-          );
+          normalizeAIFindings({
+            ...aiResult,
+            findings: [...verified],
+          });
 
         warnings.push(
           ...(aiResult.warnings ?? []).map((warning) => ({
