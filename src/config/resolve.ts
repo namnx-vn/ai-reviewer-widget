@@ -1,4 +1,4 @@
-import type { Severity } from "../domain/review";
+import type { FindingSuppression, Severity } from "../domain/review";
 import {
   ConfigurationError,
   REVIEW_PROFILES,
@@ -23,10 +23,12 @@ const SECURITY_PROFILES = [
   "security/default", "security/strict", "security/financial", "security/banking",
 ] as const;
 
-const ROOT_FIELDS = ["version", "profile", "include", "exclude", "rules", "ai", "qualityGate"];
+const ROOT_FIELDS = ["version", "profile", "include", "exclude", "rules", "ai", "qualityGate", "findingQuality"];
 const RULE_FIELDS = ["disabledFamilies", "disabled", "severity"];
 const AI_FIELDS = ["mode", "provider"];
 const QUALITY_GATE_FIELDS = ["securityProfile"];
+const FINDING_QUALITY_FIELDS = ["suppressions"];
+const SUPPRESSION_FIELDS = ["ruleId", "scope", "reason"];
 
 export function parseReviewConfiguration(source: string): unknown {
   try {
@@ -87,6 +89,8 @@ export function resolveReviewConfiguration(
     diagnostics,
     preset.securityProfile,
   );
+  const findingQuality = recordSection(input.findingQuality, "findingQuality", FINDING_QUALITY_FIELDS, diagnostics);
+  const suppressions = suppressionList(findingQuality?.suppressions, knownRules, diagnostics);
 
   if (diagnostics.length > 0) throw new ConfigurationError(diagnostics);
 
@@ -104,6 +108,7 @@ export function resolveReviewConfiguration(
     rules: { disabledFamilies: [...disabledFamilies], disabled: [...disabled], severity: { ...severity } },
     ai: { mode: aiMode, ...(provider === undefined ? {} : { provider }) },
     qualityGate: { securityProfile },
+    findingQuality: { suppressions: suppressions.map((item) => ({ ...item })) },
   });
 }
 
@@ -191,6 +196,41 @@ function profilePreset(profile: ReviewProfileId): ProfilePreset {
     };
     case "default": return { disabledFamilies: [], securityProfile: "security/default", severity: {} };
   }
+}
+
+function suppressionList(
+  value: unknown,
+  knownRules: ReadonlySet<string>,
+  diagnostics: ConfigurationDiagnostic[],
+): readonly FindingSuppression[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    diagnostics.push(diagnostic("CONFIG_INVALID_VALUE", "findingQuality.suppressions", "Expected an array."));
+    return [];
+  }
+  const result: FindingSuppression[] = [];
+  value.forEach((item, index) => {
+    const path = `findingQuality.suppressions.${index}`;
+    if (!isRecord(item)) {
+      diagnostics.push(diagnostic("CONFIG_INVALID_VALUE", path, "Expected an object."));
+      return;
+    }
+    unknownFields(item, SUPPRESSION_FIELDS, path, diagnostics);
+    const ruleId = optionalNonEmptyString(item.ruleId, `${path}.ruleId`, diagnostics);
+    const scope = optionalNonEmptyString(item.scope, `${path}.scope`, diagnostics);
+    const reason = optionalNonEmptyString(item.reason, `${path}.reason`, diagnostics);
+    if (ruleId !== undefined && !knownRules.has(ruleId)) {
+      diagnostics.push(diagnostic("CONFIG_UNKNOWN_RULE", `${path}.ruleId`, `Unknown rule ID "${ruleId}".`));
+    }
+    if (ruleId !== undefined && scope !== undefined && reason !== undefined && knownRules.has(ruleId)) {
+      result.push({ ruleId, scope, reason });
+    }
+  });
+  const keys = result.map((item) => `${item.ruleId}\u0000${item.scope}\u0000${item.reason}`);
+  if (new Set(keys).size !== keys.length) {
+    diagnostics.push(diagnostic("CONFIG_INVALID_VALUE", "findingQuality.suppressions", "Suppressions must be unique."));
+  }
+  return result;
 }
 
 function recordSection(
