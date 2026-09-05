@@ -21,6 +21,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Pin npm
+        run: npm install --global npm@11.6.0 --no-audit --no-fund
+
       - run: npm install
 
       - name: Dependency audit
@@ -93,6 +96,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - name: Pin npm
+        run: npm install --global npm@11.6.0 --no-audit --no-fund
 
       - run: npm install
 
