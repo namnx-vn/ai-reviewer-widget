@@ -18,6 +18,18 @@ export type {
   RealWorldCatalogSignal,
 } from "./real-world-catalog";
 export {
+  buildRealWorldObservationReport,
+  REAL_WORLD_OBSERVATION_SCHEMA_VERSION,
+  serializeRealWorldObservationReport,
+} from "./real-world-observation";
+export type {
+  RealWorldCaseObservation,
+  RealWorldFindingObservation,
+  RealWorldObservationReport,
+  RealWorldObservationSummary,
+  RealWorldWarningObservation,
+} from "./real-world-observation";
+export {
   countRealWorldExpectations,
   loadRealWorldEvaluationCorpus,
 } from "./real-world";
@@ -26,6 +38,7 @@ export type {
   RealWorldEvaluationCase,
   RealWorldExpectation,
   RealWorldExpectationKind,
+  RealWorldSeedDefinition,
 } from "./real-world";
 export { runEvaluationCase, runEvaluationSuite } from "./runner";
 export type { EvaluationRunnerOptions } from "./runner";
