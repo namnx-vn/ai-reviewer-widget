@@ -51,7 +51,7 @@ jobs:
         run: npm run test:evaluation
 
       - name: Evaluation quality report
-        run: npm run evaluation:report > evaluation-quality.json
+        run: npm run --silent evaluation:report > evaluation-quality.json
 
       - name: Upload evaluation quality report
         uses: actions/upload-artifact@v4
@@ -60,7 +60,7 @@ jobs:
           path: evaluation-quality.json
 
       - name: Real-world corpus observations
-        run: npm run evaluation:real-world-report > real-world-observations.json
+        run: npm run --silent evaluation:real-world-report > real-world-observations.json
 
       - name: Upload real-world corpus observations
         uses: actions/upload-artifact@v4
@@ -69,7 +69,7 @@ jobs:
           path: real-world-observations.json
 
       - name: Medium review benchmark
-        run: npm run benchmark:review -- medium > benchmark-medium.json
+        run: npm run --silent benchmark:review -- medium > benchmark-medium.json
 
       - name: Upload review benchmark
         uses: actions/upload-artifact@v4
