@@ -59,6 +59,15 @@ jobs:
           name: evaluation-quality
           path: evaluation-quality.json
 
+      - name: Real-world corpus observations
+        run: npm run evaluation:real-world-report > real-world-observations.json
+
+      - name: Upload real-world corpus observations
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-world-observations
+          path: real-world-observations.json
+
       - name: Medium review benchmark
         run: npm run benchmark:review -- medium > benchmark-medium.json
 
