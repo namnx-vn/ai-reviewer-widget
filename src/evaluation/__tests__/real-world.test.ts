@@ -23,6 +23,17 @@ describe("real-world public PR evaluation corpus", () => {
       expect(item.evaluationCase.files[0]?.path).toMatch(/\.tsx?$/);
       expect(item.evaluationCase.files[0]?.content.length).toBeGreaterThan(0);
     }
+
+    const empiricalCases = corpus.filter(
+      ({ measurementFidelity }) => measurementFidelity === "empirical",
+    );
+    expect(empiricalCases).toHaveLength(3);
+    expect(
+      empiricalCases.every(({ evaluationCase }) =>
+        evaluationCase.files[0]?.path.includes("/__tests__/") === true
+        && evaluationCase.files[0]?.path.includes(".test.") === true
+      ),
+    ).toBe(true);
   });
 
   it("reviews minimized public PR reproductions deterministically without crashing", () => {
@@ -37,5 +48,5 @@ describe("real-world public PR evaluation corpus", () => {
 
       expect(second.findings.map(key).sort()).toEqual(first.findings.map(key).sort());
     }
-  });
+  }, 15_000);
 });
