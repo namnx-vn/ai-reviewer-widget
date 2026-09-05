@@ -3,6 +3,9 @@ import { resolve } from "node:path";
 
 import type { Severity } from "../domain/review";
 import { EVALUATION_CASE_VERSION, type EvaluationCase } from "./contracts";
+import { PROMOTED_CLEAN_SEEDS } from "./real-world-promoted-clean";
+import { PROMOTED_REACT_SEEDS } from "./real-world-promoted-react";
+import { PROMOTED_SECURITY_SEEDS } from "./real-world-promoted-security";
 
 export type RealWorldExpectationKind = "must-find" | "must-not-find" | "advisory";
 
@@ -27,16 +30,20 @@ export interface RealWorldEvaluationCase {
   readonly expectations: readonly RealWorldExpectation[];
 }
 
-interface SeedDefinition {
+export interface RealWorldSeedDefinition {
   readonly id: string;
   readonly title: string;
   readonly category: string;
   readonly fixturePath: string;
+  readonly fixtureBundle?: {
+    readonly path: string;
+    readonly key: string;
+  };
   readonly source: PublicPullRequestReference;
   readonly expectations: readonly RealWorldExpectation[];
 }
 
-const SEEDS: readonly SeedDefinition[] = [
+const SEEDS: readonly RealWorldSeedDefinition[] = [
   {
     id: "vercel-next-91593-component-tree-negative",
     title: "Next.js component-tree performance refactor should stay low-noise",
@@ -101,11 +108,53 @@ const SEEDS: readonly SeedDefinition[] = [
       },
     ],
   },
+  ...PROMOTED_SECURITY_SEEDS,
+  ...PROMOTED_REACT_SEEDS,
+  ...PROMOTED_CLEAN_SEEDS,
 ];
 
-export function loadRealWorldEvaluationCorpus(rootDirectory: string = process.cwd()): readonly RealWorldEvaluationCase[] {
+function readFixtureBundleEntry(
+  rootDirectory: string,
+  bundlePath: string,
+  key: string,
+  bundleCache: Map<string, unknown>,
+): string {
+  const cached = bundleCache.get(bundlePath);
+  const parsed: unknown = cached ?? JSON.parse(
+    readFileSync(resolve(rootDirectory, bundlePath), "utf8"),
+  );
+
+  if (cached === undefined) {
+    bundleCache.set(bundlePath, parsed);
+  }
+
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new Error(`Invalid real-world fixture bundle: ${bundlePath}`);
+  }
+
+  const content: unknown = Reflect.get(parsed, key);
+  if (typeof content !== "string" || content.length === 0) {
+    throw new Error(`Missing real-world fixture ${key} in ${bundlePath}`);
+  }
+
+  return content;
+}
+
+export function loadRealWorldEvaluationCorpus(
+  rootDirectory: string = process.cwd(),
+): readonly RealWorldEvaluationCase[] {
+  const bundleCache = new Map<string, unknown>();
+
   return SEEDS.map((seed) => {
-    const content = readFileSync(resolve(rootDirectory, seed.fixturePath), "utf8");
+    const content = seed.fixtureBundle
+      ? readFixtureBundleEntry(
+          rootDirectory,
+          seed.fixtureBundle.path,
+          seed.fixtureBundle.key,
+          bundleCache,
+        )
+      : readFileSync(resolve(rootDirectory, seed.fixturePath), "utf8");
+
     return {
       source: seed.source,
       expectations: seed.expectations,
