@@ -25,17 +25,36 @@ The 100-entry catalog is therefore a **selection and labeling backlog**, not a c
 
 ## Executable minimized corpus
 
-The source code under `evaluation/fixtures/real-world/` is intentionally reduced to the smallest behavior needed for deterministic regression testing. The corpus does not clone or depend on external repositories at test time.
+The executable corpus now contains **30 manually reviewed public PR cases**. Every case runs offline through the shared production `ReviewUseCases.reviewFiles` path.
 
-Current minimized cases:
+Current executable distribution:
 
-| Corpus case | Public PR | Label intent |
-| --- | --- | --- |
-| `vercel-next-91593-component-tree-negative` | `vercel/next.js#91593` | Negative/noise-control case for intentional React/async performance code |
-| `vercel-next-86406-health-endpoint` | `vercel/next.js#86406` | Must-find security expectation for operational details exposed by a health response |
-| `vercel-next-86408-config-loader` | `vercel/next.js#86408` | Negative regression for fixed cache pollution plus advisory trusted-code execution boundary |
+| Group | Executable PRs |
+| --- | ---: |
+| Security / trust boundary | 12 |
+| React / hooks / reactive lifecycle | 7 |
+| Performance negative control | 1 |
+| Clean false-positive controls | 10 |
+| **Total** | **30** |
 
-Each minimized case preserves repository, PR number, canonical URL, and exact head SHA provenance. Its `fixtureId` is linked from the 100-PR catalog and validated in tests.
+Current human expectation labels:
+
+| Label | Expectations |
+| --- | ---: |
+| `must-find` | 11 |
+| `must-not-find` | 18 |
+| `advisory` | 3 |
+| **Total** | **32** |
+
+The original three standalone minimized fixtures remain under `evaluation/fixtures/real-world/`. Batch-1 promoted cases are stored as small offline fixture bundles:
+
+- `promoted-security-batch-1.json`
+- `promoted-react-batch-1.json`
+- `promoted-clean-batch-1.json`
+
+Each bundled entry still receives its own virtual `.ts` or `.tsx` path when passed to the reviewer, so parser behavior, finding identity, deterministic replay, and PR provenance remain case-specific.
+
+Each minimized case preserves repository, PR number, canonical URL, exact head SHA, human expectation, and catalog `fixtureId` linkage. Bundle loading fails closed when a bundle is malformed or a fixture key is missing.
 
 ## Executable label semantics
 
@@ -43,10 +62,18 @@ Each minimized case preserves repository, PR number, canonical URL, and exact he
 - `must-not-find`: a known-safe behavior used to measure false-positive pressure.
 - `advisory`: a legitimate review consideration that should not become a blocking finding without stronger evidence.
 
-Seed labels are not automatically counted as achieved precision until they map to production findings. Known gaps remain explicit rather than being converted into synthetic passing findings.
+Labels are not automatically counted as achieved precision until they map to actual production findings. Known detection gaps remain explicit rather than being converted into synthetic passing findings.
+
+## Human-adjudication correction
+
+During the 30-case promotion pass, `TanStack/query#11380` was removed from the clean negative-control set. Manual verification showed that its Preact SSR guide contained the raw `JSON.stringify(...)`-inside-`<script>` example that `#11381` later fixed as XSS-unsafe.
+
+The clean slot was replaced by `TanStack/query#11258`, a merged test-only file-renaming/consolidation change with no runtime production code change. A regression test now prevents `#11380` from being reintroduced as a clean control.
+
+This correction is intentional evidence that catalog metadata is provisional until the relevant diff is human-reviewed.
 
 ## Promotion policy
 
 A catalogued PR becomes an executable evaluation case only after its relevant diff has been manually reviewed and a minimized reproduction can preserve the behavior. Prefer minimized reproductions over storing full external diffs.
 
-Real-world precision may be promoted to a blocking quality threshold only after enough `positive-candidate` entries have been human-verified and enough negative controls have actually been executed. Catalog size alone is not evidence of reviewer precision.
+Thirty executable PRs are enough to begin a first empirical baseline and identify obvious false-positive clusters, but they are **not enough to claim the documented 90% high-severity real-world precision target**. Continue expanding toward 50+ executable PRs, then toward several hundred adjudicated findings across representative projects before promoting empirical precision into a blocking release threshold.
