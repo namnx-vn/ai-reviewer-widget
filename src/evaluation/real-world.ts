@@ -47,6 +47,26 @@ export interface RealWorldSeedDefinition {
   readonly expectations: readonly RealWorldExpectation[];
 }
 
+interface MeasurementOverride {
+  readonly analysisPath: string;
+  readonly fidelity: RealWorldMeasurementFidelity;
+}
+
+const MEASUREMENT_OVERRIDES: Readonly<Record<string, MeasurementOverride>> = {
+  "tanstack-query-11407-notify-manager-tests": {
+    analysisPath: "packages/query-core/src/__tests__/notifyManager.test.tsx",
+    fidelity: "empirical",
+  },
+  "tanstack-query-11393-timeout-manager-tests": {
+    analysisPath: "packages/query-core/src/__tests__/timeoutManager.test.tsx",
+    fidelity: "empirical",
+  },
+  "tanstack-query-11258-test-file-alignment": {
+    analysisPath: "packages/query-core/src/__tests__/mutation.test.tsx",
+    fidelity: "empirical",
+  },
+};
+
 const SEEDS: readonly RealWorldSeedDefinition[] = [
   {
     id: "vercel-next-91593-component-tree-negative",
@@ -158,17 +178,22 @@ export function loadRealWorldEvaluationCorpus(
           bundleCache,
         )
       : readFileSync(resolve(rootDirectory, seed.fixturePath), "utf8");
+    const measurementOverride = MEASUREMENT_OVERRIDES[seed.id];
 
     return {
       source: seed.source,
       expectations: seed.expectations,
-      measurementFidelity: seed.measurementFidelity ?? "synthetic",
+      measurementFidelity:
+        seed.measurementFidelity ?? measurementOverride?.fidelity ?? "synthetic",
       evaluationCase: {
         version: EVALUATION_CASE_VERSION,
         id: seed.id,
         title: seed.title,
         category: seed.category,
-        files: [{ path: seed.analysisPath ?? seed.fixturePath, content }],
+        files: [{
+          path: seed.analysisPath ?? measurementOverride?.analysisPath ?? seed.fixturePath,
+          content,
+        }],
         expectedFindings: [],
       },
     };
