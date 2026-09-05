@@ -25,9 +25,7 @@ The catalog is a **selection and labeling backlog**. Maturity is separate from t
 
 ## Executable minimized corpus
 
-The executable corpus now contains **50 manually reviewed public PR cases**. Every case runs offline through the shared production `ReviewUseCases.reviewFiles` path.
-
-Current executable distribution:
+The executable corpus contains **50 manually reviewed public PR cases**. Every case runs offline through the shared production `ReviewUseCases.reviewFiles` path.
 
 | Group | Executable PRs |
 | --- | ---: |
@@ -46,16 +44,9 @@ Current human expectation labels:
 | `advisory` | 5 |
 | **Total** | **53** |
 
-The original three standalone minimized fixtures remain under `evaluation/fixtures/real-world/`. Promoted cases are stored in small offline fixture bundles:
+The original three standalone minimized fixtures remain under `evaluation/fixtures/real-world/`. Promoted cases are stored in six small offline fixture bundles covering Batch 1 and Batch 2 for security, React/reactive, and clean controls.
 
-- `promoted-security-batch-1.json`
-- `promoted-react-batch-1.json`
-- `promoted-clean-batch-1.json`
-- `promoted-security-batch-2.json`
-- `promoted-react-batch-2.json`
-- `promoted-clean-batch-2.json`
-
-Each bundled entry still receives a case-specific `.ts` or `.tsx` analysis path. Empirical controls retain the original-like upstream test path where path context affects production policy behavior. Bundle loading fails closed when a bundle is malformed or a fixture key is missing.
+Each bundled entry receives a case-specific `.ts` or `.tsx` analysis path. Empirical controls retain the original-like upstream test path where path context affects production policy behavior. Bundle loading fails closed when a bundle is malformed or a fixture key is missing.
 
 Each minimized case preserves repository, PR number, canonical URL, exact head SHA, human expectation, and catalog `fixtureId` linkage.
 
@@ -65,23 +56,42 @@ Each minimized case preserves repository, PR number, canonical URL, exact head S
 - `must-not-find`: a known-safe behavior used to measure false-positive pressure.
 - `advisory`: a legitimate review consideration that should not become a blocking finding without stronger evidence.
 
-Labels are not automatically counted as achieved precision or recall until they map to actual production findings. Known detection gaps remain explicit rather than being converted into synthetic passing findings.
+Labels are not automatically counted as achieved precision or recall. `src/evaluation/real-world-rule-mapping.ts` separately records only human-reviewed mappings from a `must-find` expectation to acceptable production `ruleId` values. Unmapped expectations remain pending instead of receiving synthetic credit.
 
-## Empirical negative controls
+## Current observation baseline
 
-Synthetic controls remain useful for deterministic regression coverage, but they are not mixed into the empirical false-positive denominator.
+The first 50-case CI observation is deterministic across all cases:
 
-The first measurement pass used three upstream test-only clean controls with original-like `__tests__/*.test.tsx` paths. Before file-context tuning, two of three cases emitted three lifecycle/performance findings. After adding a shared performance engine policy that suppresses only production-runtime lifecycle rules in test files, the same three cases emitted zero findings while other performance rules remained enabled.
+- 50 / 50 stable cases
+- 13 production findings emitted across the corpus
+- 5 empirical negative controls
+- 0 / 5 empirical negative controls with findings
+- 0 empirical negative-control findings at medium severity or higher
+- 14 clean controls
+- 0 / 14 clean controls with findings
 
-Batch 2 adds two more upstream test-only React/Vue Query controls with original-like test paths. Observation schema v3 therefore reports an aggregate `empiricalNegativeControls` metric across all empirical `must-not-find` cases, while retaining the clean-only metrics for historical comparison. The actual five-case rate is taken from the CI observation artifact; it is not hard-coded into this document before the corpus run completes.
+The five empirical negative controls consist of three Query Core clean test PRs plus two Vue Query test-only PRs, all analyzed with upstream-like `__tests__/*.test.ts(x)` paths.
 
-These small denominators are diagnostic evidence, **not production precision guarantees**.
+The first rule mapping is intentionally narrow:
+
+- `vercel/next.js#95182` `unbounded-action-body`
+  → `performance.backpressure.unbounded-queue`
+
+This gives a mapped recall sample of **1 detected / 1 mapped**, while **16 of 17 `must-find` expectations remain pending rule mapping**. A 1/1 mapped sample is not statistically meaningful and must not be presented as 100% real-world recall.
+
+Incidental findings are not credited as true positives. For example, a `react.hooks.missing-deps` finding is not considered evidence that a stale-promise, mount-subscription, or pre-hydration navigation race was detected unless the rule and evidence actually match the adjudicated expectation.
+
+## False-positive feedback loop
+
+The first empirical pass used three upstream test-only clean controls. Before file-context tuning, two of three cases emitted three lifecycle/performance findings. The shared performance engine policy was then changed to suppress only production-runtime lifecycle rules in test files, while leaving unrelated performance analysis enabled. The same three cases subsequently emitted zero findings.
+
+Batch 2 expanded the empirical denominator to five upstream-like negative controls, and the 50-case observation still reports zero findings across those five controls. This is useful diagnostic evidence, but the denominator remains too small to claim a production false-positive rate.
 
 ## Human-adjudication corrections
 
 During Batch 1, `TanStack/query#11380` was removed from the clean negative-control set. Manual verification showed that its Preact SSR guide contained the raw `JSON.stringify(...)`-inside-`<script>` example that `#11381` later fixed as XSS-unsafe. The clean slot was replaced by test-only `TanStack/query#11258`.
 
-During Batch 2, `vercel/next.js#97284` was deliberately left `catalogued` rather than promoted because its relevant implementation is Rust-only. The current executable harness is TypeScript/TSX; inventing a TypeScript substitute would reduce fixture fidelity. The Batch-2 clean slot was instead filled by `TanStack/query#11378`, while `#97284` remains a candidate for future multi-language evaluation support.
+During Batch 2, `vercel/next.js#97284` was deliberately left `catalogued` rather than promoted because its relevant implementation is Rust-only. The current executable harness is TypeScript/TSX; inventing a TypeScript substitute would reduce fixture fidelity. The Batch-2 clean slot was instead filled by `TanStack/query#11378`.
 
 These corrections are intentional evidence that catalog metadata is provisional until the relevant diff is human-reviewed.
 
@@ -89,4 +99,4 @@ These corrections are intentional evidence that catalog metadata is provisional 
 
 A catalogued PR becomes an executable evaluation case only after its relevant diff has been manually reviewed and a minimized reproduction can preserve the behavior. Prefer minimized reproductions over storing full external diffs.
 
-Fifty executable PRs are enough to begin a more useful empirical baseline and to identify recurring false-positive clusters. They are **not enough to claim the documented 90% high-severity real-world precision target**. The next quality milestone is to map `must-find` expectations to exact production rule IDs from observed output, then expand toward several hundred adjudicated findings across representative projects before empirical precision becomes a blocking release threshold.
+Fifty executable PRs are enough to begin a useful empirical baseline and identify recurring false-positive clusters. They are **not enough to claim the documented 90% high-severity real-world precision target**. The next quality work is to expand exact rule mappings for the remaining `must-find` expectations, fix the highest-value security/react recall gaps revealed by those mappings, and then grow toward several hundred adjudicated findings across representative production repositories before empirical precision becomes a blocking release threshold.

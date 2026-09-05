@@ -30,6 +30,11 @@ export type {
   RealWorldWarningObservation,
 } from "./real-world-observation";
 export {
+  findRealWorldRuleMapping,
+  REAL_WORLD_RULE_MAPPINGS,
+} from "./real-world-rule-mapping";
+export type { RealWorldRuleMapping } from "./real-world-rule-mapping";
+export {
   countRealWorldExpectations,
   loadRealWorldEvaluationCorpus,
 } from "./real-world";

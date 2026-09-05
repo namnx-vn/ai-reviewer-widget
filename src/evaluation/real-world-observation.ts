@@ -6,8 +6,9 @@ import type {
   RealWorldExpectation,
   RealWorldMeasurementFidelity,
 } from "./real-world";
+import { findRealWorldRuleMapping } from "./real-world-rule-mapping";
 
-export const REAL_WORLD_OBSERVATION_SCHEMA_VERSION = 3 as const;
+export const REAL_WORLD_OBSERVATION_SCHEMA_VERSION = 4 as const;
 
 export interface RealWorldFindingObservation {
   readonly id: string;
@@ -40,6 +41,9 @@ export interface RealWorldObservationSummary {
   readonly stableCases: number;
   readonly totalFindings: number;
   readonly mustFindExpectations: number;
+  readonly mappedMustFindExpectations: number;
+  readonly mappedMustFindDetected: number;
+  readonly mappedMustFindRecall: number | null;
   readonly mustFindExpectationsPendingRuleMapping: number;
   readonly precisionStatus: "pending-rule-mapping";
   readonly empiricalNegativeControls: number;
@@ -113,6 +117,29 @@ function isEmpiricalNegativeControl(item: RealWorldCaseObservation): boolean {
     && !item.expectations.some(({ kind }) => kind === "must-find");
 }
 
+function calculateMappedMustFind(
+  cases: readonly RealWorldCaseObservation[],
+): { readonly mapped: number; readonly detected: number } {
+  let mapped = 0;
+  let detected = 0;
+
+  for (const item of cases) {
+    for (const expectation of item.expectations) {
+      if (expectation.kind !== "must-find") continue;
+      const mapping = findRealWorldRuleMapping(item.id, expectation.id);
+      if (mapping === undefined) continue;
+      mapped += 1;
+      if (mapping.acceptableRuleIds.some(
+        (ruleId) => item.findings.some((finding) => finding.ruleId === ruleId),
+      )) {
+        detected += 1;
+      }
+    }
+  }
+
+  return { mapped, detected };
+}
+
 export function buildRealWorldObservationReport(
   reviewUseCases: ReviewUseCases,
   corpus: readonly RealWorldEvaluationCase[],
@@ -142,6 +169,7 @@ export function buildRealWorldObservationReport(
       total + item.expectations.filter(({ kind }) => kind === "must-find").length,
     0,
   );
+  const mappedMustFind = calculateMappedMustFind(cases);
 
   return {
     schemaVersion: REAL_WORLD_OBSERVATION_SCHEMA_VERSION,
@@ -153,7 +181,14 @@ export function buildRealWorldObservationReport(
         0,
       ),
       mustFindExpectations,
-      mustFindExpectationsPendingRuleMapping: mustFindExpectations,
+      mappedMustFindExpectations: mappedMustFind.mapped,
+      mappedMustFindDetected: mappedMustFind.detected,
+      mappedMustFindRecall:
+        mappedMustFind.mapped === 0
+          ? null
+          : mappedMustFind.detected / mappedMustFind.mapped,
+      mustFindExpectationsPendingRuleMapping:
+        mustFindExpectations - mappedMustFind.mapped,
       precisionStatus: "pending-rule-mapping",
       empiricalNegativeControls: empiricalNegativeCases.length,
       empiricalNegativeControlsWithFindings,
