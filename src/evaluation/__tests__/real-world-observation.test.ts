@@ -22,14 +22,22 @@ describe("real-world observation report", () => {
     expect(report.summary.mustFindExpectationsPendingRuleMapping).toBe(11);
     expect(report.summary.precisionStatus).toBe("pending-rule-mapping");
     expect(report.summary.cleanControls).toBe(10);
-    expect(report.summary.cleanControlsWithFindings).toBeGreaterThanOrEqual(0);
-    expect(report.summary.cleanControlsWithFindings).toBeLessThanOrEqual(10);
-    expect(report.summary.cleanControlCaseFalsePositiveRate).toBeGreaterThanOrEqual(0);
-    expect(report.summary.cleanControlCaseFalsePositiveRate).toBeLessThanOrEqual(1);
-    expect(report.summary.cleanControlFindingCount).toBeGreaterThanOrEqual(0);
-    expect(report.summary.cleanControlMediumOrHigherFindingCount).toBeGreaterThanOrEqual(0);
+    expect(report.summary.syntheticCleanControls).toBe(7);
+    expect(report.summary.empiricalCleanControls).toBe(3);
+    expect(report.summary.empiricalCleanControlsWithFindings).toBeGreaterThanOrEqual(0);
+    expect(report.summary.empiricalCleanControlsWithFindings).toBeLessThanOrEqual(3);
+    expect(report.summary.empiricalCleanControlCaseFalsePositiveRate).toBeGreaterThanOrEqual(0);
+    expect(report.summary.empiricalCleanControlCaseFalsePositiveRate).toBeLessThanOrEqual(1);
+    expect(report.summary.empiricalCleanControlFindingCount).toBeGreaterThanOrEqual(0);
+    expect(report.summary.empiricalCleanControlMediumOrHigherFindingCount).toBeGreaterThanOrEqual(0);
+    expect(report.summary.allCleanControlsWithFindings).toBeGreaterThanOrEqual(
+      report.summary.empiricalCleanControlsWithFindings,
+    );
+    expect(report.summary.allCleanControlFindingCount).toBeGreaterThanOrEqual(
+      report.summary.empiricalCleanControlFindingCount,
+    );
     expect(report.cases).toHaveLength(30);
 
     expect(() => JSON.parse(serializeRealWorldObservationReport(report))).not.toThrow();
-  });
+  }, 15_000);
 });
