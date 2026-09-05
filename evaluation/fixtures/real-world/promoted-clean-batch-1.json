@@ -1,0 +1,12 @@
+{
+  "tanstack-query-11406-angular-jsdoc": "export interface QueryOptions {\n  readonly enabled?: boolean;\n}\n\nexport function injectQuery(options: QueryOptions): QueryOptions {\n  return options;\n}\n",
+  "tanstack-query-11407-notify-manager-tests": "export function batch<T>(callback: () => T): T {\n  return callback();\n}\n\nexport function schedule(callback: () => void): void {\n  setTimeout(callback, 0);\n}\n",
+  "tanstack-query-11393-timeout-manager-tests": "export interface TimerProvider {\n  setTimeout(callback: () => void, delay: number): unknown;\n  clearTimeout(timer: unknown): void;\n}\n\nexport function runTimer(provider: TimerProvider, callback: () => void): unknown {\n  return provider.setTimeout(callback, 10);\n}\n",
+  "vercel-next-98291-memory-docs": "export interface MemorySample {\n  readonly heapUsed: number;\n  readonly rss: number;\n  readonly arrayBuffers: number;\n}\n\nexport function compareMemory(before: MemorySample, after: MemorySample): number {\n  return after.rss - before.rss;\n}\n",
+  "vercel-next-96751-ai-agent-docs": "export interface SkillStep {\n  readonly title: string;\n  readonly prerequisite?: string;\n}\n\nexport const steps: readonly SkillStep[] = [\n  { title: \"Read the guide\" },\n  { title: \"Run the workflow\", prerequisite: \"Read the guide\" },\n  { title: \"Verify the result\", prerequisite: \"Run the workflow\" },\n];\n",
+  "vercel-next-96723-doc-link-updates": "export const documentationLinks = {\n  imageOptimization: \"https://vercel.com/docs/image-optimization\",\n  tracing: \"https://vercel.com/docs/tracing/instrumentation\",\n} as const;\n",
+  "vercel-next-75178-readme-link": "export const routingDocumentation =\n  \"https://nextjs.org/docs/app/building-your-application/routing\";\n",
+  "vercel-next-96871-lint-refactor": "export function getValue(\n  entry: Readonly<Record<string, number>>,\n  columnKey: string,\n): number | undefined {\n  return entry[columnKey];\n}\n",
+  "tanstack-query-11366-generated-reference-docs": "export interface MutationResult<T> {\n  readonly data: T;\n}\n\nexport function describeMutationResult<T>(result: MutationResult<T>): T {\n  return result.data;\n}\n",
+  "tanstack-query-11258-test-file-alignment": "export type MutateFunction<TVariables> = (\n  variables: TVariables,\n) => Promise<void>;\n\nexport function invokeMutation<TVariables>(\n  mutate: MutateFunction<TVariables>,\n  variables: TVariables,\n): Promise<void> {\n  return mutate(variables);\n}\n"
+}
