@@ -6,7 +6,7 @@ const TEST_FILE_RUNTIME_LIFECYCLE_RULES: ReadonlySet<string> = new Set([
 ]);
 
 export function isPerformanceTestFile(file: string): boolean {
-  const normalized = file.replaceAll("\\", "/");
+  const normalized = file.replace(/\\/gu, "/");
   return normalized.includes("/__tests__/")
     || /(?:^|\/)tests?\//u.test(normalized)
     || /\.(?:test|spec)\.[cm]?[jt]sx?$/u.test(normalized);
