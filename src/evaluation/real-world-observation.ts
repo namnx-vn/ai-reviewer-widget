@@ -4,9 +4,10 @@ import type {
   PublicPullRequestReference,
   RealWorldEvaluationCase,
   RealWorldExpectation,
+  RealWorldMeasurementFidelity,
 } from "./real-world";
 
-export const REAL_WORLD_OBSERVATION_SCHEMA_VERSION = 1 as const;
+export const REAL_WORLD_OBSERVATION_SCHEMA_VERSION = 2 as const;
 
 export interface RealWorldFindingObservation {
   readonly id: string;
@@ -28,6 +29,7 @@ export interface RealWorldCaseObservation {
   readonly category: string;
   readonly source: PublicPullRequestReference;
   readonly expectations: readonly RealWorldExpectation[];
+  readonly measurementFidelity: RealWorldMeasurementFidelity;
   readonly findings: readonly RealWorldFindingObservation[];
   readonly warnings: readonly RealWorldWarningObservation[];
   readonly stable: boolean;
@@ -41,10 +43,14 @@ export interface RealWorldObservationSummary {
   readonly mustFindExpectationsPendingRuleMapping: number;
   readonly precisionStatus: "pending-rule-mapping";
   readonly cleanControls: number;
-  readonly cleanControlsWithFindings: number;
-  readonly cleanControlCaseFalsePositiveRate: number;
-  readonly cleanControlFindingCount: number;
-  readonly cleanControlMediumOrHigherFindingCount: number;
+  readonly syntheticCleanControls: number;
+  readonly empiricalCleanControls: number;
+  readonly empiricalCleanControlsWithFindings: number;
+  readonly empiricalCleanControlCaseFalsePositiveRate: number;
+  readonly empiricalCleanControlFindingCount: number;
+  readonly empiricalCleanControlMediumOrHigherFindingCount: number;
+  readonly allCleanControlsWithFindings: number;
+  readonly allCleanControlFindingCount: number;
 }
 
 export interface RealWorldObservationReport {
@@ -89,6 +95,7 @@ function observeCase(
     category: item.evaluationCase.category,
     source: item.source,
     expectations: item.expectations,
+    measurementFidelity: item.measurementFidelity,
     findings: first.findings.map(observeFinding),
     warnings: first.warnings.map(({ code, message }) => ({ code, message })),
     stable: JSON.stringify(firstIdentities) === JSON.stringify(secondIdentities),
@@ -101,10 +108,17 @@ export function buildRealWorldObservationReport(
 ): RealWorldObservationReport {
   const cases = corpus.map((item) => observeCase(reviewUseCases, item));
   const cleanCases = cases.filter(({ category }) => category === "clean-negative");
-  const cleanControlsWithFindings = cleanCases.filter(
+  const empiricalCleanCases = cleanCases.filter(
+    ({ measurementFidelity }) => measurementFidelity === "empirical",
+  );
+  const empiricalCleanControlsWithFindings = empiricalCleanCases.filter(
     ({ findings }) => findings.length > 0,
   ).length;
-  const cleanFindings = cleanCases.flatMap(({ findings }) => findings);
+  const empiricalCleanFindings = empiricalCleanCases.flatMap(({ findings }) => findings);
+  const allCleanControlsWithFindings = cleanCases.filter(
+    ({ findings }) => findings.length > 0,
+  ).length;
+  const allCleanFindings = cleanCases.flatMap(({ findings }) => findings);
   const mustFindExpectations = cases.reduce(
     (total, item) =>
       total + item.expectations.filter(({ kind }) => kind === "must-find").length,
@@ -124,13 +138,21 @@ export function buildRealWorldObservationReport(
       mustFindExpectationsPendingRuleMapping: mustFindExpectations,
       precisionStatus: "pending-rule-mapping",
       cleanControls: cleanCases.length,
-      cleanControlsWithFindings,
-      cleanControlCaseFalsePositiveRate:
-        cleanCases.length === 0 ? 0 : cleanControlsWithFindings / cleanCases.length,
-      cleanControlFindingCount: cleanFindings.length,
-      cleanControlMediumOrHigherFindingCount: cleanFindings.filter(({ severity }) =>
-        MEDIUM_OR_HIGHER.has(severity)
+      syntheticCleanControls: cleanCases.filter(
+        ({ measurementFidelity }) => measurementFidelity === "synthetic",
       ).length,
+      empiricalCleanControls: empiricalCleanCases.length,
+      empiricalCleanControlsWithFindings,
+      empiricalCleanControlCaseFalsePositiveRate:
+        empiricalCleanCases.length === 0
+          ? 0
+          : empiricalCleanControlsWithFindings / empiricalCleanCases.length,
+      empiricalCleanControlFindingCount: empiricalCleanFindings.length,
+      empiricalCleanControlMediumOrHigherFindingCount: empiricalCleanFindings.filter(
+        ({ severity }) => MEDIUM_OR_HIGHER.has(severity),
+      ).length,
+      allCleanControlsWithFindings,
+      allCleanControlFindingCount: allCleanFindings.length,
     },
     cases,
   };
