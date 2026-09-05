@@ -10,11 +10,11 @@ describe("real-world public PR evaluation corpus", () => {
   it("keeps provenance and labeled expectations explicit", () => {
     const corpus = loadRealWorldEvaluationCorpus();
 
-    expect(corpus).toHaveLength(30);
-    expect(new Set(corpus.map(({ source }) => `${source.repository}#${source.number}`)).size).toBe(30);
-    expect(countRealWorldExpectations(corpus, "must-find")).toBe(11);
-    expect(countRealWorldExpectations(corpus, "must-not-find")).toBe(18);
-    expect(countRealWorldExpectations(corpus, "advisory")).toBe(3);
+    expect(corpus).toHaveLength(50);
+    expect(new Set(corpus.map(({ source }) => `${source.repository}#${source.number}`)).size).toBe(50);
+    expect(countRealWorldExpectations(corpus, "must-find")).toBe(17);
+    expect(countRealWorldExpectations(corpus, "must-not-find")).toBe(31);
+    expect(countRealWorldExpectations(corpus, "advisory")).toBe(5);
 
     for (const item of corpus) {
       expect(item.source.url).toBe(`https://github.com/${item.source.repository}/pull/${item.source.number}`);
@@ -27,7 +27,7 @@ describe("real-world public PR evaluation corpus", () => {
     const empiricalCases = corpus.filter(
       ({ measurementFidelity }) => measurementFidelity === "empirical",
     );
-    expect(empiricalCases).toHaveLength(3);
+    expect(empiricalCases).toHaveLength(5);
     expect(
       empiricalCases.every(({ evaluationCase }) =>
         evaluationCase.files[0]?.path.includes("/__tests__/") === true
@@ -48,5 +48,5 @@ describe("real-world public PR evaluation corpus", () => {
 
       expect(second.findings.map(key).sort()).toEqual(first.findings.map(key).sort());
     }
-  }, 15_000);
+  }, 25_000);
 });

@@ -3,8 +3,11 @@ import { resolve } from "node:path";
 
 import type { Severity } from "../domain/review";
 import { EVALUATION_CASE_VERSION, type EvaluationCase } from "./contracts";
+import { PROMOTED_CLEAN_BATCH_2_SEEDS } from "./real-world-promoted-clean-batch-2";
 import { PROMOTED_CLEAN_SEEDS } from "./real-world-promoted-clean";
+import { PROMOTED_REACT_BATCH_2_SEEDS } from "./real-world-promoted-react-batch-2";
 import { PROMOTED_REACT_SEEDS } from "./real-world-promoted-react";
+import { PROMOTED_SECURITY_BATCH_2_SEEDS } from "./real-world-promoted-security-batch-2";
 import { PROMOTED_SECURITY_SEEDS } from "./real-world-promoted-security";
 
 export type RealWorldExpectationKind = "must-find" | "must-not-find" | "advisory";
@@ -133,8 +136,11 @@ const SEEDS: readonly RealWorldSeedDefinition[] = [
     ],
   },
   ...PROMOTED_SECURITY_SEEDS,
+  ...PROMOTED_SECURITY_BATCH_2_SEEDS,
   ...PROMOTED_REACT_SEEDS,
+  ...PROMOTED_REACT_BATCH_2_SEEDS,
   ...PROMOTED_CLEAN_SEEDS,
+  ...PROMOTED_CLEAN_BATCH_2_SEEDS,
 ];
 
 function readFixtureBundleEntry(

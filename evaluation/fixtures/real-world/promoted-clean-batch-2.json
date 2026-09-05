@@ -1,0 +1,6 @@
+{
+  "vercel-next-96772-promise-resolvers-refactor": "export function createPromiseWithResolvers<T>() {\n  let resolve!: (value: T | PromiseLike<T>) => void;\n  let reject!: (reason?: unknown) => void;\n  const promise = new Promise<T>((res, rej) => {\n    resolve = res;\n    reject = rej;\n  });\n  return { promise, resolve, reject };\n}\n",
+  "tanstack-query-11369-solid-jsdoc-negative": "/** Returns the query client supplied by the nearest provider. */\nexport function useQueryClient<T>(client: T): T {\n  return client;\n}\n",
+  "tanstack-query-11368-solid-doc-generator-negative": "interface DocumentationTarget {\n  readonly entryPoint: string;\n  readonly outputDir: string;\n  readonly exclude: readonly string[];\n}\n\nexport const solidQueryDocs: DocumentationTarget = {\n  entryPoint: \"packages/solid-query/src/index.ts\",\n  outputDir: \"docs/framework/solid/reference\",\n  exclude: [\"packages/query-core/**/*\"],\n};\n",
+  "tanstack-query-11378-vue-jsdoc-negative": "/** Options may include reactive values while preserving the query-key contract. */\nexport function normalizeVueQueryKey(\n  key: readonly unknown[],\n): readonly unknown[] {\n  return key;\n}\n"
+}

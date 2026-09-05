@@ -7,7 +7,7 @@ import type {
   RealWorldMeasurementFidelity,
 } from "./real-world";
 
-export const REAL_WORLD_OBSERVATION_SCHEMA_VERSION = 2 as const;
+export const REAL_WORLD_OBSERVATION_SCHEMA_VERSION = 3 as const;
 
 export interface RealWorldFindingObservation {
   readonly id: string;
@@ -42,6 +42,11 @@ export interface RealWorldObservationSummary {
   readonly mustFindExpectations: number;
   readonly mustFindExpectationsPendingRuleMapping: number;
   readonly precisionStatus: "pending-rule-mapping";
+  readonly empiricalNegativeControls: number;
+  readonly empiricalNegativeControlsWithFindings: number;
+  readonly empiricalNegativeControlCaseFalsePositiveRate: number;
+  readonly empiricalNegativeControlFindingCount: number;
+  readonly empiricalNegativeControlMediumOrHigherFindingCount: number;
   readonly cleanControls: number;
   readonly syntheticCleanControls: number;
   readonly empiricalCleanControls: number;
@@ -102,11 +107,24 @@ function observeCase(
   };
 }
 
+function isEmpiricalNegativeControl(item: RealWorldCaseObservation): boolean {
+  return item.measurementFidelity === "empirical"
+    && item.expectations.some(({ kind }) => kind === "must-not-find")
+    && !item.expectations.some(({ kind }) => kind === "must-find");
+}
+
 export function buildRealWorldObservationReport(
   reviewUseCases: ReviewUseCases,
   corpus: readonly RealWorldEvaluationCase[],
 ): RealWorldObservationReport {
   const cases = corpus.map((item) => observeCase(reviewUseCases, item));
+  const empiricalNegativeCases = cases.filter(isEmpiricalNegativeControl);
+  const empiricalNegativeControlsWithFindings = empiricalNegativeCases.filter(
+    ({ findings }) => findings.length > 0,
+  ).length;
+  const empiricalNegativeFindings = empiricalNegativeCases.flatMap(
+    ({ findings }) => findings,
+  );
   const cleanCases = cases.filter(({ category }) => category === "clean-negative");
   const empiricalCleanCases = cleanCases.filter(
     ({ measurementFidelity }) => measurementFidelity === "empirical",
@@ -137,6 +155,16 @@ export function buildRealWorldObservationReport(
       mustFindExpectations,
       mustFindExpectationsPendingRuleMapping: mustFindExpectations,
       precisionStatus: "pending-rule-mapping",
+      empiricalNegativeControls: empiricalNegativeCases.length,
+      empiricalNegativeControlsWithFindings,
+      empiricalNegativeControlCaseFalsePositiveRate:
+        empiricalNegativeCases.length === 0
+          ? 0
+          : empiricalNegativeControlsWithFindings / empiricalNegativeCases.length,
+      empiricalNegativeControlFindingCount: empiricalNegativeFindings.length,
+      empiricalNegativeControlMediumOrHigherFindingCount: empiricalNegativeFindings.filter(
+        ({ severity }) => MEDIUM_OR_HIGHER.has(severity),
+      ).length,
       cleanControls: cleanCases.length,
       syntheticCleanControls: cleanCases.filter(
         ({ measurementFidelity }) => measurementFidelity === "synthetic",

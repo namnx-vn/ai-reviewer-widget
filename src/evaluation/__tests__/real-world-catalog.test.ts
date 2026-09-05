@@ -45,8 +45,8 @@ describe("100-PR real-world catalog", () => {
       ({ maturity }) => maturity === "minimized",
     );
 
-    expect(executableCorpus).toHaveLength(30);
-    expect(minimizedEntries).toHaveLength(30);
+    expect(executableCorpus).toHaveLength(50);
+    expect(minimizedEntries).toHaveLength(50);
 
     for (const item of executableCorpus) {
       const catalogEntry = minimizedEntries.find(
@@ -74,5 +74,15 @@ describe("100-PR real-world catalog", () => {
     expect(replacement?.signal).toBe("negative-control");
     expect(replacement?.maturity).toBe("minimized");
     expect(replacement?.fixtureId).toBe("tanstack-query-11258-test-file-alignment");
+  });
+
+  it("keeps the Rust-only clean candidate catalogued until the runner supports it", () => {
+    const rustOnly = REAL_WORLD_PR_CATALOG.find(
+      ({ repository, number }) => repository === "vercel/next.js" && number === 97284,
+    );
+
+    expect(rustOnly?.category).toBe("clean");
+    expect(rustOnly?.maturity).toBe("catalogued");
+    expect(rustOnly?.fixtureId).toBeUndefined();
   });
 });
