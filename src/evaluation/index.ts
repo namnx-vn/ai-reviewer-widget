@@ -38,6 +38,7 @@ export type {
   RealWorldEvaluationCase,
   RealWorldExpectation,
   RealWorldExpectationKind,
+  RealWorldMeasurementFidelity,
   RealWorldSeedDefinition,
 } from "./real-world";
 export { runEvaluationCase, runEvaluationSuite } from "./runner";
