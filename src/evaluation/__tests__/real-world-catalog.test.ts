@@ -45,7 +45,8 @@ describe("100-PR real-world catalog", () => {
       ({ maturity }) => maturity === "minimized",
     );
 
-    expect(minimizedEntries).toHaveLength(executableCorpus.length);
+    expect(executableCorpus).toHaveLength(30);
+    expect(minimizedEntries).toHaveLength(30);
 
     for (const item of executableCorpus) {
       const catalogEntry = minimizedEntries.find(
@@ -56,5 +57,22 @@ describe("100-PR real-world catalog", () => {
       expect(catalogEntry).toBeDefined();
       expect(catalogEntry?.fixtureId).toBe(item.evaluationCase.id);
     }
+  });
+
+  it("does not treat the known XSS-producing Preact SSR guide as a clean control", () => {
+    expect(
+      REAL_WORLD_PR_CATALOG.some(
+        ({ repository, number }) => repository === "TanStack/query" && number === 11380,
+      ),
+    ).toBe(false);
+
+    const replacement = REAL_WORLD_PR_CATALOG.find(
+      ({ repository, number }) => repository === "TanStack/query" && number === 11258,
+    );
+
+    expect(replacement?.category).toBe("clean");
+    expect(replacement?.signal).toBe("negative-control");
+    expect(replacement?.maturity).toBe("minimized");
+    expect(replacement?.fixtureId).toBe("tanstack-query-11258-test-file-alignment");
   });
 });
