@@ -8,6 +8,7 @@ import { PROMOTED_REACT_SEEDS } from "./real-world-promoted-react";
 import { PROMOTED_SECURITY_SEEDS } from "./real-world-promoted-security";
 
 export type RealWorldExpectationKind = "must-find" | "must-not-find" | "advisory";
+export type RealWorldMeasurementFidelity = "empirical" | "synthetic";
 
 export interface PublicPullRequestReference {
   readonly repository: string;
@@ -28,6 +29,7 @@ export interface RealWorldEvaluationCase {
   readonly evaluationCase: EvaluationCase;
   readonly source: PublicPullRequestReference;
   readonly expectations: readonly RealWorldExpectation[];
+  readonly measurementFidelity: RealWorldMeasurementFidelity;
 }
 
 export interface RealWorldSeedDefinition {
@@ -35,6 +37,8 @@ export interface RealWorldSeedDefinition {
   readonly title: string;
   readonly category: string;
   readonly fixturePath: string;
+  readonly analysisPath?: string;
+  readonly measurementFidelity?: RealWorldMeasurementFidelity;
   readonly fixtureBundle?: {
     readonly path: string;
     readonly key: string;
@@ -158,12 +162,13 @@ export function loadRealWorldEvaluationCorpus(
     return {
       source: seed.source,
       expectations: seed.expectations,
+      measurementFidelity: seed.measurementFidelity ?? "synthetic",
       evaluationCase: {
         version: EVALUATION_CASE_VERSION,
         id: seed.id,
         title: seed.title,
         category: seed.category,
-        files: [{ path: seed.fixturePath, content }],
+        files: [{ path: seed.analysisPath ?? seed.fixturePath, content }],
         expectedFindings: [],
       },
     };
