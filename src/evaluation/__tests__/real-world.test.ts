@@ -10,16 +10,17 @@ describe("real-world public PR evaluation corpus", () => {
   it("keeps provenance and labeled expectations explicit", () => {
     const corpus = loadRealWorldEvaluationCorpus();
 
-    expect(corpus).toHaveLength(3);
-    expect(new Set(corpus.map(({ source }) => `${source.repository}#${source.number}`)).size).toBe(3);
-    expect(countRealWorldExpectations(corpus, "must-find")).toBe(1);
-    expect(countRealWorldExpectations(corpus, "must-not-find")).toBe(2);
-    expect(countRealWorldExpectations(corpus, "advisory")).toBe(1);
+    expect(corpus).toHaveLength(30);
+    expect(new Set(corpus.map(({ source }) => `${source.repository}#${source.number}`)).size).toBe(30);
+    expect(countRealWorldExpectations(corpus, "must-find")).toBe(11);
+    expect(countRealWorldExpectations(corpus, "must-not-find")).toBe(18);
+    expect(countRealWorldExpectations(corpus, "advisory")).toBe(3);
 
     for (const item of corpus) {
       expect(item.source.url).toBe(`https://github.com/${item.source.repository}/pull/${item.source.number}`);
       expect(item.source.headSha).toMatch(/^[0-9a-f]{40}$/);
       expect(item.evaluationCase.files).toHaveLength(1);
+      expect(item.evaluationCase.files[0]?.path).toMatch(/\.tsx?$/);
       expect(item.evaluationCase.files[0]?.content.length).toBeGreaterThan(0);
     }
   });
