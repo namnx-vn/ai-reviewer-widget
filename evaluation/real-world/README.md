@@ -60,10 +60,10 @@ Labels are not automatically counted as achieved precision or recall. `src/evalu
 
 ## Current observation baseline
 
-The first 50-case CI observation is deterministic across all cases:
+The current 50-case CI observation is deterministic across all cases:
 
 - 50 / 50 stable cases
-- 13 production findings emitted across the corpus
+- 21 production findings emitted across the corpus
 - 5 empirical negative controls
 - 0 / 5 empirical negative controls with findings
 - 0 empirical negative-control findings at medium severity or higher
@@ -72,20 +72,48 @@ The first 50-case CI observation is deterministic across all cases:
 
 The five empirical negative controls consist of three Query Core clean test PRs plus two Vue Query test-only PRs, all analyzed with upstream-like `__tests__/*.test.ts(x)` paths.
 
-The first rule mapping is intentionally narrow:
+## Verified production-rule mappings
 
-- `vercel/next.js#95182` `unbounded-action-body`
-  → `performance.backpressure.unbounded-queue`
+The mapped `must-find` subset has expanded from 1 to **9 of 17 expectations**. Every mapping below was added only after the production observation emitted the corresponding rule on the minimized fixture:
 
-This gives a mapped recall sample of **1 detected / 1 mapped**, while **16 of 17 `must-find` expectations remain pending rule mapping**. A 1/1 mapped sample is not statistically meaningful and must not be presented as 100% real-world recall.
+| Public PR expectation | Production rule |
+| --- | --- |
+| `vercel/next.js#86406` operational health details | `security.data.operational-response-exposure` |
+| `vercel/next.js#96608` missing segment-script nonce | `security.xss.csp-nonce-propagation` |
+| `vercel/next.js#97043` missing Pages streaming nonce | `security.xss.csp-nonce-propagation` |
+| `vercel/next.js#95182` unbounded Edge action body | `performance.backpressure.unbounded-queue` |
+| `TanStack/query#11381` raw JSON in executable script | `security.xss.raw-json-script-serialization` |
+| `vercel/next.js#98152` missing boundary-script nonce | `security.xss.csp-nonce-propagation` |
+| `vercel/next.js#96580` destructive environment reload | `security.configuration.destructive-env-reload` |
+| `TanStack/query#11270` nullable hydration root dereference | `quality.correctness.nullable-hydration-state` |
+| `vercel/next.js#93154` repeated search-param cache collision | `quality.correctness.search-param-multivalue-key` |
+
+The observation therefore reports **9 detected / 9 mapped**, with **8 of 17 `must-find` expectations still pending rule mapping**. The 9/9 number is only the recall of the deliberately mapped subset; it is **not** a 100% real-world recall claim.
+
+The two generic runtime-state checks were placed in the core AST contribution rather than the React contribution because the relevant public reproductions are ordinary `.ts` code and do not require a React surface. This keeps the production detector aligned with the behavior being measured and avoids duplicate findings on React files.
 
 Incidental findings are not credited as true positives. For example, a `react.hooks.missing-deps` finding is not considered evidence that a stale-promise, mount-subscription, or pre-hydration navigation race was detected unless the rule and evidence actually match the adjudicated expectation.
+
+### Remaining unmapped `must-find` backlog
+
+The eight pending expectations are:
+
+- `TanStack/query#10079` stale query promise after retry/reset
+- `TanStack/query#11385` cached-query mount subscription gap
+- `TanStack/query#10006` devtools cross-instance state leak
+- `vercel/next.js#96252` pre-hydration history traversal race
+- `TanStack/query#11326` missing server query-cache teardown
+- `TanStack/query#11395` non-deterministic dehydration timestamp
+- `vercel/next.js#83200` manifest emitted in the streamed body instead of the head
+- `vercel/next.js#91586` noop-tracer force-context correctness
+
+These now form the next recall backlog; they remain pending instead of receiving credit from unrelated findings.
 
 ## False-positive feedback loop
 
 The first empirical pass used three upstream test-only clean controls. Before file-context tuning, two of three cases emitted three lifecycle/performance findings. The shared performance engine policy was then changed to suppress only production-runtime lifecycle rules in test files, while leaving unrelated performance analysis enabled. The same three cases subsequently emitted zero findings.
 
-Batch 2 expanded the empirical denominator to five upstream-like negative controls, and the 50-case observation still reports zero findings across those five controls. This is useful diagnostic evidence, but the denominator remains too small to claim a production false-positive rate.
+Batch 2 expanded the empirical denominator to five upstream-like negative controls. After the new security and core-correctness rules were added, the 50-case observation still reports zero findings across those five controls and zero findings across all 14 clean controls. This is useful diagnostic evidence, but the denominator remains too small to claim a production false-positive rate.
 
 ## Human-adjudication corrections
 
@@ -99,4 +127,4 @@ These corrections are intentional evidence that catalog metadata is provisional 
 
 A catalogued PR becomes an executable evaluation case only after its relevant diff has been manually reviewed and a minimized reproduction can preserve the behavior. Prefer minimized reproductions over storing full external diffs.
 
-Fifty executable PRs are enough to begin a useful empirical baseline and identify recurring false-positive clusters. They are **not enough to claim the documented 90% high-severity real-world precision target**. The next quality work is to expand exact rule mappings for the remaining `must-find` expectations, fix the highest-value security/react recall gaps revealed by those mappings, and then grow toward several hundred adjudicated findings across representative production repositories before empirical precision becomes a blocking release threshold.
+Fifty executable PRs are enough to identify recurring precision and recall gaps, but they are **not enough to claim the documented 90% high-severity real-world precision target**. The next quality work should focus on the eight remaining unmapped `must-find` expectations, then grow toward several hundred adjudicated findings across representative production repositories before empirical precision or recall becomes a blocking release threshold.
