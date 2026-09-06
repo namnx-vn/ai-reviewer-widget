@@ -10,7 +10,7 @@ describe("real-world production rule mappings", () => {
       ({ caseId, expectationId }) => `${caseId}:${expectationId}`,
     );
 
-    expect(REAL_WORLD_RULE_MAPPINGS).toHaveLength(9);
+    expect(REAL_WORLD_RULE_MAPPINGS).toHaveLength(17);
     expect(new Set(identities).size).toBe(REAL_WORLD_RULE_MAPPINGS.length);
 
     for (const mapping of REAL_WORLD_RULE_MAPPINGS) {

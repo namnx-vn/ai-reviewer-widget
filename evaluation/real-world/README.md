@@ -52,18 +52,19 @@ Each minimized case preserves repository, PR number, canonical URL, exact head S
 
 ## Executable label semantics
 
-- `must-find`: a human-reviewed issue that the reviewer should eventually detect reliably.
+- `must-find`: a human-reviewed issue that the reviewer should detect reliably.
 - `must-not-find`: a known-safe behavior used to measure false-positive pressure.
 - `advisory`: a legitimate review consideration that should not become a blocking finding without stronger evidence.
 
-Labels are not automatically counted as achieved precision or recall. `src/evaluation/real-world-rule-mapping.ts` separately records only human-reviewed mappings from a `must-find` expectation to acceptable production `ruleId` values. Unmapped expectations remain pending instead of receiving synthetic credit.
+Labels are not automatically counted as achieved precision or recall. `src/evaluation/real-world-rule-mapping.ts` records only human-reviewed mappings from a `must-find` expectation to acceptable production `ruleId` values. A mapping is added only after the production observation emits a semantically matching rule on the minimized fixture.
 
 ## Current observation baseline
 
-The current 50-case CI observation is deterministic across all cases:
+The latest rule-only 50-case CI observation is deterministic across all cases and reports:
 
 - 50 / 50 stable cases
-- 21 production findings emitted across the corpus
+- 29 production findings emitted across the corpus
+- 17 `must-find` expectations with semantically matching production findings available for exact mapping
 - 5 empirical negative controls
 - 0 / 5 empirical negative controls with findings
 - 0 empirical negative-control findings at medium severity or higher
@@ -74,7 +75,7 @@ The five empirical negative controls consist of three Query Core clean test PRs 
 
 ## Verified production-rule mappings
 
-The mapped `must-find` subset has expanded from 1 to **9 of 17 expectations**. Every mapping below was added only after the production observation emitted the corresponding rule on the minimized fixture:
+All **17 of 17 `must-find` expectations** now have exact production-rule mappings. Every mapping was added only after the corresponding production rule was observed on the executable minimized case.
 
 | Public PR expectation | Production rule |
 | --- | --- |
@@ -87,33 +88,48 @@ The mapped `must-find` subset has expanded from 1 to **9 of 17 expectations**. E
 | `vercel/next.js#96580` destructive environment reload | `security.configuration.destructive-env-reload` |
 | `TanStack/query#11270` nullable hydration root dereference | `quality.correctness.nullable-hydration-state` |
 | `vercel/next.js#93154` repeated search-param cache collision | `quality.correctness.search-param-multivalue-key` |
+| `TanStack/query#10079` stale promise after retry/reset | `react.hooks.stale-promise-ref` |
+| `TanStack/query#11385` mount-time external-store subscription gap | `react.hooks.external-subscription-gap` |
+| `TanStack/query#10006` cross-instance devtools state leak | `react.state.module-shared-instance-state` |
+| `vercel/next.js#96252` pre-hydration navigation traversal gap | `react.hooks.browser-subscription-gap` |
+| `TanStack/query#11326` missing SSR query-cache teardown | `quality.resource.server-cache-teardown` |
+| `TanStack/query#11395` wall-clock dehydration timestamp | `quality.correctness.nondeterministic-snapshot-time` |
+| `vercel/next.js#83200` manifest emitted in streamed body metadata | `quality.web.manifest-streamed-body` |
+| `vercel/next.js#91586` undefined method guard identifier | `quality.correctness.undefined-method-guard` |
 
-The observation therefore reports **9 detected / 9 mapped**, with **8 of 17 `must-find` expectations still pending rule mapping**. The 9/9 number is only the recall of the deliberately mapped subset; it is **not** a 100% real-world recall claim.
+After the mapping manifest is applied, the observation contract should report **17 detected / 17 mapped** and **0 pending `must-find` mappings**.
 
-The two generic runtime-state checks were placed in the core AST contribution rather than the React contribution because the relevant public reproductions are ordinary `.ts` code and do not require a React surface. This keeps the production detector aligned with the behavior being measured and avoids duplicate findings on React files.
+This 17/17 result is the recall of the current **17 adjudicated positive expectations in the 50-case minimized corpus**. It is **not** evidence of universal or production-wide 100% recall. The sample is intentionally narrow and remains too small to establish a release-blocking real-world recall guarantee.
 
-Incidental findings are not credited as true positives. For example, a `react.hooks.missing-deps` finding is not considered evidence that a stale-promise, mount-subscription, or pre-hydration navigation race was detected unless the rule and evidence actually match the adjudicated expectation.
+The observation field `precisionStatus` remains conservative because completing positive expectation mappings does not fully adjudicate every incidental production finding as a true or false positive. Precision must continue to be evaluated separately against representative positive and negative evidence.
 
-### Remaining unmapped `must-find` backlog
+## Recall-gap closure design
 
-The eight pending expectations are:
+The final eight gaps were closed with generic deterministic rules rather than fixture-specific checks.
 
-- `TanStack/query#10079` stale query promise after retry/reset
-- `TanStack/query#11385` cached-query mount subscription gap
-- `TanStack/query#10006` devtools cross-instance state leak
-- `vercel/next.js#96252` pre-hydration history traversal race
-- `TanStack/query#11326` missing server query-cache teardown
-- `TanStack/query#11395` non-deterministic dehydration timestamp
-- `vercel/next.js#83200` manifest emitted in the streamed body instead of the head
-- `vercel/next.js#91586` noop-tracer force-context correctness
+### Lifecycle / state races
 
-These now form the next recall backlog; they remain pending instead of receiving credit from unrelated findings.
+- `react.hooks.stale-promise-ref` detects a promise ref exposed to callers while refresh logic is gated by terminal status and ignores promise/fetch replacement.
+- `react.hooks.external-subscription-gap` detects external-store state read during render and subscribed later in a passive effect without snapshot reconciliation.
+- `react.state.module-shared-instance-state` detects mutable module state used as component instance state and mutated by the same component, creating cross-instance interference.
+- `react.hooks.browser-subscription-gap` detects browser/history snapshots read before hydration and event listeners attached later without reconciling the initial gap.
+
+### SSR / streaming / resource correctness
+
+- `quality.resource.server-cache-teardown` detects server/provider query clients unmounted without canceling pending work and clearing per-request cache state.
+- `quality.correctness.nondeterministic-snapshot-time` detects wall-clock reads embedded directly in dehydration/snapshot metadata.
+- `quality.web.manifest-streamed-body` detects `rel=manifest` markup emitted through body/streamed metadata instead of the eagerly emitted head.
+- `quality.correctness.undefined-method-guard` detects class-method guards that reference bare identifiers unavailable in method, module, or runtime scope.
+
+React-specific lifecycle/state behavior stays in the React plugin. Generic TypeScript, web-document, and server-resource correctness stays in the core AST contribution. No detector depends on a PR number, fixture id, or evaluation-only code path.
+
+Incidental findings are not credited as true positives. For example, `react.hooks.missing-deps` is not considered evidence that a stale-promise, mount-subscription, or pre-hydration navigation race was detected unless a rule with matching semantics is also emitted.
 
 ## False-positive feedback loop
 
 The first empirical pass used three upstream test-only clean controls. Before file-context tuning, two of three cases emitted three lifecycle/performance findings. The shared performance engine policy was then changed to suppress only production-runtime lifecycle rules in test files, while leaving unrelated performance analysis enabled. The same three cases subsequently emitted zero findings.
 
-Batch 2 expanded the empirical denominator to five upstream-like negative controls. After the new security and core-correctness rules were added, the 50-case observation still reports zero findings across those five controls and zero findings across all 14 clean controls. This is useful diagnostic evidence, but the denominator remains too small to claim a production false-positive rate.
+Batch 2 expanded the empirical denominator to five upstream-like negative controls. After the security, runtime-state, lifecycle/state, and SSR/resource rules were added, the 50-case observation still reports zero findings across those five controls and zero findings across all 14 clean controls. This is useful diagnostic evidence, but the denominator remains too small to claim a production false-positive rate.
 
 ## Human-adjudication corrections
 
@@ -123,8 +139,10 @@ During Batch 2, `vercel/next.js#97284` was deliberately left `catalogued` rather
 
 These corrections are intentional evidence that catalog metadata is provisional until the relevant diff is human-reviewed.
 
-## Promotion policy
+## Promotion and next-quality policy
 
 A catalogued PR becomes an executable evaluation case only after its relevant diff has been manually reviewed and a minimized reproduction can preserve the behavior. Prefer minimized reproductions over storing full external diffs.
 
-Fifty executable PRs are enough to identify recurring precision and recall gaps, but they are **not enough to claim the documented 90% high-severity real-world precision target**. The next quality work should focus on the eight remaining unmapped `must-find` expectations, then grow toward several hundred adjudicated findings across representative production repositories before empirical precision or recall becomes a blocking release threshold.
+With the current 17 positive expectations mapped, the next quality work should no longer optimize for this fixed recall denominator. The next step is to **expand the adjudicated executable denominator** with new positive and negative cases across representative production repositories, then use the larger evidence set to decide which rules need further tuning.
+
+Fifty executable PRs are enough to expose meaningful precision and recall gaps, but they are **not enough to claim the documented 90% high-severity real-world precision target** or a general real-world recall target. Empirical precision/recall should become release-blocking only after several hundred adjudicated findings provide a representative denominator.

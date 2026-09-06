@@ -5,7 +5,6 @@ import type { ASTRule } from "../rules";
 
 const SERVER_CACHE_TEARDOWN_RULE_ID = "quality.resource.server-cache-teardown";
 const SNAPSHOT_TIME_RULE_ID = "quality.correctness.nondeterministic-snapshot-time";
-const MANIFEST_BODY_RULE_ID = "quality.web.manifest-streamed-body";
 const UNDEFINED_METHOD_GUARD_RULE_ID = "quality.correctness.undefined-method-guard";
 
 const REQUIRED_QUERY_CLIENT_METHODS = [
@@ -151,34 +150,6 @@ export const nondeterministicSnapshotTimeRule: ASTRule = {
       "A dehydration or snapshot serializer writes Date.now() into snapshot metadata, making cached/prerendered output depend on the execution clock instead of the snapshot's deterministic time boundary.",
       "Pass the snapshot/cache timestamp into the serializer, or derive it from deterministic snapshot metadata rather than reading the wall clock inside the cached computation.",
     ));
-  },
-};
-
-export const manifestStreamedBodyRule: ASTRule = {
-  id: MANIFEST_BODY_RULE_ID,
-  description:
-    "Detect web-manifest link markup emitted through streamed body metadata instead of the document head.",
-
-  check(node: unknown, file: string): ReviewFinding[] {
-    if (
-      !isNode(node) ||
-      node.type !== "VariableDeclarator" ||
-      node.id.type !== "Identifier" ||
-      !/(?:body|streamedBody|metadataBody)/i.test(node.id.name) ||
-      node.init === null ||
-      !containsManifestLink(node.init)
-    ) {
-      return [];
-    }
-
-    return [createFinding(
-      MANIFEST_BODY_RULE_ID,
-      file,
-      node,
-      "Web manifest is emitted through streamed body metadata",
-      "A rel=manifest link is constructed in body/streamed metadata. Browsers expect manifest discovery in document head and may miss a link emitted after head streaming has completed.",
-      "Emit the manifest link with eagerly available/static head metadata and keep later streaming for metadata that is valid outside the initial head boundary.",
-    )];
   },
 };
 
@@ -369,34 +340,6 @@ function isDateNowCall(node: TSESTree.CallExpression): boolean {
     node.callee.object.name === "Date" &&
     propertyName(node.callee.property, node.callee.computed) === "now"
   );
-}
-
-function containsManifestLink(node: TSESTree.Node): boolean {
-  let found = false;
-
-  visit(node, (child) => {
-    if (
-      child.type === "Literal" &&
-      typeof child.value === "string" &&
-      isManifestMarkup(child.value)
-    ) {
-      found = true;
-      return;
-    }
-
-    if (
-      child.type === "TemplateElement" &&
-      isManifestMarkup(child.value.raw)
-    ) {
-      found = true;
-    }
-  });
-
-  return found;
-}
-
-function isManifestMarkup(value: string): boolean {
-  return /<link\b[^>]*\brel=["']?manifest["']?/i.test(value);
 }
 
 function collectModuleBindings(program: TSESTree.Program): ReadonlySet<string> {

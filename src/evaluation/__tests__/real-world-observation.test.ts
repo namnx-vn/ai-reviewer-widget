@@ -19,10 +19,10 @@ describe("real-world observation report", () => {
     expect(report.summary.totalCases).toBe(50);
     expect(report.summary.stableCases).toBe(50);
     expect(report.summary.mustFindExpectations).toBe(17);
-    expect(report.summary.mappedMustFindExpectations).toBe(9);
-    expect(report.summary.mappedMustFindDetected).toBe(9);
+    expect(report.summary.mappedMustFindExpectations).toBe(17);
+    expect(report.summary.mappedMustFindDetected).toBe(17);
     expect(report.summary.mappedMustFindRecall).toBe(1);
-    expect(report.summary.mustFindExpectationsPendingRuleMapping).toBe(8);
+    expect(report.summary.mustFindExpectationsPendingRuleMapping).toBe(0);
     expect(report.summary.precisionStatus).toBe("pending-rule-mapping");
 
     expect(report.summary.empiricalNegativeControls).toBe(5);

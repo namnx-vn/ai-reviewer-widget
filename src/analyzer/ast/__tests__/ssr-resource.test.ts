@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { analyzeFiles } from "../../index";
 import { analyzeAST } from "../analyzer";
+import { manifestStreamedBodyRule } from "../rules/manifest-streaming";
 import {
-  manifestStreamedBodyRule,
   nondeterministicSnapshotTimeRule,
   serverCacheTeardownRule,
   undefinedMethodGuardRule,
