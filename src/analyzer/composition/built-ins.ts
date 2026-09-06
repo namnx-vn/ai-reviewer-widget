@@ -3,6 +3,7 @@ import type { ReviewFinding } from "../../domain/review";
 import { analyzeArchitectureGraph, buildDependencyGraph } from "../architecture/analyzer";
 import { noRemoteToRemoteImport } from "../architecture/rules";
 import { analyzeAST } from "../ast/analyzer";
+import { manifestStreamedBodyRule } from "../ast/rules/manifest-streaming";
 import { noConsoleRule } from "../ast/rules/no-console";
 import { noEvalRule } from "../ast/rules/no-eval";
 import {
@@ -10,7 +11,6 @@ import {
   searchParamMultivalueKeyRule,
 } from "../ast/rules/runtime-state";
 import {
-  manifestStreamedBodyRule,
   nondeterministicSnapshotTimeRule,
   serverCacheTeardownRule,
   undefinedMethodGuardRule,
