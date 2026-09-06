@@ -167,7 +167,11 @@ export const undefinedMethodGuardRule: ASTRule = {
     const findings: ReviewFinding[] = [];
 
     visit(node, (child) => {
-      if (child.type !== "MethodDefinition") {
+      if (
+        child.type !== "MethodDefinition" ||
+        child.value.type !== "FunctionExpression" ||
+        child.value.body === null
+      ) {
         return;
       }
 
