@@ -16,6 +16,7 @@ import {
 } from "./policies";
 import { SecurityRuleRegistry } from "./registry/security-rule-registry";
 import { dangerousExecutionRules } from "./rules/dangerous-execution";
+import { runtimeBoundarySecurityRules } from "./rules/runtime-boundaries";
 import { injectionRules } from "./rules/injection";
 import { browserSecurityRules } from "./rules/browser";
 import { cryptoRules } from "./rules/crypto";
@@ -102,6 +103,7 @@ export function analyzeSupplyChainFindings(
 export function createSourceSecurityRuleRegistry(): SecurityRuleRegistry {
   const registry = new SecurityRuleRegistry();
   for (const rule of dangerousExecutionRules) registry.register(rule);
+  for (const rule of runtimeBoundarySecurityRules) registry.register(rule);
   for (const rule of injectionRules) registry.register(rule);
   for (const rule of browserSecurityRules) registry.register(rule);
   for (const rule of secretsRules) registry.register(rule);

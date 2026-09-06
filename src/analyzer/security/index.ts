@@ -30,6 +30,7 @@ export {
   resolveSecurityRulePolicy,
 } from "./policies";
 export { dangerousExecutionRules } from "./rules/dangerous-execution";
+export { runtimeBoundarySecurityRules } from "./rules/runtime-boundaries";
 export { authenticationRules } from "./rules/auth";
 export { authorizationRules } from "./rules/authorization";
 export { browserSecurityRules } from "./rules/browser";
