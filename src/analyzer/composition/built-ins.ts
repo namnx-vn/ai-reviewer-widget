@@ -5,6 +5,10 @@ import { noRemoteToRemoteImport } from "../architecture/rules";
 import { analyzeAST } from "../ast/analyzer";
 import { noConsoleRule } from "../ast/rules/no-console";
 import { noEvalRule } from "../ast/rules/no-eval";
+import {
+  nullableHydrationStateRule,
+  searchParamMultivalueKeyRule,
+} from "../ast/rules/runtime-state";
 import type { ASTRule } from "../ast/rules";
 import { analyzePerformanceFiles } from "../performance/review-findings";
 import {
@@ -36,7 +40,12 @@ export function createBuiltInAnalyzerContributions(
       order: BUILT_IN_ANALYZER_ORDER.ast,
       analyze(files) {
         return result(sourceFiles(files).flatMap(({ path, content }) =>
-          analyzeAST(content, path, [noConsoleRule, ...astRules])));
+          analyzeAST(content, path, [
+            noConsoleRule,
+            nullableHydrationStateRule,
+            searchParamMultivalueKeyRule,
+            ...astRules,
+          ])));
       },
     },
     {

@@ -1,87 +1,118 @@
 import type { TSESTree } from "@typescript-eslint/typescript-estree";
 
 import type { ReviewFinding } from "../../../domain/review";
-import { visit } from "../../ast/component-utils";
-import type { ReactRule } from "../../engine/react-rule";
+import type { ASTRule } from "../rules";
 
 type FunctionLike =
   | TSESTree.FunctionDeclaration
   | TSESTree.FunctionExpression
   | TSESTree.ArrowFunctionExpression;
 
-const NULLABLE_HYDRATION_RULE_ID = "react.patterns.nullable-hydration-state";
-const SEARCH_PARAM_KEY_RULE_ID = "react.patterns.search-param-multivalue-key";
+interface NamedFunction {
+  readonly name: string;
+  readonly node: FunctionLike;
+}
 
-export const reactPatternsNullableHydrationStateRule: ReactRule = {
+const NULLABLE_HYDRATION_RULE_ID = "quality.correctness.nullable-hydration-state";
+const SEARCH_PARAM_KEY_RULE_ID = "quality.correctness.search-param-multivalue-key";
+
+export const nullableHydrationStateRule: ASTRule = {
   id: NULLABLE_HYDRATION_RULE_ID,
   description:
     "Detect hydration helpers that dereference nullable state before a null guard.",
 
-  check(node, context) {
-    if (node.type !== "Program") {
+  check(node: unknown, file: string): ReviewFinding[] {
+    if (!isNode(node)) {
       return [];
     }
 
-    return findNullableHydrationAccesses(node).map((match) =>
-      createFinding(
-        NULLABLE_HYDRATION_RULE_ID,
-        context.file,
-        match,
-        "Nullable hydration state is dereferenced without a guard",
-        "This hydration path accepts nullish state but dereferences it before proving that state is present.",
-        "Guard nullish hydration state before reading fields, or use optional chaining from the nullable root value.",
-      ),
-    );
-  },
-};
-
-export const reactPatternsSearchParamMultivalueKeyRule: ReactRule = {
-  id: SEARCH_PARAM_KEY_RULE_ID,
-  description:
-    "Detect cache and routing keys that collapse repeated URLSearchParams values through Object.fromEntries.",
-
-  check(node, context) {
-    if (node.type !== "Program") {
+    const candidate = namedFunction(node);
+    if (
+      candidate === undefined ||
+      !/hydrate|hydration/i.test(candidate.name) ||
+      candidate.node.body.type !== "BlockStatement"
+    ) {
       return [];
     }
 
-    return findSearchParamKeyCollapses(node).map((match) =>
-      createFinding(
-        SEARCH_PARAM_KEY_RULE_ID,
-        context.file,
-        match,
-        "Repeated search parameters collapse in cache identity",
-        "Object.fromEntries(new URLSearchParams(...)) keeps only one value per key, so repeated search parameters can collide with single-value cache or routing keys.",
-        "Preserve repeated values with URLSearchParams entries/getAll semantics or encode the ordered parameter pairs directly into the key.",
-      ),
-    );
-  },
-};
-
-function findNullableHydrationAccesses(
-  ast: TSESTree.Program,
-): readonly TSESTree.MemberExpression[] {
-  const matches: TSESTree.MemberExpression[] = [];
-
-  visitNamedFunctions(ast, (name, node) => {
-    if (!/hydrate|hydration/i.test(name) || node.body.type !== "BlockStatement") {
-      return;
-    }
-
-    for (const parameter of node.params) {
+    const findings: ReviewFinding[] = [];
+    for (const parameter of candidate.node.params) {
       const parameterName = nullableParameterName(parameter);
       if (parameterName === undefined) {
         continue;
       }
 
-      const match = findFirstUnsafeAccess(node.body, parameterName);
-      if (match !== undefined) {
-        matches.push(match);
+      const unsafeAccess = findFirstUnsafeAccess(
+        candidate.node.body,
+        parameterName,
+      );
+      if (unsafeAccess !== undefined) {
+        findings.push(createFinding(
+          NULLABLE_HYDRATION_RULE_ID,
+          file,
+          unsafeAccess,
+          "Nullable hydration state is dereferenced without a guard",
+          "This hydration path accepts nullish state but dereferences it before proving that state is present.",
+          "Guard nullish hydration state before reading fields, or use optional chaining from the nullable root value.",
+        ));
       }
     }
-  });
 
-  return matches;
+    return findings;
+  },
+};
+
+export const searchParamMultivalueKeyRule: ASTRule = {
+  id: SEARCH_PARAM_KEY_RULE_ID,
+  description:
+    "Detect cache and routing keys that collapse repeated URLSearchParams values through Object.fromEntries.",
+
+  check(node: unknown, file: string): ReviewFinding[] {
+    if (!isNode(node)) {
+      return [];
+    }
+
+    const candidate = namedFunction(node);
+    if (
+      candidate === undefined ||
+      !/(?:cache|key|segment|route|page)/i.test(candidate.name)
+    ) {
+      return [];
+    }
+
+    const matches: TSESTree.CallExpression[] = [];
+    visit(candidate.node.body, (child) => {
+      if (child.type === "CallExpression" && isSearchParamFromEntries(child)) {
+        matches.push(child);
+      }
+    });
+
+    return matches.map((match) => createFinding(
+      SEARCH_PARAM_KEY_RULE_ID,
+      file,
+      match,
+      "Repeated search parameters collapse in cache identity",
+      "Object.fromEntries(new URLSearchParams(...)) keeps only one value per key, so repeated search parameters can collide with single-value cache or routing keys.",
+      "Preserve repeated values with URLSearchParams entries/getAll semantics or encode the ordered parameter pairs directly into the key.",
+    ));
+  },
+};
+
+function namedFunction(node: TSESTree.Node): NamedFunction | undefined {
+  if (node.type === "FunctionDeclaration" && node.id !== null) {
+    return { name: node.id.name, node };
+  }
+
+  if (
+    node.type === "VariableDeclarator" &&
+    node.id.type === "Identifier" &&
+    (node.init?.type === "ArrowFunctionExpression" ||
+      node.init?.type === "FunctionExpression")
+  ) {
+    return { name: node.id.name, node: node.init };
+  }
+
+  return undefined;
 }
 
 function findFirstUnsafeAccess(
@@ -157,7 +188,10 @@ function isTerminatingNullGuard(
   return statementTerminates(statement.consequent);
 }
 
-function isNullishTest(node: TSESTree.Expression, parameterName: string): boolean {
+function isNullishTest(
+  node: TSESTree.Expression,
+  parameterName: string,
+): boolean {
   if (
     node.type === "UnaryExpression" &&
     node.operator === "!" &&
@@ -206,26 +240,6 @@ function statementTerminates(statement: TSESTree.Statement): boolean {
   );
 }
 
-function findSearchParamKeyCollapses(
-  ast: TSESTree.Program,
-): readonly TSESTree.CallExpression[] {
-  const matches: TSESTree.CallExpression[] = [];
-
-  visitNamedFunctions(ast, (name, node) => {
-    if (!/(?:cache|key|segment|route|page)/i.test(name)) {
-      return;
-    }
-
-    visit(node.body, (child) => {
-      if (child.type === "CallExpression" && isSearchParamFromEntries(child)) {
-        matches.push(child);
-      }
-    });
-  });
-
-  return matches;
-}
-
 function isSearchParamFromEntries(node: TSESTree.CallExpression): boolean {
   if (
     node.callee.type !== "MemberExpression" ||
@@ -244,26 +258,6 @@ function isSearchParamFromEntries(node: TSESTree.CallExpression): boolean {
     entries.callee.type === "Identifier" &&
     entries.callee.name === "URLSearchParams"
   );
-}
-
-function visitNamedFunctions(
-  ast: TSESTree.Program,
-  callback: (name: string, node: FunctionLike) => void,
-): void {
-  visit(ast, (node) => {
-    if (node.type === "FunctionDeclaration" && node.id !== null) {
-      callback(node.id.name, node);
-      return;
-    }
-
-    if (
-      node.type === "VariableDeclarator" &&
-      node.id.type === "Identifier" &&
-      (node.init?.type === "ArrowFunctionExpression" || node.init?.type === "FunctionExpression")
-    ) {
-      callback(node.id.name, node.init);
-    }
-  });
 }
 
 function createFinding(
@@ -294,4 +288,37 @@ function createFinding(
     suggestion,
     confidence: 0.99,
   };
+}
+
+function visit(
+  node: TSESTree.Node,
+  visitor: (node: TSESTree.Node) => void,
+): void {
+  visitor(node);
+
+  for (const value of Object.values(node)) {
+    if (isNode(value)) {
+      visit(value, visitor);
+      continue;
+    }
+
+    if (!Array.isArray(value)) {
+      continue;
+    }
+
+    for (const item of value) {
+      if (isNode(item)) {
+        visit(item, visitor);
+      }
+    }
+  }
+}
+
+function isNode(value: unknown): value is TSESTree.Node {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    typeof value.type === "string"
+  );
 }

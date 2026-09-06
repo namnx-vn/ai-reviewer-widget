@@ -34,8 +34,6 @@ describe("reactPlugin", () => {
         "react.context.consumer-invalidation",
         "react.context.provider-nesting",
         "react.patterns.query-key-stability",
-        "react.patterns.nullable-hydration-state",
-        "react.patterns.search-param-multivalue-key",
         "react.patterns.query-effect-sync",
         "react.patterns.query-cache-invalidation-render",
         "react.patterns.mutation-in-render",
@@ -122,30 +120,6 @@ describe("reactPlugin", () => {
 
     expect(findings.map((finding) => finding.ruleId)).toContain(
       "react.patterns.nested-component-definition",
-    );
-  });
-
-  it("runs runtime-state pattern rules through the default plugin", () => {
-    const findings = new ReactEngine().analyze({
-      source: `
-        interface DehydratedState { readonly mutations?: readonly unknown[] }
-        export function hydrateOnClient(state: DehydratedState | null) {
-          return state.mutations?.length ?? 0;
-        }
-
-        export function createPageCacheKey(search: string) {
-          return Object.fromEntries(new URLSearchParams(search));
-        }
-      `,
-      file: "runtime-state.ts",
-      plugins: [reactPlugin],
-    });
-
-    expect(findings.map((finding) => finding.ruleId)).toEqual(
-      expect.arrayContaining([
-        "react.patterns.nullable-hydration-state",
-        "react.patterns.search-param-multivalue-key",
-      ]),
     );
   });
 

@@ -14,11 +14,9 @@ import {
   reactPatternsIneffectiveErrorBoundaryRule,
   reactPatternsMutationInRenderRule,
   reactPatternsNestedComponentDefinitionRule,
-  reactPatternsNullableHydrationStateRule,
   reactPatternsQueryCacheInvalidationRenderRule,
   reactPatternsQueryEffectSyncRule,
   reactPatternsQueryKeyStabilityRule,
-  reactPatternsSearchParamMultivalueKeyRule,
   reactPatternsSuspenseFallbackRule,
 } from "../rules/patterns";
 import {
@@ -84,8 +82,6 @@ export const reactPlugin: ReactPlugin = {
     reactContextConsumerInvalidationRule,
     reactContextProviderNestingRule,
     reactPatternsQueryKeyStabilityRule,
-    reactPatternsNullableHydrationStateRule,
-    reactPatternsSearchParamMultivalueKeyRule,
     reactPatternsQueryEffectSyncRule,
     reactPatternsQueryCacheInvalidationRenderRule,
     reactPatternsMutationInRenderRule,
