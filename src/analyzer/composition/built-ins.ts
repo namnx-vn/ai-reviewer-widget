@@ -9,6 +9,12 @@ import {
   nullableHydrationStateRule,
   searchParamMultivalueKeyRule,
 } from "../ast/rules/runtime-state";
+import {
+  manifestStreamedBodyRule,
+  nondeterministicSnapshotTimeRule,
+  serverCacheTeardownRule,
+  undefinedMethodGuardRule,
+} from "../ast/rules/ssr-resource";
 import type { ASTRule } from "../ast/rules";
 import { analyzePerformanceFiles } from "../performance/review-findings";
 import {
@@ -44,6 +50,10 @@ export function createBuiltInAnalyzerContributions(
             noConsoleRule,
             nullableHydrationStateRule,
             searchParamMultivalueKeyRule,
+            serverCacheTeardownRule,
+            nondeterministicSnapshotTimeRule,
+            manifestStreamedBodyRule,
+            undefinedMethodGuardRule,
             ...astRules,
           ])));
       },

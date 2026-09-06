@@ -5,7 +5,12 @@ import {
   reactContextUnstableValueRule,
 } from "../rules/context";
 import { reactHooksAsyncEffectRule } from "../rules/hooks/async-effect";
+import { reactHooksBrowserSubscriptionGapRule } from "../rules/hooks/pre-hydration-navigation";
 import { reactHooksConditionalRule } from "../rules/hooks/conditional";
+import {
+  reactHooksExternalSubscriptionGapRule,
+  reactHooksStalePromiseRefRule,
+} from "../rules/hooks/lifecycle-races";
 import { reactHooksInvalidOrderRule } from "../rules/hooks/invalid-order";
 import { reactHooksMissingDepsRule } from "../rules/hooks/missing-deps";
 import { reactHooksStaleClosureRule } from "../rules/hooks/stale-closure";
@@ -51,11 +56,12 @@ import {
   reactStateRedundantStateRule,
   reactStateSynchronizationRule,
 } from "../rules/state";
+import { reactStateModuleSharedInstanceRule } from "../rules/state/module-instance-state";
 
 export const reactPlugin: ReactPlugin = {
   id: "react",
   name: "React",
-  version: "3.6.19",
+  version: "3.6.20",
   rules: [
     reactHooksMissingDepsRule,
     reactHooksStaleClosureRule,
@@ -63,6 +69,9 @@ export const reactPlugin: ReactPlugin = {
     reactHooksInvalidOrderRule,
     reactHooksUnnecessaryEffectRule,
     reactHooksAsyncEffectRule,
+    reactHooksStalePromiseRefRule,
+    reactHooksExternalSubscriptionGapRule,
+    reactHooksBrowserSubscriptionGapRule,
     reactRenderingCallbackMisuseRule,
     reactRenderingKeyMisuseRule,
     reactRenderingUnnecessaryRerenderRule,
@@ -73,6 +82,7 @@ export const reactPlugin: ReactPlugin = {
     reactStateDerivedStateRule,
     reactStateRedundantStateRule,
     reactStateSynchronizationRule,
+    reactStateModuleSharedInstanceRule,
     reactPerformanceExpensiveRenderWorkRule,
     reactPerformanceUnboundedListRenderRule,
     reactPerformanceTrivialUseMemoRule,
