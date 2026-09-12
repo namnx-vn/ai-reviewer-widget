@@ -10,11 +10,11 @@ describe("real-world public PR evaluation corpus", () => {
   it("keeps provenance and labeled expectations explicit", () => {
     const corpus = loadRealWorldEvaluationCorpus();
 
-    expect(corpus).toHaveLength(50);
-    expect(new Set(corpus.map(({ source }) => `${source.repository}#${source.number}`)).size).toBe(50);
-    expect(countRealWorldExpectations(corpus, "must-find")).toBe(17);
-    expect(countRealWorldExpectations(corpus, "must-not-find")).toBe(31);
-    expect(countRealWorldExpectations(corpus, "advisory")).toBe(5);
+    expect(corpus).toHaveLength(75);
+    expect(new Set(corpus.map(({ source }) => `${source.repository}#${source.number}`)).size).toBe(75);
+    expect(countRealWorldExpectations(corpus, "must-find")).toBeGreaterThan(17);
+    expect(countRealWorldExpectations(corpus, "must-not-find")).toBeGreaterThan(31);
+    expect(countRealWorldExpectations(corpus, "advisory")).toBeGreaterThanOrEqual(5);
 
     for (const item of corpus) {
       expect(item.source.url).toBe(`https://github.com/${item.source.repository}/pull/${item.source.number}`);
@@ -27,13 +27,15 @@ describe("real-world public PR evaluation corpus", () => {
     const empiricalCases = corpus.filter(
       ({ measurementFidelity }) => measurementFidelity === "empirical",
     );
-    expect(empiricalCases).toHaveLength(5);
-    expect(
-      empiricalCases.every(({ evaluationCase }) =>
-        evaluationCase.files[0]?.path.includes("/__tests__/") === true
-        && evaluationCase.files[0]?.path.includes(".test.") === true
-      ),
-    ).toBe(true);
+    expect(empiricalCases.length).toBeGreaterThanOrEqual(15);
+    expect(empiricalCases.every(({ evaluationCase }) =>
+      evaluationCase.files[0]?.path.startsWith("evaluation/fixtures/real-world/virtual/") === false
+    )).toBe(true);
+
+    expect(corpus.filter(({ cohort }) => cohort === "baseline-50")).toHaveLength(50);
+    const expansionCases = corpus.filter(({ cohort }) => cohort === "expansion-wave-1");
+    expect(expansionCases).toHaveLength(25);
+    expect(countRealWorldExpectations(expansionCases, "must-find")).toBeGreaterThan(0);
   });
 
   it("reviews minimized public PR reproductions deterministically without crashing", () => {

@@ -45,8 +45,8 @@ describe("100-PR real-world catalog", () => {
       ({ maturity }) => maturity === "minimized",
     );
 
-    expect(executableCorpus).toHaveLength(50);
-    expect(minimizedEntries).toHaveLength(50);
+    expect(executableCorpus).toHaveLength(75);
+    expect(minimizedEntries).toHaveLength(75);
 
     for (const item of executableCorpus) {
       const catalogEntry = minimizedEntries.find(
