@@ -12,9 +12,9 @@ describe("real-world public PR evaluation corpus", () => {
 
     expect(corpus).toHaveLength(75);
     expect(new Set(corpus.map(({ source }) => `${source.repository}#${source.number}`)).size).toBe(75);
-    expect(countRealWorldExpectations(corpus, "must-find")).toBeGreaterThan(17);
-    expect(countRealWorldExpectations(corpus, "must-not-find")).toBeGreaterThan(31);
-    expect(countRealWorldExpectations(corpus, "advisory")).toBeGreaterThanOrEqual(5);
+    expect(countRealWorldExpectations(corpus, "must-find")).toBe(32);
+    expect(countRealWorldExpectations(corpus, "must-not-find")).toBe(41);
+    expect(countRealWorldExpectations(corpus, "advisory")).toBe(5);
 
     for (const item of corpus) {
       expect(item.source.url).toBe(`https://github.com/${item.source.repository}/pull/${item.source.number}`);
@@ -27,7 +27,7 @@ describe("real-world public PR evaluation corpus", () => {
     const empiricalCases = corpus.filter(
       ({ measurementFidelity }) => measurementFidelity === "empirical",
     );
-    expect(empiricalCases.length).toBeGreaterThanOrEqual(15);
+    expect(empiricalCases).toHaveLength(30);
     expect(empiricalCases.every(({ evaluationCase }) =>
       evaluationCase.files[0]?.path.startsWith("evaluation/fixtures/real-world/virtual/") === false
     )).toBe(true);
@@ -35,7 +35,8 @@ describe("real-world public PR evaluation corpus", () => {
     expect(corpus.filter(({ cohort }) => cohort === "baseline-50")).toHaveLength(50);
     const expansionCases = corpus.filter(({ cohort }) => cohort === "expansion-wave-1");
     expect(expansionCases).toHaveLength(25);
-    expect(countRealWorldExpectations(expansionCases, "must-find")).toBeGreaterThan(0);
+    expect(countRealWorldExpectations(expansionCases, "must-find")).toBe(15);
+    expect(countRealWorldExpectations(expansionCases, "must-not-find")).toBe(10);
   });
 
   it("reviews minimized public PR reproductions deterministically without crashing", () => {

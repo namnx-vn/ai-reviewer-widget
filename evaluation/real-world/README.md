@@ -25,7 +25,7 @@ The catalog is a **selection and labeling backlog**. Maturity is separate from t
 
 ## Executable minimized corpus
 
-The executable corpus contains **50 manually reviewed public PR cases**. Every case runs offline through the shared production `ReviewUseCases.reviewFiles` path.
+The executable corpus contains **75 manually reviewed public PR cases**. Every case runs offline through the shared production `ReviewUseCases.reviewFiles` path.
 
 | Group | Executable PRs |
 | --- | ---: |
@@ -33,18 +33,20 @@ The executable corpus contains **50 manually reviewed public PR cases**. Every c
 | React / hooks / reactive lifecycle | 15 |
 | Performance negative control | 1 |
 | Clean false-positive controls | 14 |
-| **Total** | **50** |
+| Expansion performance cases | 8 |
+| Expansion Next.js / RSC cases | 17 |
+| **Total** | **75** |
 
 Current human expectation labels:
 
 | Label | Expectations |
 | --- | ---: |
-| `must-find` | 17 |
-| `must-not-find` | 31 |
+| `must-find` | 32 |
+| `must-not-find` | 41 |
 | `advisory` | 5 |
-| **Total** | **53** |
+| **Total** | **78** |
 
-The original three standalone minimized fixtures remain under `evaluation/fixtures/real-world/`. Promoted cases are stored in six small offline fixture bundles covering Batch 1 and Batch 2 for security, React/reactive, and clean controls.
+The original three standalone minimized fixtures remain under `evaluation/fixtures/real-world/`. Promoted cases are stored in offline fixture bundles covering the first two security, React/reactive, and clean batches plus the 25-case expansion wave.
 
 Each bundled entry receives a case-specific `.ts` or `.tsx` analysis path. Empirical controls retain the original-like upstream test path where path context affects production policy behavior. Bundle loading fails closed when a bundle is malformed or a fixture key is missing.
 
@@ -60,18 +62,32 @@ Labels are not automatically counted as achieved precision or recall. `src/evalu
 
 ## Current observation baseline
 
-The latest rule-only 50-case CI observation is deterministic across all cases and reports:
+The latest rule-only 75-case observation is deterministic across all cases and reports:
 
-- 50 / 50 stable cases
-- 29 production findings emitted across the corpus
-- 17 `must-find` expectations with semantically matching production findings available for exact mapping
-- 5 empirical negative controls
-- 0 / 5 empirical negative controls with findings
+- 75 / 75 stable cases
+- 36 production findings emitted across the corpus
+- 32 `must-find` expectations: 17 detected baseline expectations and 15 newly exposed false negatives
+- 15 empirical negative controls
+- 0 / 15 empirical negative controls with findings
 - 0 empirical negative-control findings at medium severity or higher
 - 14 clean controls
 - 0 / 14 clean controls with findings
 
-The five empirical negative controls consist of three Query Core clean test PRs plus two Vue Query test-only PRs, all analyzed with upstream-like `__tests__/*.test.ts(x)` paths.
+The original five empirical negative controls consist of three Query Core clean test PRs plus two Vue Query test-only PRs. The expansion adds ten source-backed TypeScript/TSX controls with upstream-like production or test paths. The narrower `empiricalCleanControls` field still counts only cases in the `clean-negative` category and therefore remains 3.
+
+The corpus is divided into a frozen `baseline-50` cohort and `expansion-wave-1`. The baseline remains 17/17 for mapped recall. The expansion intentionally adds 15 positive expectations before any new rule work, so its initial observation is 0 TP / 15 FN. Aggregate adjudicated recall is therefore 17/32 (53.125%), making the newly exposed gaps visible instead of hiding them behind mapping coverage.
+
+## Finding adjudication and precision
+
+`src/evaluation/real-world-finding-adjudication.ts` records explicit finding verdicts and rationales. It does not infer a false positive from a missing expectation and does not credit incidental output automatically.
+
+All 29 findings emitted by the frozen baseline cohort have now been adjudicated:
+
+- 19 true-positive findings
+- 10 false-positive findings
+- measured baseline precision: 19/29 (65.52%)
+
+The 25-case expansion emits seven additional findings. Those findings remain pending, so the 75-case aggregate precision status is `partially-adjudicated` and aggregate `precision` remains `null`. Precision becomes measured for a cohort only after every emitted finding in that cohort has an explicit verdict.
 
 ## Verified production-rule mappings
 
@@ -101,7 +117,7 @@ After the mapping manifest is applied, the observation contract should report **
 
 This 17/17 result is the recall of the current **17 adjudicated positive expectations in the 50-case minimized corpus**. It is **not** evidence of universal or production-wide 100% recall. The sample is intentionally narrow and remains too small to establish a release-blocking real-world recall guarantee.
 
-The observation field `precisionStatus` remains conservative because completing positive expectation mappings does not fully adjudicate every incidental production finding as a true or false positive. Precision must continue to be evaluated separately against representative positive and negative evidence.
+The observation field `precisionStatus` now distinguishes `pending-finding-adjudication`, `partially-adjudicated`, and `measured`. Completing positive expectation mappings alone never establishes precision.
 
 ## Recall-gap closure design
 
@@ -143,6 +159,6 @@ These corrections are intentional evidence that catalog metadata is provisional 
 
 A catalogued PR becomes an executable evaluation case only after its relevant diff has been manually reviewed and a minimized reproduction can preserve the behavior. Prefer minimized reproductions over storing full external diffs.
 
-With the current 17 positive expectations mapped, the next quality work should no longer optimize for this fixed recall denominator. The next step is to **expand the adjudicated executable denominator** with new positive and negative cases across representative production repositories, then use the larger evidence set to decide which rules need further tuning.
+The first expansion wave has increased the executable denominator to 75 without changing production rules. The next quality work is to adjudicate the seven new emitted findings and review the 15 expansion false negatives before deciding whether any rule tuning is justified.
 
-Fifty executable PRs are enough to expose meaningful precision and recall gaps, but they are **not enough to claim the documented 90% high-severity real-world precision target** or a general real-world recall target. Empirical precision/recall should become release-blocking only after several hundred adjudicated findings provide a representative denominator.
+Seventy-five executable PRs are enough to expose meaningful precision and recall gaps, but they are **not enough to claim the documented 90% high-severity real-world precision target** or a general real-world recall target. The catalog is still concentrated in Next.js and TanStack Query; the 100-case wave should add repository diversity before empirical precision/recall becomes release-blocking.

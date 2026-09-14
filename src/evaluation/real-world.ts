@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 
 import type { Severity } from "../domain/review";
 import { EVALUATION_CASE_VERSION, type EvaluationCase } from "./contracts";
+import { REAL_WORLD_EXPANSION_WAVE_1_SEEDS } from "./real-world-expansion-wave-1";
 import { PROMOTED_CLEAN_BATCH_2_SEEDS } from "./real-world-promoted-clean-batch-2";
 import { PROMOTED_CLEAN_SEEDS } from "./real-world-promoted-clean";
 import { PROMOTED_REACT_BATCH_2_SEEDS } from "./real-world-promoted-react-batch-2";
@@ -12,6 +13,7 @@ import { PROMOTED_SECURITY_SEEDS } from "./real-world-promoted-security";
 
 export type RealWorldExpectationKind = "must-find" | "must-not-find" | "advisory";
 export type RealWorldMeasurementFidelity = "empirical" | "synthetic";
+export type RealWorldEvaluationCohort = "baseline-50" | "expansion-wave-1";
 
 export interface PublicPullRequestReference {
   readonly repository: string;
@@ -33,6 +35,7 @@ export interface RealWorldEvaluationCase {
   readonly source: PublicPullRequestReference;
   readonly expectations: readonly RealWorldExpectation[];
   readonly measurementFidelity: RealWorldMeasurementFidelity;
+  readonly cohort: RealWorldEvaluationCohort;
 }
 
 export interface RealWorldSeedDefinition {
@@ -42,6 +45,7 @@ export interface RealWorldSeedDefinition {
   readonly fixturePath: string;
   readonly analysisPath?: string;
   readonly measurementFidelity?: RealWorldMeasurementFidelity;
+  readonly cohort?: RealWorldEvaluationCohort;
   readonly fixtureBundle?: {
     readonly path: string;
     readonly key: string;
@@ -141,6 +145,7 @@ const SEEDS: readonly RealWorldSeedDefinition[] = [
   ...PROMOTED_REACT_BATCH_2_SEEDS,
   ...PROMOTED_CLEAN_SEEDS,
   ...PROMOTED_CLEAN_BATCH_2_SEEDS,
+  ...REAL_WORLD_EXPANSION_WAVE_1_SEEDS,
 ];
 
 function readFixtureBundleEntry(
@@ -191,6 +196,7 @@ export function loadRealWorldEvaluationCorpus(
       expectations: seed.expectations,
       measurementFidelity:
         seed.measurementFidelity ?? measurementOverride?.fidelity ?? "synthetic",
+      cohort: seed.cohort ?? "baseline-50",
       evaluationCase: {
         version: EVALUATION_CASE_VERSION,
         id: seed.id,

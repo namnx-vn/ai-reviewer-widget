@@ -1,5 +1,13 @@
 export { matchFindings } from "./matcher";
 export {
+  findRealWorldFindingAdjudication,
+  REAL_WORLD_FINDING_ADJUDICATIONS,
+} from "./real-world-finding-adjudication";
+export type {
+  RealWorldFindingAdjudication,
+  RealWorldFindingVerdict,
+} from "./real-world-finding-adjudication";
+export {
   calculateDuplicateRate,
   calculateEvaluationMetrics,
   calculateStability,
@@ -27,6 +35,9 @@ export type {
   RealWorldFindingObservation,
   RealWorldObservationReport,
   RealWorldObservationSummary,
+  RealWorldPrecisionStatus,
+  RealWorldPrecisionSummary,
+  RealWorldRecallSummary,
   RealWorldWarningObservation,
 } from "./real-world-observation";
 export {
@@ -40,6 +51,7 @@ export {
 } from "./real-world";
 export type {
   PublicPullRequestReference,
+  RealWorldEvaluationCohort,
   RealWorldEvaluationCase,
   RealWorldExpectation,
   RealWorldExpectationKind,

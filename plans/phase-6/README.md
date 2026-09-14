@@ -61,6 +61,7 @@ These are engineering targets measured by the evaluation harness, not product gu
 | 6.8 | ✅ Complete | AI Context Selection & Verification | [6.8](./6.8-ai-context-verification.md) |
 | 6.9 | ✅ Complete | Developer Feedback Loop | [6.9](./6.9-developer-feedback.md) |
 | 6.10 | ✅ Complete | Production Readiness & v1 Contract | [6.10](./6.10-production-readiness.md) |
+| 6.11 | 🚧 In Progress | Evaluation Expansion Wave | [6.11](./6.11-evaluation-expansion-wave.md) |
 
 ---
 

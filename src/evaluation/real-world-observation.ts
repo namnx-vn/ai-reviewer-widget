@@ -2,13 +2,15 @@ import type { ReviewUseCases } from "../application/review";
 import type { ReviewFinding, ReviewWarning, Severity } from "../domain/review";
 import type {
   PublicPullRequestReference,
+  RealWorldEvaluationCohort,
   RealWorldEvaluationCase,
   RealWorldExpectation,
   RealWorldMeasurementFidelity,
 } from "./real-world";
+import { findRealWorldFindingAdjudication } from "./real-world-finding-adjudication";
 import { findRealWorldRuleMapping } from "./real-world-rule-mapping";
 
-export const REAL_WORLD_OBSERVATION_SCHEMA_VERSION = 4 as const;
+export const REAL_WORLD_OBSERVATION_SCHEMA_VERSION = 5 as const;
 
 export interface RealWorldFindingObservation {
   readonly id: string;
@@ -31,9 +33,33 @@ export interface RealWorldCaseObservation {
   readonly source: PublicPullRequestReference;
   readonly expectations: readonly RealWorldExpectation[];
   readonly measurementFidelity: RealWorldMeasurementFidelity;
+  readonly cohort: RealWorldEvaluationCohort;
   readonly findings: readonly RealWorldFindingObservation[];
   readonly warnings: readonly RealWorldWarningObservation[];
   readonly stable: boolean;
+}
+
+export interface RealWorldRecallSummary {
+  readonly mustFindExpectations: number;
+  readonly truePositiveCount: number;
+  readonly falseNegativeCount: number;
+  readonly recall: number | null;
+}
+
+export type RealWorldPrecisionStatus =
+  | "pending-finding-adjudication"
+  | "partially-adjudicated"
+  | "measured";
+
+export interface RealWorldPrecisionSummary {
+  readonly totalFindings: number;
+  readonly adjudicatedFindingCount: number;
+  readonly truePositiveFindingCount: number;
+  readonly falsePositiveFindingCount: number;
+  readonly findingsPendingAdjudication: number;
+  readonly adjudicationCoverage: number;
+  readonly status: RealWorldPrecisionStatus;
+  readonly precision: number | null;
 }
 
 export interface RealWorldObservationSummary {
@@ -45,7 +71,20 @@ export interface RealWorldObservationSummary {
   readonly mappedMustFindDetected: number;
   readonly mappedMustFindRecall: number | null;
   readonly mustFindExpectationsPendingRuleMapping: number;
-  readonly precisionStatus: "pending-rule-mapping";
+  readonly recallTruePositiveCount: number;
+  readonly recallFalseNegativeCount: number;
+  readonly adjudicatedRecall: number | null;
+  readonly recallByCohort: Readonly<Record<RealWorldEvaluationCohort, RealWorldRecallSummary>>;
+  readonly precisionStatus: RealWorldPrecisionStatus;
+  readonly adjudicatedFindingCount: number;
+  readonly truePositiveFindingCount: number;
+  readonly falsePositiveFindingCount: number;
+  readonly findingsPendingAdjudication: number;
+  readonly findingAdjudicationCoverage: number;
+  readonly precision: number | null;
+  readonly precisionByCohort: Readonly<
+    Record<RealWorldEvaluationCohort, RealWorldPrecisionSummary>
+  >;
   readonly empiricalNegativeControls: number;
   readonly empiricalNegativeControlsWithFindings: number;
   readonly empiricalNegativeControlCaseFalsePositiveRate: number;
@@ -105,10 +144,21 @@ function observeCase(
     source: item.source,
     expectations: item.expectations,
     measurementFidelity: item.measurementFidelity,
+    cohort: item.cohort,
     findings: first.findings.map(observeFinding),
     warnings: first.warnings.map(({ code, message }) => ({ code, message })),
     stable: JSON.stringify(firstIdentities) === JSON.stringify(secondIdentities),
   };
+}
+
+function isMustFindDetected(
+  item: RealWorldCaseObservation,
+  expectation: RealWorldExpectation,
+): boolean {
+  const mapping = findRealWorldRuleMapping(item.id, expectation.id);
+  return mapping !== undefined && mapping.acceptableRuleIds.some(
+    (ruleId) => item.findings.some((finding) => finding.ruleId === ruleId),
+  );
 }
 
 function isEmpiricalNegativeControl(item: RealWorldCaseObservation): boolean {
@@ -129,15 +179,78 @@ function calculateMappedMustFind(
       const mapping = findRealWorldRuleMapping(item.id, expectation.id);
       if (mapping === undefined) continue;
       mapped += 1;
-      if (mapping.acceptableRuleIds.some(
-        (ruleId) => item.findings.some((finding) => finding.ruleId === ruleId),
-      )) {
+      if (isMustFindDetected(item, expectation)) {
         detected += 1;
       }
     }
   }
 
   return { mapped, detected };
+}
+
+function calculateRecall(
+  cases: readonly RealWorldCaseObservation[],
+): RealWorldRecallSummary {
+  const mustFindExpectations = cases.flatMap(({ expectations }) =>
+    expectations.filter(({ kind }) => kind === "must-find")
+  );
+  const truePositiveCount = cases.reduce(
+    (total, item) => total + item.expectations.filter(
+      (expectation) =>
+        expectation.kind === "must-find" && isMustFindDetected(item, expectation),
+    ).length,
+    0,
+  );
+  const falseNegativeCount = mustFindExpectations.length - truePositiveCount;
+
+  return {
+    mustFindExpectations: mustFindExpectations.length,
+    truePositiveCount,
+    falseNegativeCount,
+    recall: mustFindExpectations.length === 0
+      ? null
+      : truePositiveCount / mustFindExpectations.length,
+  };
+}
+
+function precisionStatus(
+  totalFindings: number,
+  adjudicatedFindings: number,
+): RealWorldPrecisionStatus {
+  if (adjudicatedFindings === 0) return "pending-finding-adjudication";
+  if (adjudicatedFindings < totalFindings) return "partially-adjudicated";
+  return "measured";
+}
+
+function calculatePrecision(
+  cases: readonly RealWorldCaseObservation[],
+): RealWorldPrecisionSummary {
+  const findings = cases.flatMap(({ findings }) => findings);
+  const adjudications = cases.flatMap((item) =>
+    item.findings.flatMap((finding) => {
+      const adjudication = findRealWorldFindingAdjudication(item.id, finding.id);
+      return adjudication === undefined ? [] : [adjudication];
+    })
+  );
+  const truePositiveFindingCount = adjudications.filter(
+    ({ verdict }) => verdict === "true-positive",
+  ).length;
+  const falsePositiveFindingCount = adjudications.length - truePositiveFindingCount;
+  const status = precisionStatus(findings.length, adjudications.length);
+
+  return {
+    totalFindings: findings.length,
+    adjudicatedFindingCount: adjudications.length,
+    truePositiveFindingCount,
+    falsePositiveFindingCount,
+    findingsPendingAdjudication: findings.length - adjudications.length,
+    adjudicationCoverage: findings.length === 0 ? 0 : adjudications.length / findings.length,
+    status,
+    precision:
+      status === "measured" && adjudications.length > 0
+        ? truePositiveFindingCount / adjudications.length
+        : null,
+  };
 }
 
 export function buildRealWorldObservationReport(
@@ -170,16 +283,31 @@ export function buildRealWorldObservationReport(
     0,
   );
   const mappedMustFind = calculateMappedMustFind(cases);
+  const recall = calculateRecall(cases);
+  const recallByCohort: Readonly<Record<RealWorldEvaluationCohort, RealWorldRecallSummary>> = {
+    "baseline-50": calculateRecall(cases.filter(({ cohort }) => cohort === "baseline-50")),
+    "expansion-wave-1": calculateRecall(
+      cases.filter(({ cohort }) => cohort === "expansion-wave-1"),
+    ),
+  };
+  const precision = calculatePrecision(cases);
+  const precisionByCohort: Readonly<
+    Record<RealWorldEvaluationCohort, RealWorldPrecisionSummary>
+  > = {
+    "baseline-50": calculatePrecision(
+      cases.filter(({ cohort }) => cohort === "baseline-50"),
+    ),
+    "expansion-wave-1": calculatePrecision(
+      cases.filter(({ cohort }) => cohort === "expansion-wave-1"),
+    ),
+  };
 
   return {
     schemaVersion: REAL_WORLD_OBSERVATION_SCHEMA_VERSION,
     summary: {
       totalCases: cases.length,
       stableCases: cases.filter(({ stable }) => stable).length,
-      totalFindings: cases.reduce(
-        (total, item) => total + item.findings.length,
-        0,
-      ),
+      totalFindings: precision.totalFindings,
       mustFindExpectations,
       mappedMustFindExpectations: mappedMustFind.mapped,
       mappedMustFindDetected: mappedMustFind.detected,
@@ -189,7 +317,18 @@ export function buildRealWorldObservationReport(
           : mappedMustFind.detected / mappedMustFind.mapped,
       mustFindExpectationsPendingRuleMapping:
         mustFindExpectations - mappedMustFind.mapped,
-      precisionStatus: "pending-rule-mapping",
+      recallTruePositiveCount: recall.truePositiveCount,
+      recallFalseNegativeCount: recall.falseNegativeCount,
+      adjudicatedRecall: recall.recall,
+      recallByCohort,
+      precisionStatus: precision.status,
+      adjudicatedFindingCount: precision.adjudicatedFindingCount,
+      truePositiveFindingCount: precision.truePositiveFindingCount,
+      falsePositiveFindingCount: precision.falsePositiveFindingCount,
+      findingsPendingAdjudication: precision.findingsPendingAdjudication,
+      findingAdjudicationCoverage: precision.adjudicationCoverage,
+      precision: precision.precision,
+      precisionByCohort,
       empiricalNegativeControls: empiricalNegativeCases.length,
       empiricalNegativeControlsWithFindings,
       empiricalNegativeControlCaseFalsePositiveRate:

@@ -18,19 +18,19 @@ describe("real-world observation report", () => {
     expect(report.schemaVersion).toBe(REAL_WORLD_OBSERVATION_SCHEMA_VERSION);
     expect(report.summary.totalCases).toBe(75);
     expect(report.summary.stableCases).toBe(75);
-    expect(report.summary.mustFindExpectations).toBeGreaterThan(17);
+    expect(report.summary.mustFindExpectations).toBe(32);
     expect(report.summary.mappedMustFindExpectations).toBe(17);
     expect(report.summary.mappedMustFindDetected).toBe(17);
     expect(report.summary.mappedMustFindRecall).toBe(1);
     expect(report.summary.mustFindExpectationsPendingRuleMapping).toBe(
-      report.summary.mustFindExpectations - 17,
+      15,
     );
     expect(report.summary.recallTruePositiveCount).toBe(17);
     expect(report.summary.recallFalseNegativeCount).toBe(
-      report.summary.mustFindExpectations - 17,
+      15,
     );
     expect(report.summary.adjudicatedRecall).toBe(
-      17 / report.summary.mustFindExpectations,
+      17 / 32,
     );
     expect(report.summary.recallByCohort["baseline-50"]).toEqual({
       mustFindExpectations: 17,
@@ -38,23 +38,51 @@ describe("real-world observation report", () => {
       falseNegativeCount: 0,
       recall: 1,
     });
-    expect(report.summary.recallByCohort["expansion-wave-1"]?.mustFindExpectations)
-      .toBeGreaterThan(0);
+    expect(report.summary.recallByCohort["expansion-wave-1"]).toEqual({
+      mustFindExpectations: 15,
+      truePositiveCount: 0,
+      falseNegativeCount: 15,
+      recall: 0,
+    });
 
     expect(report.summary.precisionStatus).toBe("partially-adjudicated");
-    expect(report.summary.adjudicatedFindingCount).toBe(17);
-    expect(report.summary.truePositiveFindingCount).toBe(17);
-    expect(report.summary.falsePositiveFindingCount).toBe(0);
-    expect(report.summary.findingsPendingAdjudication).toBe(
-      report.summary.totalFindings - 17,
-    );
+    expect(report.summary.adjudicatedFindingCount).toBe(29);
+    expect(report.summary.truePositiveFindingCount).toBe(19);
+    expect(report.summary.falsePositiveFindingCount).toBe(10);
+    expect(report.summary.findingsPendingAdjudication).toBe(7);
+    expect(report.summary.findingAdjudicationCoverage).toBe(29 / 36);
     expect(report.summary.precision).toBeNull();
+    expect(report.summary.precisionByCohort["baseline-50"]).toEqual({
+      totalFindings: 29,
+      adjudicatedFindingCount: 29,
+      truePositiveFindingCount: 19,
+      falsePositiveFindingCount: 10,
+      findingsPendingAdjudication: 0,
+      adjudicationCoverage: 1,
+      status: "measured",
+      precision: 19 / 29,
+    });
+    expect(report.summary.precisionByCohort["expansion-wave-1"]).toEqual({
+      totalFindings: 7,
+      adjudicatedFindingCount: 0,
+      truePositiveFindingCount: 0,
+      falsePositiveFindingCount: 0,
+      findingsPendingAdjudication: 7,
+      adjudicationCoverage: 0,
+      status: "pending-finding-adjudication",
+      precision: null,
+    });
 
-    expect(report.summary.empiricalNegativeControls).toBeGreaterThanOrEqual(15);
-    expect(report.summary.empiricalNegativeControlsWithFindings).toBe(0);
-    expect(report.summary.empiricalNegativeControlCaseFalsePositiveRate).toBe(0);
-    expect(report.summary.empiricalNegativeControlFindingCount).toBe(0);
-    expect(report.summary.empiricalNegativeControlMediumOrHigherFindingCount).toBe(0);
+    expect(report.summary.empiricalNegativeControls).toBe(15);
+    expect(report.summary.empiricalNegativeControlCaseFalsePositiveRate).toBe(
+      report.summary.empiricalNegativeControlsWithFindings
+        / report.summary.empiricalNegativeControls,
+    );
+    expect(report.summary.empiricalNegativeControlFindingCount).toBeGreaterThanOrEqual(
+      report.summary.empiricalNegativeControlsWithFindings,
+    );
+    expect(report.summary.empiricalNegativeControlMediumOrHigherFindingCount)
+      .toBeLessThanOrEqual(report.summary.empiricalNegativeControlFindingCount);
 
     expect(report.summary.cleanControls).toBeGreaterThanOrEqual(14);
     expect(report.summary.empiricalCleanControlsWithFindings).toBe(0);

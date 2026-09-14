@@ -1,1 +1,1 @@
-{"root":["./vite.config.ts","./scripts/ai-reviewer.ts","./scripts/review-pr.ts","./scripts/secret-scan.ts"],"version":"5.9.3"}
+{"root":["./vite.cli.config.ts","./vite.config.ts","./vite.package-test.config.ts","./scripts/ai-reviewer.ts","./scripts/benchmark-review.ts","./scripts/evaluation-quality-report.ts","./scripts/real-world-observation-report.ts","./scripts/review-pr.ts","./scripts/secret-scan.ts"],"version":"5.9.3"}
