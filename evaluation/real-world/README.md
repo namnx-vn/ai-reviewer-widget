@@ -62,7 +62,7 @@ Labels are not automatically counted as achieved precision or recall. `src/evalu
 
 ## Current observation baseline
 
-The latest rule-only 75-case observation is deterministic across all cases and reports:
+The frozen Phase 6.11 rule-only observation is saved in [`phase-6.11-observations.json`](./phase-6.11-observations.json). It is deterministic across all 75 cases and reports:
 
 - 75 / 75 stable cases
 - 36 production findings emitted across the corpus
@@ -91,7 +91,7 @@ The 25-case expansion emits seven additional findings. Those findings remain pen
 
 ## Verified production-rule mappings
 
-All **17 of 17 `must-find` expectations** now have exact production-rule mappings. Every mapping was added only after the corresponding production rule was observed on the executable minimized case.
+All **17 of 17 baseline `must-find` expectations** have exact production-rule mappings. The 15 expansion expectations remain unmapped and count as false negatives. Every mapping was added only after the corresponding production rule was observed on the executable minimized case.
 
 | Public PR expectation | Production rule |
 | --- | --- |
@@ -113,7 +113,7 @@ All **17 of 17 `must-find` expectations** now have exact production-rule mapping
 | `vercel/next.js#83200` manifest emitted in streamed body metadata | `quality.web.manifest-streamed-body` |
 | `vercel/next.js#91586` undefined method guard identifier | `quality.correctness.undefined-method-guard` |
 
-After the mapping manifest is applied, the observation contract should report **17 detected / 17 mapped** and **0 pending `must-find` mappings**.
+The frozen observation reports **17 detected / 17 mapped** for the baseline and **15 pending `must-find` mappings** for the expansion.
 
 This 17/17 result is the recall of the current **17 adjudicated positive expectations in the 50-case minimized corpus**. It is **not** evidence of universal or production-wide 100% recall. The sample is intentionally narrow and remains too small to establish a release-blocking real-world recall guarantee.
 

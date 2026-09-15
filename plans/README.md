@@ -126,7 +126,7 @@ Status: ✅ Completed for the currently defined scope
 
 # Phase 6 — Real-World Review Reliability
 
-Status: 🚧 Reliability hardening continues through Phase 6.11
+Status: ✅ Complete through Phase 6.11
 
 [Phase 6 Overview](./phase-6/README.md)
 
@@ -142,7 +142,7 @@ Status: 🚧 Reliability hardening continues through Phase 6.11
 | 6.8 | ✅ Complete | [AI Context Selection & Verification](./phase-6/6.8-ai-context-verification.md) |
 | 6.9 | ✅ Complete | [Developer Feedback Loop](./phase-6/6.9-developer-feedback.md) |
 | 6.10 | ✅ Complete | [Production Readiness & v1 Contract](./phase-6/6.10-production-readiness.md) |
-| 6.11 | 🚧 In Progress | [Evaluation Expansion Wave](./phase-6/6.11-evaluation-expansion-wave.md) |
+| 6.11 | ✅ Complete | [Evaluation Expansion Wave](./phase-6/6.11-evaluation-expansion-wave.md) |
 
 ---
 
