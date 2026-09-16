@@ -1,0 +1,56 @@
+{
+  "provenance": "synthetic-offline; hand-authored semantic snapshot; no public-repository quality claim",
+  "repositoryId": "synthetic/workspace-review",
+  "base": [
+    {
+      "path": "package.json",
+      "content": "{\"private\":true,\"workspaces\":[\"packages/*\"]}"
+    },
+    {
+      "path": "packages/shared/package.json",
+      "content": "{\"name\":\"@workspace/shared\"}"
+    },
+    {
+      "path": "packages/web/package.json",
+      "content": "{\"name\":\"@workspace/web\",\"dependencies\":{\"react\":\"19.0.0\"}}"
+    },
+    {
+      "path": "packages/shared/src/amount.ts",
+      "content": "export function amount(value: string): number { return Number(value); }"
+    },
+    {
+      "path": "packages/shared/src/debt.ts",
+      "content": "export function debug(value: string): void { console.log(value); }"
+    },
+    {
+      "path": "packages/web/src/Amount.tsx",
+      "content": "import { useEffect } from 'react';\nimport { amount } from '../../shared/src/amount';\nexport function Amount({ value, onValue }: { value: string; onValue: (value: string) => void }) {\n  useEffect(() => { onValue(value); }, [value, onValue]);\n  return <div>{amount(value)}</div>;\n}"
+    }
+  ],
+  "head": [
+    {
+      "path": "package.json",
+      "content": "{\"private\":true,\"workspaces\":[\"packages/*\"]}"
+    },
+    {
+      "path": "packages/shared/package.json",
+      "content": "{\"name\":\"@workspace/shared\"}"
+    },
+    {
+      "path": "packages/web/package.json",
+      "content": "{\"name\":\"@workspace/web\",\"dependencies\":{\"react\":\"19.0.0\"}}"
+    },
+    {
+      "path": "packages/shared/src/amount.ts",
+      "content": "export function amount(value: string): number { return eval(value); }"
+    },
+    {
+      "path": "packages/shared/src/debt.ts",
+      "content": "export function debug(value: string): void { console.log(value); }"
+    },
+    {
+      "path": "packages/web/src/Amount.tsx",
+      "content": "import { useEffect } from 'react';\nimport { amount } from '../../shared/src/amount';\nexport function Amount({ value, onValue }: { value: string; onValue: (value: string) => void }) {\n  useEffect(() => { onValue(value); }, []);\n  return <div>{amount(value)}</div>;\n}"
+    }
+  ]
+}
