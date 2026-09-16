@@ -7,10 +7,14 @@ import type {
   RealWorldExpectation,
   RealWorldMeasurementFidelity,
 } from "./real-world";
-import { findRealWorldFindingAdjudication } from "./real-world-finding-adjudication";
+import {
+  findRealWorldFindingAdjudication,
+  REAL_WORLD_FINDING_ADJUDICATIONS,
+  type RealWorldFindingAdjudication,
+} from "./real-world-finding-adjudication";
 import { findRealWorldRuleMapping } from "./real-world-rule-mapping";
 
-export const REAL_WORLD_OBSERVATION_SCHEMA_VERSION = 5 as const;
+export const REAL_WORLD_OBSERVATION_SCHEMA_VERSION = 6 as const;
 
 export interface RealWorldFindingObservation {
   readonly id: string;
@@ -20,6 +24,7 @@ export interface RealWorldFindingObservation {
   readonly source: ReviewFinding["source"];
   readonly confidence: number;
   readonly location?: ReviewFinding["location"];
+  readonly adjudication?: RealWorldFindingAdjudication;
 }
 
 export interface RealWorldWarningObservation {
@@ -37,6 +42,7 @@ export interface RealWorldCaseObservation {
   readonly findings: readonly RealWorldFindingObservation[];
   readonly warnings: readonly RealWorldWarningObservation[];
   readonly stable: boolean;
+  readonly qualityStatus: "eligible" | "invalid-fixture";
 }
 
 export interface RealWorldRecallSummary {
@@ -49,7 +55,8 @@ export interface RealWorldRecallSummary {
 export type RealWorldPrecisionStatus =
   | "pending-finding-adjudication"
   | "partially-adjudicated"
-  | "measured";
+  | "measured"
+  | "blocked-invalid-fixtures";
 
 export interface RealWorldPrecisionSummary {
   readonly totalFindings: number;
@@ -60,9 +67,19 @@ export interface RealWorldPrecisionSummary {
   readonly adjudicationCoverage: number;
   readonly status: RealWorldPrecisionStatus;
   readonly precision: number | null;
+  readonly excludedFindingCount: number;
+  readonly eligibleFindingCount: number;
+  readonly eligiblePrecision: number | null;
 }
 
 export interface RealWorldObservationSummary {
+  readonly qualityStatus: "eligible" | "blocked-invalid-fixtures";
+  readonly excludedCaseIds: readonly string[];
+  readonly excludedFindingCount: number;
+  readonly eligibleFindingCount: number;
+  readonly eligiblePrecision: number | null;
+  readonly excludedMustFindExpectations: number;
+  readonly rawCorpusRecall: number | null;
   readonly totalCases: number;
   readonly stableCases: number;
   readonly totalFindings: number;
@@ -117,7 +134,7 @@ function findingIdentity(finding: ReviewFinding): string {
   return `${finding.ruleId}:${finding.id}`;
 }
 
-function observeFinding(finding: ReviewFinding): RealWorldFindingObservation {
+function observeFinding(finding: ReviewFinding, caseId: string): RealWorldFindingObservation {
   return {
     id: finding.id,
     ruleId: finding.ruleId,
@@ -126,6 +143,7 @@ function observeFinding(finding: ReviewFinding): RealWorldFindingObservation {
     source: finding.source,
     confidence: finding.confidence,
     location: finding.location,
+    adjudication: findRealWorldFindingAdjudication(caseId, finding.id),
   };
 }
 
@@ -145,9 +163,12 @@ function observeCase(
     expectations: item.expectations,
     measurementFidelity: item.measurementFidelity,
     cohort: item.cohort,
-    findings: first.findings.map(observeFinding),
+    findings: first.findings.map((finding) => observeFinding(finding, item.evaluationCase.id)),
     warnings: first.warnings.map(({ code, message }) => ({ code, message })),
     stable: JSON.stringify(firstIdentities) === JSON.stringify(secondIdentities),
+    qualityStatus: REAL_WORLD_FINDING_ADJUDICATIONS.some(
+      ({ caseId, verdict }) => caseId === item.evaluationCase.id && verdict === "invalid-fixture",
+    ) ? "invalid-fixture" : "eligible",
   };
 }
 
@@ -235,8 +256,19 @@ function calculatePrecision(
   const truePositiveFindingCount = adjudications.filter(
     ({ verdict }) => verdict === "true-positive",
   ).length;
-  const falsePositiveFindingCount = adjudications.length - truePositiveFindingCount;
-  const status = precisionStatus(findings.length, adjudications.length);
+  const falsePositiveFindingCount = adjudications.filter(
+    ({ verdict }) => verdict === "false-positive",
+  ).length;
+  const excludedFindingCount = cases.filter(
+    ({ qualityStatus }) => qualityStatus === "invalid-fixture",
+  ).reduce((count, { findings }) => count + findings.length, 0);
+  const eligibleFindingCount = findings.length - excludedFindingCount;
+  const eligibleAdjudicationCount = truePositiveFindingCount + falsePositiveFindingCount;
+  const fullyAdjudicated = adjudications.length === findings.length;
+  const eligiblePrecision = fullyAdjudicated && eligibleAdjudicationCount > 0
+    ? truePositiveFindingCount / eligibleAdjudicationCount : null;
+  const status = cases.some(({ qualityStatus }) => qualityStatus === "invalid-fixture")
+    ? "blocked-invalid-fixtures" : precisionStatus(findings.length, adjudications.length);
 
   return {
     totalFindings: findings.length,
@@ -246,6 +278,9 @@ function calculatePrecision(
     findingsPendingAdjudication: findings.length - adjudications.length,
     adjudicationCoverage: findings.length === 0 ? 0 : adjudications.length / findings.length,
     status,
+    excludedFindingCount,
+    eligibleFindingCount,
+    eligiblePrecision,
     precision:
       status === "measured" && adjudications.length > 0
         ? truePositiveFindingCount / adjudications.length
@@ -283,11 +318,12 @@ export function buildRealWorldObservationReport(
     0,
   );
   const mappedMustFind = calculateMappedMustFind(cases);
-  const recall = calculateRecall(cases);
+  const eligibleCases = cases.filter(({ qualityStatus }) => qualityStatus === "eligible");
+  const recall = calculateRecall(eligibleCases);
   const recallByCohort: Readonly<Record<RealWorldEvaluationCohort, RealWorldRecallSummary>> = {
-    "baseline-50": calculateRecall(cases.filter(({ cohort }) => cohort === "baseline-50")),
+    "baseline-50": calculateRecall(eligibleCases.filter(({ cohort }) => cohort === "baseline-50")),
     "expansion-wave-1": calculateRecall(
-      cases.filter(({ cohort }) => cohort === "expansion-wave-1"),
+      eligibleCases.filter(({ cohort }) => cohort === "expansion-wave-1"),
     ),
   };
   const precision = calculatePrecision(cases);
@@ -305,6 +341,15 @@ export function buildRealWorldObservationReport(
   return {
     schemaVersion: REAL_WORLD_OBSERVATION_SCHEMA_VERSION,
     summary: {
+      qualityStatus: cases.some(({ qualityStatus }) => qualityStatus === "invalid-fixture")
+        ? "blocked-invalid-fixtures" : "eligible",
+      excludedCaseIds: cases.filter(({ qualityStatus }) => qualityStatus === "invalid-fixture")
+        .map(({ id }) => id),
+      excludedFindingCount: precision.excludedFindingCount,
+      eligibleFindingCount: precision.eligibleFindingCount,
+      eligiblePrecision: precision.eligiblePrecision,
+      excludedMustFindExpectations: mustFindExpectations - recall.mustFindExpectations,
+      rawCorpusRecall: calculateRecall(cases).recall,
       totalCases: cases.length,
       stableCases: cases.filter(({ stable }) => stable).length,
       totalFindings: precision.totalFindings,

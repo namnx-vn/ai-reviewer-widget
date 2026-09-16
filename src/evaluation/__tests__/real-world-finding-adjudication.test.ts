@@ -20,13 +20,30 @@ describe("real-world finding adjudication", () => {
     );
 
     expect(new Set(identities).size).toBe(identities.length);
-    expect(REAL_WORLD_FINDING_ADJUDICATIONS).toHaveLength(29);
+    expect(REAL_WORLD_FINDING_ADJUDICATIONS).toHaveLength(36);
     expect(REAL_WORLD_FINDING_ADJUDICATIONS.filter(
       ({ verdict }) => verdict === "true-positive",
     )).toHaveLength(19);
     expect(REAL_WORLD_FINDING_ADJUDICATIONS.filter(
       ({ verdict }) => verdict === "false-positive",
-    )).toHaveLength(10);
+    )).toHaveLength(11);
+    expect(REAL_WORLD_FINDING_ADJUDICATIONS.filter(
+      ({ verdict }) => verdict === "invalid-fixture",
+    )).toHaveLength(6);
+
+    const expansionCaseIds = new Set(corpus.filter(
+      ({ cohort }) => cohort === "expansion-wave-1",
+    ).map(({ evaluationCase }) => evaluationCase.id));
+    const expansionVerdicts = REAL_WORLD_FINDING_ADJUDICATIONS.filter(
+      ({ caseId }) => expansionCaseIds.has(caseId),
+    );
+    expect(expansionVerdicts).toHaveLength(7);
+    for (const verdict of expansionVerdicts) {
+      expect(verdict.verdict).not.toBe("true-positive");
+      expect(verdict.provenance?.headSha).toMatch(/^[a-f0-9]{40}$/u);
+      expect(verdict.provenance?.sourceUrl).toContain(verdict.provenance?.headSha);
+      expect(verdict.provenance?.fixtureAssessment.length).toBeGreaterThan(0);
+    }
 
     for (const adjudication of REAL_WORLD_FINDING_ADJUDICATIONS) {
       const observedCase = report.cases.find(({ id }) => id === adjudication.caseId);

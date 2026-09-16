@@ -1,4 +1,4 @@
-export type RealWorldFindingVerdict = "true-positive" | "false-positive";
+export type RealWorldFindingVerdict = "true-positive" | "false-positive" | "invalid-fixture";
 
 export interface RealWorldFindingAdjudication {
   readonly caseId: string;
@@ -6,6 +6,11 @@ export interface RealWorldFindingAdjudication {
   readonly verdict: RealWorldFindingVerdict;
   readonly expectationId?: string;
   readonly rationale: string;
+  readonly provenance?: {
+    readonly headSha: string;
+    readonly sourceUrl: string;
+    readonly fixtureAssessment: string;
+  };
 }
 
 export const REAL_WORLD_FINDING_ADJUDICATIONS: readonly RealWorldFindingAdjudication[] = [
@@ -201,6 +206,83 @@ export const REAL_WORLD_FINDING_ADJUDICATIONS: readonly RealWorldFindingAdjudica
     findingId: "react.hooks.missing-deps:evaluation/fixtures/real-world/virtual/vercel-next-96252-pre-hydration-navigation-race.tsx:6:2",
     verdict: "false-positive",
     rationale: "The state setter is stable and window APIs are global mutable sources rather than reactive dependencies; adding them would not reconcile the hydration gap.",
+  },
+  {
+    caseId: "vercel-next-96245-hmr-digest-serialization",
+    findingId: "performance.async.serial-await:packages%2Fnext%2Fsrc%2Fserver%2Fdev%2Fhot-reloader-turbopack.ts:432-478:none",
+    verdict: "invalid-fixture",
+    rationale: "The pinned change introduces the digest await to compare successive outputs before advancing hmrHash; iterations depend on previous digest state. The fixture's performance expectation is contradicted by this correctness change.",
+    provenance: {
+      headSha: "db4e628203b930b66c6986cf7ac2151fddcee38f",
+      sourceUrl: "https://raw.githubusercontent.com/vercel/next.js/db4e628203b930b66c6986cf7ac2151fddcee38f/packages/next/src/server/dev/hot-reloader-turbopack.ts",
+      fixtureAssessment: "The minimized fixture labels intended content-digest correctness work as an expensive pre-fix HMR serialization bug and removes the prior-digest state transition and incremental write semantics.",
+    },
+  },
+  {
+    caseId: "vercel-next-96245-hmr-digest-serialization",
+    findingId: "performance.async.serial-await:packages%2Fnext%2Fsrc%2Fserver%2Fdev%2Fhot-reloader-turbopack.ts:484-530:none",
+    verdict: "invalid-fixture",
+    rationale: "The pinned getServerContentDigest performs writeToDisk internally and documents incremental memoization. The fixture invents a separate persistence await and omits these semantics, so its second serial-await finding has no faithful upstream counterpart.",
+    provenance: {
+      headSha: "db4e628203b930b66c6986cf7ac2151fddcee38f",
+      sourceUrl: "https://raw.githubusercontent.com/vercel/next.js/db4e628203b930b66c6986cf7ac2151fddcee38f/packages/next/src/server/dev/hot-reloader-turbopack.ts",
+      fixtureAssessment: "The minimized fixture labels intended content-digest correctness work as an expensive pre-fix HMR serialization bug and removes the prior-digest state transition and incremental write semantics.",
+    },
+  },
+  {
+    caseId: "vercel-next-97184-app-loader-cache-hit-dependency",
+    findingId: "performance.cache.missing-ttl:packages%2Fnext%2Fsrc%2Fbuild%2Fwebpack%2Floaders%2Fnext-app-loader%2Findex.ts:387-427:none",
+    verdict: "invalid-fixture",
+    rationale: "Upstream directory scan results are scoped to a compilation, whose lifecycle supplies expiration. The minimized module Map loses this scope; a TTL requirement cannot be adjudicated from the altered fixture.",
+    provenance: {
+      headSha: "581a78cbc30a1c8731fb65d768986f094cac103c",
+      sourceUrl: "https://raw.githubusercontent.com/vercel/next.js/581a78cbc30a1c8731fb65d768986f094cac103c/packages/next/src/build/webpack/loaders/next-app-loader/index.ts",
+      fixtureAssessment: "The minimization replaces WeakMap<Compilation, Map<directory, Promise<boolean>>> with a persistent module Map and deterministic synthetic tree strings, losing compilation lifetime and directory-scan semantics. Pinned head already registers context dependencies before cache reads.",
+    },
+  },
+  {
+    caseId: "vercel-next-97184-app-loader-cache-hit-dependency",
+    findingId: "performance.cache.unbounded:packages%2Fnext%2Fsrc%2Fbuild%2Fwebpack%2Floaders%2Fnext-app-loader%2Findex.ts:387-427:none",
+    verdict: "invalid-fixture",
+    rationale: "Upstream scans traverse the compilation's filesystem route directories with WeakMap ownership, rather than arbitrary appDirectory keys retained globally. The minimization creates the growth concern being reported.",
+    provenance: {
+      headSha: "581a78cbc30a1c8731fb65d768986f094cac103c",
+      sourceUrl: "https://raw.githubusercontent.com/vercel/next.js/581a78cbc30a1c8731fb65d768986f094cac103c/packages/next/src/build/webpack/loaders/next-app-loader/index.ts",
+      fixtureAssessment: "The minimization replaces WeakMap<Compilation, Map<directory, Promise<boolean>>> with a persistent module Map and deterministic synthetic tree strings, losing compilation lifetime and directory-scan semantics. Pinned head already registers context dependencies before cache reads.",
+    },
+  },
+  {
+    caseId: "vercel-next-97184-app-loader-cache-hit-dependency",
+    findingId: "performance.memory.unbounded-cache:packages%2Fnext%2Fsrc%2Fbuild%2Fwebpack%2Floaders%2Fnext-app-loader%2Findex.ts:98-123:none",
+    verdict: "invalid-fixture",
+    rationale: "The persistent module cache is an artifact of the fixture. Pinned source uses a weak compilation key, allowing scan maps to be collected after their owner disappears.",
+    provenance: {
+      headSha: "581a78cbc30a1c8731fb65d768986f094cac103c",
+      sourceUrl: "https://raw.githubusercontent.com/vercel/next.js/581a78cbc30a1c8731fb65d768986f094cac103c/packages/next/src/build/webpack/loaders/next-app-loader/index.ts",
+      fixtureAssessment: "The minimization replaces WeakMap<Compilation, Map<directory, Promise<boolean>>> with a persistent module Map and deterministic synthetic tree strings, losing compilation lifetime and directory-scan semantics. Pinned head already registers context dependencies before cache reads.",
+    },
+  },
+  {
+    caseId: "vercel-next-97184-app-loader-cache-hit-dependency",
+    findingId: "performance.memory.unbounded-map-set:packages%2Fnext%2Fsrc%2Fbuild%2Fwebpack%2Floaders%2Fnext-app-loader%2Findex.ts:98-123:none",
+    verdict: "invalid-fixture",
+    rationale: "The fixture removes weak compilation ownership and finite directory traversal, so this persistent collection claim cannot establish an empirical upstream defect.",
+    provenance: {
+      headSha: "581a78cbc30a1c8731fb65d768986f094cac103c",
+      sourceUrl: "https://raw.githubusercontent.com/vercel/next.js/581a78cbc30a1c8731fb65d768986f094cac103c/packages/next/src/build/webpack/loaders/next-app-loader/index.ts",
+      fixtureAssessment: "The minimization replaces WeakMap<Compilation, Map<directory, Promise<boolean>>> with a persistent module Map and deterministic synthetic tree strings, losing compilation lifetime and directory-scan semantics. Pinned head already registers context dependencies before cache reads.",
+    },
+  },
+  {
+    caseId: "vercel-next-96727-request-cache-completed-entry",
+    findingId: "performance.cache.missing-ttl:packages%2Fnext%2Fsrc%2Fserver%2Fuse-cache%2Fhandlers.ts:271-301:none",
+    verdict: "false-positive",
+    rationale: "pendingFills deletes entries when their promises settle. The upstream defect is deleting completed entries too early within the request, not lacking time-based expiration; adding a TTL does not repair sequential request deduplication.",
+    provenance: {
+      headSha: "047556e8cdd0f51f23dbe0393fd8ffd98bc8a0da",
+      sourceUrl: "https://github.com/vercel/next.js/commit/047556e8cdd0f51f23dbe0393fd8ffd98bc8a0da",
+      fixtureAssessment: "The fixture preserves settlement-time eviction for the assessed missing-TTL claim; request ownership is absent from the reduced module and must be restored before evaluating cross-request retention claims.",
+    },
   },
 ];
 
