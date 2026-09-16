@@ -64,3 +64,23 @@ The file adapter uses restricted metadata files, fsync, an exclusive writer lock
 ## CI evidence
 
 `npm run evaluation:reliability-report` emits corpus and synthetic repository/PR observations. CI uploads this report alongside tests/coverage and existing artifacts. Reporting exits successfully even when qualification is insufficient; the `quality`/`promote` operations enforce refusal separately. The current corpus has six invalid-fixture findings across two quarantined captures, so production precision remains unqualified. Synthetic passing tests establish integration behavior, not real-world 98% precision.
+
+`npm run evaluation:phase7-report` emits the versioned scorecard, calibration diagnostics, operational SLO assessment, semantic program summaries and metamorphic/adversarial report. CI fails only if a maintained supported transformation becomes unstable; known capability gaps and insufficient sample sizes remain explicit report data and block promotion rather than being relabeled as passes.
+
+The local operator also exposes diagnostic report commands:
+
+```bash
+npm run review:intelligence -- scorecard scorecard-input.json
+npm run review:intelligence -- calibration calibration-input.json
+npm run review:intelligence -- calibration-drift comparison.json
+npm run review:intelligence -- slo slo-input.json
+npm run review:intelligence -- semantic adversarial-corpus.json
+npm run review:intelligence -- proposals /tmp/reviewer-learning owner/repository dataset-v1
+npm run review:intelligence -- adaptation /tmp/reviewer-learning owner/repository profile-v1
+```
+
+These commands validate external JSON strictly. Standalone scorecard/calibration/SLO output is diagnostic evidence; it does not create a promotion receipt. `fitEmpiricalCalibrator` accepts labels only through an injected trusted verification port and records the calibration cohort exposure. Sparse family/profile/provenance bins return no probability. Raw model confidence and deterministic detection certainty are retained as separate fields.
+
+`createReliableReviewUseCases` is the explicit evidence-and-trust composition. It binds analyzer-owned facts to exact findings, evaluates registered counterexamples, and consults versioned empirical trust policy before allowing high severity to block. Missing measured trust remains advisory. Mandatory rules fail closed if evidence, parsing or analyzer execution is incomplete. Existing entry points are not silently switched before their rule families qualify.
+
+Candidate tournaments rerun production and candidate compositions through repository and base/head/incremental paths, repeat the actual PR request, include decisions/warnings/security gates in stability identity, measure total execution time, enforce deadlines, and require protected quality, calibration and semantic evidence. They report `hardResourceIsolation: false`; the deadline can reject late asynchronous work but cannot preempt synchronous CPU or enforce memory limits. Production shadowing still needs a dedicated process/container adapter before automatic rollout.

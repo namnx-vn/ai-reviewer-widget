@@ -42,7 +42,7 @@ jobs:
           path: sbom.cdx.json
 
       - name: TypeScript
-        run: npx tsc --noEmit
+        run: npm run typecheck
 
       - name: Lint
         run: npm run lint
@@ -79,6 +79,16 @@ jobs:
 
       - name: Medium review benchmark
         run: npm run --silent benchmark:review -- medium > benchmark-medium.json
+
+      - name: Phase 7 quality and semantic stability
+        run: npm run --silent evaluation:phase7-report > phase-7-quality.json
+
+      - name: Upload Phase 7 quality report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-7-quality
+          path: phase-7-quality.json
 
       - name: Upload review benchmark
         uses: actions/upload-artifact@v4

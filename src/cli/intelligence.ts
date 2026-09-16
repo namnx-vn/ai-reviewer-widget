@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createLearningService, parseLearningEvent, type LearningEvent, type LearningService } from "../application/improvement";
+import { buildRepositoryAdaptation, createLearningService, generateImprovementProposals, parseLearningEvent, type LearningEvent, type LearningService } from "../application/improvement";
 import { createDefaultReviewUseCases } from "../application/review";
 import { fingerprintReviewFinding } from "../domain/review";
 import { evaluatePromotionQuality, parsePromotionQualityInput } from "../evaluation";
@@ -12,6 +12,7 @@ import { createFileLearningStore } from "./improvement-store";
 import { createFilePromotionQualityPort, verifyQualitySourceEvidence } from "./intelligence-quality";
 import { assertApprovedPromotionPolicy } from "./promotion-policy";
 import type { CliIO } from "./run";
+import { INTELLIGENCE_REPORT_COMMANDS, runIntelligenceReport } from "./intelligence-report";
 
 let runtimeDigest: string | undefined;
 function baselineDigest(): string {
@@ -118,6 +119,23 @@ export async function runIntelligenceCli(args: readonly string[], io: CliIO): Pr
     const [command, ...parameters] = args;
     if (command === undefined || command === "--help") {
       io.stdout("review-intelligence repository|pr <manifest.json> <store>\nreview-intelligence quality <bundle.json> [--authorize-quality-evidence]\nreview-intelligence event <metadata.json> <store> [--authorize-adjudication|--authorize-shadow|--authorize-quality-evidence]\nreview-intelligence failures|production <store> [repository]\nreview-intelligence promote|rollback <store> <candidate|version> <actor> <authorization-ref> --authorize-release\n");
+      io.stdout("review-intelligence scorecard|calibration|calibration-drift|slo|semantic <input.json>\nreview-intelligence proposals|adaptation <store> <repository> <dataset/profile-version>\n");
+      return 0;
+    }
+    if (INTELLIGENCE_REPORT_COMMANDS.some((name) => name === command)) {
+      if (parameters.length !== 1 || !parameters[0]) throw new Error("Report requires exactly one JSON input path.");
+      return runIntelligenceReport(command, parameters[0], io);
+    }
+    if (command === "proposals" || command === "adaptation") {
+      const [directory, repositoryId, version, ...extra] = parameters;
+      if (!directory || !repositoryId || !version || extra.length) throw new Error("Learning report requires store, repository and dataset/profile version.");
+      const learning = await service(directory, io, []);
+      await learning.initialize();
+      const { events } = await createFileLearningStore(resolve(io.cwd, directory)).read();
+      const report = command === "proposals" ? await generateImprovementProposals(events, repositoryId, { datasetVersion: version, cohortRefs: [version] })
+        : buildRepositoryAdaptation(events, repositoryId, { profileVersion: version, policyVersion: "advisory-v1", evaluatedAt: new Date().toISOString(),
+          staleAfterMs: 90 * 24 * 60 * 60 * 1000, minimumTrustedSamples: 5, globalPriors: {} });
+      io.stdout(`${JSON.stringify(report, null, 2)}\n`);
       return 0;
     }
     if (command === "quality" && parameters[0]) return await quality(parameters[0], parameters.slice(1), io);

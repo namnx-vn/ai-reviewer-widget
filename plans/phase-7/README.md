@@ -2,13 +2,15 @@
 
 > Engineering contract: [`../../AGENTS.md`](../../AGENTS.md)
 
-Status: 🚧 Reliability foundation implemented; end-state quality targets remain unproven.
+Status: ✅ Engineering mechanisms implemented; 🚧 empirical qualification and hard process isolation remain incomplete.
 
 Prerequisite: Phase 6.11 is complete and its observation report is frozen. Complete finding adjudication and fixture-fidelity auditing before using that cohort to qualify production behavior.
 
 Implementation contract: [Reliability, evaluation, and controlled improvement](./7.0-reliability-implementation.md).
 
-The foundation includes adjudication and fixture quarantine, holdout/precision/recall gates, canonical AI claims, repository/base-head evaluation, a durable outcome journal, isolated shadow receipts, and explicit promotion/rollback. Detailed roadmap items below retain their own exit criteria: larger unseen cohorts, empirical calibration, semantic primitives, automated proposal/fixture generation, and hard operational isolation remain outstanding.
+The implementation now includes adjudication and fixture quarantine, multidimensional scorecards, holdout/precision/recall gates, empirical calibration fitting and drift reports, evidence graphs, counterexample verification, bounded semantic/differential analysis, repository/base-head evaluation, outcome mining, pending proposals and regression drafts, candidate tournaments, metamorphic/adversarial evaluation, repository/history priors, centralized trust policy, operational SLO reports, a durable outcome journal, isolated shadow receipts, and explicit promotion/rollback. Detailed roadmap exit criteria still require larger independently verified cohorts, real calibration/shadow samples, and hard process isolation.
+
+Status labels below distinguish shipped engineering mechanisms from empirical proof. `✅ Mechanism implemented; qualification pending` means the API, validation and regression coverage exist and fail closed when evidence is insufficient; it does not claim the target metric has been achieved in production.
 
 ---
 
@@ -155,7 +157,7 @@ Wave A improves the quality measurement system before deeper analysis or self-im
 
 ### 7.1 — Ground Truth & Adjudication Expansion
 
-Status: 📌 Next after Phase 6.11
+Status: ✅ Adjudication implemented; 100-case/15-repository exit gate pending
 
 Objective: turn the real-world corpus into a reliable ground-truth asset rather than a collection of interesting examples.
 
@@ -181,7 +183,7 @@ Initial exit gate:
 
 ### 7.2 — Reliability Scorecard
 
-Status: ⏳ Planned
+Status: ✅ Mechanism implemented; qualification pending
 
 Objective: make reviewer quality diagnosable by rule family and operating context, not only aggregate precision/recall.
 
@@ -217,7 +219,7 @@ Acceptance criteria:
 
 ### 7.3 — Confidence Calibration
 
-Status: ⏳ Planned
+Status: ✅ Fit/report/drift mechanisms implemented; representative calibration data pending
 
 Objective: make confidence values empirically meaningful rather than arbitrary rule/model scores.
 
@@ -245,7 +247,7 @@ Constraints:
 
 ### 7.4 — Evidence Graph & Finding Evidence Contract
 
-Status: ⏳ Planned
+Status: ✅ Metadata contract implemented; production-wide evidence coverage pending
 
 Objective: represent why a finding is believed using structured evidence that can be verified, rendered, and tested.
 
@@ -277,7 +279,7 @@ Wave B deepens deterministic semantics and verifies findings more aggressively b
 
 ### 7.5 — Semantic Program Intelligence
 
-Status: ⏳ Planned
+Status: ✅ Bounded primitives implemented; wider interprocedural coverage pending
 
 Objective: evolve supported analysis from primarily local AST patterns toward cross-symbol and interprocedural reasoning where justified by measured failure classes.
 
@@ -300,7 +302,7 @@ Constraints:
 
 ### 7.6 — Finding Verification Pipeline
 
-Status: ⏳ Planned
+Status: ✅ Explicit reliable pipeline implemented; default production adoption pending qualification
 
 Objective: introduce an explicit candidate-to-finding verification pipeline.
 
@@ -333,7 +335,7 @@ AI-specific behavior:
 
 ### 7.7 — Counterexample Engine
 
-Status: ⏳ Planned
+Status: ✅ Registry and fail-closed stages implemented; measured FP reduction pending
 
 Objective: actively search for conditions that invalidate a candidate before emitting it.
 
@@ -355,7 +357,7 @@ Acceptance criteria:
 
 ### 7.16 — Differential / Change-Introduced Analysis
 
-Status: ⏳ Planned
+Status: ✅ Selected semantic property deltas implemented
 
 Objective: reason about behavior introduced by the PR rather than treating the head tree as an isolated repository snapshot.
 
@@ -382,7 +384,7 @@ Wave C turns real developer outcomes into bounded, auditable improvement evidenc
 
 ### 7.8 — Developer Outcome Learning
 
-Status: ⏳ Planned
+Status: ✅ Durable metadata learning implemented
 
 Objective: aggregate Phase 6.9 feedback into reliable rule-quality signals without direct behavior mutation.
 
@@ -413,7 +415,7 @@ Constraints:
 
 ### 7.9 — Automated Failure Mining
 
-Status: ⏳ Planned
+Status: ✅ Reproducible scoped clustering implemented
 
 Objective: identify repeated reviewer failure classes from adjudication and production outcomes.
 
@@ -436,7 +438,7 @@ Acceptance criteria:
 
 ### 7.10 — Improvement Proposal Agent
 
-Status: ⏳ Planned
+Status: ✅ Pending proposal generation implemented; production mutation prohibited
 
 Objective: use AI optionally to propose bounded improvements from verified failure clusters.
 
@@ -458,7 +460,7 @@ Safety contract:
 
 ### 7.11 — Regression Case Generation
 
-Status: ⏳ Planned
+Status: ✅ Pending exact-capture drafts and independent verification implemented
 
 Objective: convert trustworthy failures into durable evaluation cases so known failure classes are hard to reintroduce.
 
@@ -496,7 +498,7 @@ Constraints:
 
 ### 7.12 — Candidate Tournament & Promotion Gates
 
-Status: ⏳ Planned
+Status: ✅ Tournament and protected gates implemented; qualifying holdout pending
 
 Objective: require improvement candidates to outperform or match production across protected metrics before promotion.
 
@@ -533,7 +535,7 @@ Wave D validates candidates on real traffic and adds bounded repository/historic
 
 ### 7.13 — Shadow Review
 
-Status: ⏳ Planned
+Status: ✅ Isolated publication path implemented; hard process isolation pending
 
 Objective: execute candidate behavior against real reviews without publishing candidate findings to developers.
 
@@ -549,7 +551,7 @@ Requirements:
 
 ### 7.14 — Repository-Adaptive Intelligence
 
-Status: ⏳ Planned
+Status: ✅ Advisory-only versioned priors implemented
 
 Objective: learn bounded repository-specific priors and conventions while preserving global safety policy.
 
@@ -570,7 +572,7 @@ Constraints:
 
 ### 7.15 — Temporal & Historical Review Intelligence
 
-Status: ⏳ Planned
+Status: ✅ Metadata history and staleness handling implemented
 
 Objective: use version-control and review history to improve context and avoid repeating known mistakes.
 
@@ -592,7 +594,7 @@ Constraints:
 
 ### 7.17 — Metamorphic / Semantic Stability Testing
 
-Status: ⏳ Planned
+Status: ✅ Bounded suite implemented; representative 99% qualification pending
 
 Objective: verify that findings survive semantics-preserving source transformations.
 
@@ -614,7 +616,7 @@ Acceptance criteria:
 
 ### 7.18 — Adversarial Reviewer Testing
 
-Status: ⏳ Planned
+Status: ✅ Versioned initial corpus implemented; expansion ongoing
 
 Objective: deliberately construct difficult-but-valid code shapes that expose analyzer blind spots or false positives before real repositories do.
 
@@ -638,7 +640,7 @@ Acceptance criteria:
 
 ### 7.19 — Reviewer Trust Policy
 
-Status: ⏳ Planned
+Status: ✅ Central policy and reliable composition implemented; measured eligibility pending
 
 Objective: encode which findings may block, comment, or remain advisory based on measured reliability.
 
@@ -658,7 +660,7 @@ Policy requirements:
 
 ### 7.20 — Production Reliability SLO & Continuous Quality Gate
 
-Status: ⏳ Planned
+Status: ✅ SLO/report/CI mechanisms implemented; production sample qualification pending
 
 Objective: turn reviewer quality and execution reliability into enforceable release criteria.
 
