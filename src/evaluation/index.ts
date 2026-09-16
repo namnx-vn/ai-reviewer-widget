@@ -72,4 +72,17 @@ export type {
   QualityCaseCounts,
 } from "./quality-gates";
 export { evaluatePullRequestReview, evaluateRepositoryReview, parsePullRequestReviewInput, parseRepositoryReviewInput } from "./repository-review";
+export { buildReliabilityScorecard } from "./scorecard";
+export type * from "./scorecard";
+export { buildCalibrationReport, compareCalibrationReports } from "./calibration";
+export type * from "./calibration";
+export { fitEmpiricalCalibrator, predictEmpiricalProbability } from "./calibrator";
+export type * from "./calibrator";
+export { buildReliabilitySloReport, parseReliabilitySloInput } from "./reliability-slo";
+export type * from "./reliability-slo";
+export { applySemanticTransformation, parseAdversarialCorpus, runSemanticStabilityEvaluation } from "./semantic-stability";
+export type * from "./semantic-stability";
+export { runCandidateTournament } from "./tournament";
+export type * from "./tournament";
+export { buildObservationScorecard } from "./observation-scorecard";
 export type { RepositorySnapshot, RepositoryReviewEvaluation, PullRequestEvaluationInput, PullRequestReviewEvaluation } from "./repository-review";
