@@ -61,3 +61,15 @@ export type {
 export { runEvaluationCase, runEvaluationSuite } from "./runner";
 export type { EvaluationRunnerOptions } from "./runner";
 export type * from "./contracts";
+export { assertCandidateHoldoutIsolation, validateHoldoutManifest } from "./holdout";
+export type { CandidateTrainingExposure, HoldoutCase, HoldoutManifest } from "./holdout";
+export { evaluatePromotionQuality, parsePromotionQualityInput, wilsonLowerBound } from "./quality-gates";
+export type {
+  PairedQualityCase,
+  PromotionQualityInput,
+  PromotionQualityPolicy,
+  PromotionQualityResult,
+  QualityCaseCounts,
+} from "./quality-gates";
+export { evaluatePullRequestReview, evaluateRepositoryReview, parsePullRequestReviewInput, parseRepositoryReviewInput } from "./repository-review";
+export type { RepositorySnapshot, RepositoryReviewEvaluation, PullRequestEvaluationInput, PullRequestReviewEvaluation } from "./repository-review";

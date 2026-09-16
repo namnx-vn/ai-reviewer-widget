@@ -148,11 +148,13 @@ Status: ✅ Complete through Phase 6.11
 
 # Phase 7 — Continuous Review Intelligence & Reliability
 
-Status: ⏳ Planned
+Status: 🚧 Reliability foundation implemented; empirical qualification and remaining roadmap work continue.
 
 Prerequisite: Phase 6.11 must be completed and its expanded evaluation/adjudication baseline frozen before Phase 7 production behavior changes are promoted.
 
 [Phase 7 Overview](./phase-7/README.md)
+
+[Reliability implementation and validation](./phase-7/7.0-reliability-implementation.md) covers completed adjudication/fidelity audit, independent holdout gates, claim-bound AI verification, repository/PR harness, and durable learning/promotion. This foundation does not mark the entire twenty-part roadmap complete.
 
 | Phase | Status | Scope |
 | --- | --- | --- |

@@ -68,6 +68,15 @@ jobs:
           name: real-world-observations
           path: real-world-observations.json
 
+      - name: Continuous reliability observations
+        run: npm run --silent evaluation:reliability-report > continuous-reliability.json
+
+      - name: Upload continuous reliability observations
+        uses: actions/upload-artifact@v4
+        with:
+          name: continuous-reliability
+          path: continuous-reliability.json
+
       - name: Medium review benchmark
         run: npm run --silent benchmark:review -- medium > benchmark-medium.json
 

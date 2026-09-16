@@ -2,9 +2,13 @@
 
 > Engineering contract: [`../../AGENTS.md`](../../AGENTS.md)
 
-Status: ⏳ Planned
+Status: 🚧 Reliability foundation implemented; end-state quality targets remain unproven.
 
-Prerequisite: complete and freeze the Phase 6.11 evaluation expansion wave before production behavior changes begin.
+Prerequisite: Phase 6.11 is complete and its observation report is frozen. Complete finding adjudication and fixture-fidelity auditing before using that cohort to qualify production behavior.
+
+Implementation contract: [Reliability, evaluation, and controlled improvement](./7.0-reliability-implementation.md).
+
+The foundation includes adjudication and fixture quarantine, holdout/precision/recall gates, canonical AI claims, repository/base-head evaluation, a durable outcome journal, isolated shadow receipts, and explicit promotion/rollback. Detailed roadmap items below retain their own exit criteria: larger unseen cohorts, empirical calibration, semantic primitives, automated proposal/fixture generation, and hard operational isolation remain outstanding.
 
 ---
 
@@ -34,7 +38,7 @@ Phase 6 already provides the required foundation:
 - developer feedback persistence and metrics
 - production-readiness contracts and observability
 
-Phase 6.11 is expanding the executable public-PR corpus and adjudicating emitted findings. Phase 7 must use that evidence instead of tuning production behavior against a small or incomplete denominator.
+Phase 6.11 froze 75 executable cases, baseline precision 19/29, expectation recall 17/32, and seven pending expansion findings. These are minimized, rule-only observations, not full-repository or AI-enabled guarantees. Phase 7 must finish adjudication, audit minimization against pinned upstream source, and distinguish invalid fixtures from analyzer failures. The frozen report must remain unchanged; corrected observations are separate artifacts.
 
 ---
 
@@ -137,6 +141,10 @@ These are end-state engineering targets, not current product guarantees.
 
 Where the corpus is insufficient to establish a metric statistically, reports must say `insufficient evidence` rather than infer a guarantee.
 
+Blocking qualification requires a versioned statistical policy, a precision lower confidence bound, minimum independent repository samples, a recall floor, and no protected positive/negative-control regression. A high point estimate or a small number of PRs cannot independently qualify a rule. Deterministic detector confidence is distinct from empirical correctness probability.
+
+Development, calibration, and protected holdout data must be isolated by repository and time. Previously inspected/tuned fixtures cannot be retroactively declared unseen holdout. Candidate exposure and every gate receipt must identify dataset, policy, baseline, and candidate versions. Pending verdicts, invalid fixture fidelity, incomplete context, and missing denominators block qualification.
+
 ---
 
 # Roadmap
@@ -233,6 +241,7 @@ Constraints:
 
 - calibration must not allow low-quality historical feedback to silently suppress mandatory policy
 - raw LLM self-confidence must never be treated as calibrated confidence by itself
+- deterministic detection certainty must remain separate from empirical correctness; preserve existing domain confidence compatibility while measuring calibration separately
 
 ### 7.4 — Evidence Graph & Finding Evidence Contract
 
@@ -257,6 +266,8 @@ Acceptance criteria:
 - evidence locations are stable enough for evaluation and GitHub rendering
 - evidence can be serialized without exposing unnecessary repository source
 - missing/contradictory evidence affects verification/confidence rather than being ignored
+- evidence must establish the actual claim, not merely another detector finding at a nearby source location
+- AI claims naming a deterministic finding cannot retain a contradictory conclusion; supported conclusions are bound to canonical detector evidence
 
 ---
 
@@ -317,6 +328,8 @@ AI-specific behavior:
 - deterministic verification is preferred when feasible
 - unverifiable AI claims must not become blocking findings
 - disagreement between AI and deterministic evidence must be represented explicitly
+- known-file membership, nearby lines, or raw model confidence alone do not constitute semantic support
+- missing evidence leaves AI hypotheses advisory and ineligible for blocking
 
 ### 7.7 — Counterexample Engine
 
@@ -507,6 +520,10 @@ Default promotion policy:
 - known positive fixes are demonstrated by dedicated regression cases
 - deterministic stability remains 100%
 - performance regression remains within the active budget
+- protected recall floors and paired positive-case regressions are enforced; suppression/downgrading cannot improve precision by concealing misses
+- statistically insufficient holdout evidence never passes promotion
+- qualification includes full-repository snapshots and base/head PR runs through the shared application pipeline, with AI-enabled runs separately identified
+- incomplete context, unsupported files, parse failures, and budget truncation cannot be reported as a complete clean review
 
 ---
 
@@ -526,7 +543,9 @@ Requirements:
 - shadow output is isolated from GitHub comments/check conclusions
 - candidate-only, production-only, and changed findings are observable
 - resource/cost limits prevent shadow mode from degrading production reliability
-- promotion can require a minimum real-review sample size
+- promotion requires the active policy's minimum verified real-review sample size
+- candidate receipts bind immutable candidate artifact, current production baseline, dataset and policy versions
+- rollout has bounded resources, an explicit auditable activation, and rollback to a retained production version
 
 ### 7.14 — Repository-Adaptive Intelligence
 
@@ -568,6 +587,8 @@ Constraints:
 - history is contextual evidence, not proof of correctness
 - avoid storing unnecessary raw source in feedback/history records
 - stale historical decisions must be distinguishable from current policy
+- outcomes are persisted durably without source, deduplicated by stable finding identity, and conflicting/untrusted labels remain pending
+- zero-finding reviews and explicitly reported missed bugs are recorded so failure mining is not restricted to emitted findings
 
 ### 7.17 — Metamorphic / Semantic Stability Testing
 
@@ -671,13 +692,13 @@ Phase 7 should be executed in this order unless a later plan explicitly changes 
 ```text
 Complete Phase 6.11
         ↓
-7.1 Ground Truth & Adjudication
+7.1 Ground Truth, Adjudication & Fidelity Audit
         ↓
 7.2 Reliability Scorecard
         ↓
-7.3 Confidence Calibration
+Holdout Isolation & Precision/Recall Gates
         ↓
-7.4 Evidence Contract
+Claim-bound AI Verification
         ↓
 ┌────────────────────────────────────┐
 │ Wave B                             │
@@ -793,3 +814,7 @@ Phase 7 is complete only when the platform demonstrates a closed, measurable, re
 - [ ] trust policy determines blocking eligibility from measured reliability
 - [ ] production quality/SLO gates prevent reliability regressions
 - [ ] no self-improvement path silently changes production behavior
+- [ ] protected holdout is independent of candidate development/calibration and statistical qualification fails closed
+- [ ] full-repository and base/head PR evaluation report context completeness and AI provenance explicitly
+- [ ] durable metadata-only learning records survive reload and include zero-finding reviews and reported misses
+- [ ] auditable promotion receipts bind artifact/baseline/dataset/policy and support rollback

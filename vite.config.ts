@@ -18,6 +18,7 @@ export default defineConfig({
         'src/domain/**/*.ts',
         'src/analyzer/**/*.ts',
         'src/engine/**/*.ts',
+        'src/evaluation/**/*.ts',
         'src/github/**/*.ts',
         'src/mfe/**/*.ts',
         'src/plugins/**/*.ts',
@@ -26,8 +27,7 @@ export default defineConfig({
       ],
       exclude: ['**/__tests__/**', '**/*.test.ts'],
       thresholds: {
-        // Ratchet the current branch baseline; raise to 80 as legacy gaps are covered.
-        branches: 77,
+        branches: 80,
         lines: 80,
         functions: 80,
         statements: 80,
