@@ -22,7 +22,7 @@
     "evaluation:report": "tsx scripts/evaluation-quality-report.ts",
     "evaluation:real-world-report": "tsx scripts/real-world-observation-report.ts",
     "evaluation:reliability-report": "tsx scripts/continuous-reliability-report.ts",
-    "evaluation:phase7-report": "tsx scripts/phase-7-quality-report.ts",
+    "evaluation:phase7-report": "node --import tsx scripts/phase-7-quality-report.ts",
     "review:intelligence": "tsx scripts/review-intelligence.ts",
     "test:e2e": "playwright test",
     "test:package": "npm run build && vitest run --config vite.package-test.config.ts",
