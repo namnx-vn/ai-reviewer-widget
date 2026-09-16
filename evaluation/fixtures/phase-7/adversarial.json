@@ -1,0 +1,219 @@
+{
+  "version": 1,
+  "id": "phase-7-adversarial-v1",
+  "fidelity": "synthetic-offline",
+  "cases": [
+    {
+      "id": "alias-execution",
+      "category": "alias",
+      "files": [
+        {
+          "path": "src/execute.ts",
+          "content": "const execute = eval; export function run(input: string) { return execute(input); }"
+        }
+      ],
+      "expectations": [
+        {
+          "kind": "must-find",
+          "ruleId": "security.execution.no-indirect-eval",
+          "file": "src/execute.ts",
+          "rationale": "A runtime-controlled input is passed to an alias of global eval."
+        }
+      ],
+      "transformations": [
+        "formatting",
+        "comments"
+      ]
+    },
+    {
+      "id": "reexport-wrapper",
+      "category": "re-export/wrapper",
+      "files": [
+        {
+          "path": "src/execute.ts",
+          "content": "export function execute(input: string) { return new Function(input)(); }"
+        },
+        {
+          "path": "src/index.ts",
+          "content": "export { execute as run } from './execute';"
+        },
+        {
+          "path": "src/use.ts",
+          "content": "import { run } from './index'; export const result = run('return 1');"
+        }
+      ],
+      "expectations": [
+        {
+          "kind": "must-find",
+          "ruleId": "security.execution.no-new-function",
+          "file": "src/execute.ts",
+          "rationale": "The exported wrapper builds executable code from its public input."
+        }
+      ],
+      "transformations": [
+        "formatting",
+        "comments"
+      ]
+    },
+    {
+      "id": "dynamic-module",
+      "category": "dynamic-import",
+      "files": [
+        {
+          "path": "src/load.ts",
+          "content": "export async function load(request: { query: { path: string } }) { const module = await import(request.query.path); return module.default; }"
+        }
+      ],
+      "expectations": [
+        {
+          "kind": "must-find",
+          "ruleId": "security.execution.untrusted-module-import",
+          "file": "src/load.ts",
+          "rationale": "The request query controls an unrestricted executable module specifier; no allowlist is present. This is an explicit currently unmapped capability gap, not the string-timer rule."
+        }
+      ],
+      "transformations": [
+        "formatting",
+        "comments"
+      ]
+    },
+    {
+      "id": "optional-execution",
+      "category": "optional-chaining",
+      "files": [
+        {
+          "path": "src/execute.ts",
+          "content": "export function run(input: string) { return globalThis.eval?.(input); }"
+        }
+      ],
+      "expectations": [
+        {
+          "kind": "must-find",
+          "ruleId": "security.execution.no-eval",
+          "file": "src/execute.ts",
+          "rationale": "Optional invocation still reaches global eval with public runtime input; the execution rule classifies globalThis.eval as eval rather than an alias."
+        }
+      ],
+      "transformations": [
+        "formatting",
+        "comments"
+      ]
+    },
+    {
+      "id": "async-component",
+      "category": "async/resource-lifetime",
+      "files": [
+        {
+          "path": "src/Account.tsx",
+          "content": "import { useEffect } from 'react'; export function Account({ load }: { load: () => Promise<void> }) { useEffect(async () => { await load(); }, [load]); return <div />; }"
+        }
+      ],
+      "expectations": [
+        {
+          "kind": "must-find",
+          "ruleId": "react.hooks.async-effect",
+          "file": "src/Account.tsx",
+          "rationale": "The async effect returns a Promise rather than React's cleanup function or undefined."
+        }
+      ],
+      "transformations": [
+        "formatting",
+        "comments"
+      ]
+    },
+    {
+      "id": "workspace-boundary",
+      "category": "monorepo",
+      "files": [
+        {
+          "path": "package.json",
+          "content": "{\"private\":true,\"workspaces\":[\"packages/*\"]}"
+        },
+        {
+          "path": "packages/core/package.json",
+          "content": "{\"name\":\"@workspace/core\"}"
+        },
+        {
+          "path": "packages/core/src/code.ts",
+          "content": "export function compile(input: string) { return new Function(input); }"
+        },
+        {
+          "path": "packages/web/src/index.ts",
+          "content": "import { compile } from '../../core/src/code'; export const task = compile('return 1');"
+        }
+      ],
+      "expectations": [
+        {
+          "kind": "must-find",
+          "ruleId": "security.execution.no-new-function",
+          "file": "packages/core/src/code.ts",
+          "rationale": "A cross-package exported function constructs executable code from caller input."
+        }
+      ],
+      "transformations": [
+        "formatting",
+        "comments"
+      ]
+    },
+    {
+      "id": "test-dynamic-api",
+      "category": "test-context",
+      "files": [
+        {
+          "path": "src/__tests__/execute.test.ts",
+          "content": "function run(input: string) { return new Function(input); } export const actual = run('return 1');"
+        }
+      ],
+      "expectations": [
+        {
+          "kind": "must-find",
+          "ruleId": "security.execution.no-new-function",
+          "file": "src/__tests__/execute.test.ts",
+          "rationale": "Executable test code can still evaluate runtime input; path alone does not prove safety."
+        }
+      ],
+      "transformations": [
+        "formatting",
+        "comments",
+        "identifier-rename"
+      ],
+      "rename": {
+        "file": "src/__tests__/execute.test.ts",
+        "functionName": "run",
+        "from": "input",
+        "to": "payload"
+      }
+    },
+    {
+      "id": "type-imports-negative",
+      "category": "type-import/negative-control",
+      "files": [
+        {
+          "path": "src/a.ts",
+          "content": "export interface A { value: string }"
+        },
+        {
+          "path": "src/b.ts",
+          "content": "export interface B { count: number }"
+        },
+        {
+          "path": "src/use.ts",
+          "content": "import type { A } from './a';\nimport type { B } from './b';\nexport function pair(a: A, b: B) { return [a.value, b.count]; }"
+        }
+      ],
+      "expectations": [
+        {
+          "kind": "must-not-find",
+          "ruleId": "security.execution.no-eval",
+          "file": "src/use.ts",
+          "rationale": "Pure typed property reads contain no dynamic execution sink."
+        }
+      ],
+      "transformations": [
+        "formatting",
+        "comments",
+        "type-import-order"
+      ]
+    }
+  ]
+}
