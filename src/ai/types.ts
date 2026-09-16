@@ -46,6 +46,12 @@ export interface AIReviewFinding {
   agent?: AIReviewAgentId;
 
   evidence?: ReviewFindingEvidence;
+
+  /** Untrusted hypothesis; independent verification binds the detector conclusion. */
+  verificationClaim?: {
+    readonly ruleId: string;
+    readonly deterministicFindingId: string;
+  };
 }
 
 export interface AIReviewWarning {

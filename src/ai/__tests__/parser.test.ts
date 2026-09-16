@@ -3,6 +3,16 @@ import { describe, expect, it } from "vitest";
 import { parseAIResult } from "../parser";
 
 describe("parseAIResult", () => {
+  it("retains only structurally valid explicit verification claims and ignores supplied evidence", () => {
+    const base = { title: "Claim", message: "Claim detail", severity: "high", confidence: 0.9 };
+    const result = parseAIResult({ findings: [
+      { ...base, verificationClaim: { ruleId: "security.no-eval", deterministicFindingId: "security-1" }, evidence: { status: "supported", provenance: [] } },
+      { ...base, verificationClaim: { ruleId: "security.no-eval", deterministicFindingId: 7 } },
+    ] });
+    expect(result.findings[0]?.verificationClaim).toEqual({ ruleId: "security.no-eval", deterministicFindingId: "security-1" });
+    expect(result.findings[0]?.evidence).toBeUndefined();
+    expect(result.findings[1]?.verificationClaim).toBeUndefined();
+  });
   it("rejects low-confidence findings", () => {
     const result = parseAIResult({
       findings: [

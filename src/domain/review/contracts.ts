@@ -17,6 +17,14 @@ export interface ReviewLocation {
 
 export interface ReviewFindingEvidence {
   readonly status: "supported" | "unsupported" | "unverifiable";
+  readonly reason?:
+    | "canonical-detector-match"
+    | "missing-location"
+    | "unknown-file"
+    | "missing-claim"
+    | "claim-mismatch"
+    | "contradictory-detector"
+    | "verification-failed";
   readonly provenance: readonly {
     readonly kind: "deterministic-finding" | "repository-file";
     readonly reference: string;

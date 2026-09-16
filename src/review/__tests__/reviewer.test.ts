@@ -274,7 +274,8 @@ describe("reviewer orchestration", () => {
 
     expect(result.findings).toEqual(expect.arrayContaining([
       expect.objectContaining({ ruleId: "security.no-eval", confidence: 1 }),
-      expect.objectContaining({ title: "Potential concern", severity: "medium", source: "ai" }),
+      expect.objectContaining({ title: "Potential concern", severity: "info", confidence: 0.4, source: "ai",
+        evidence: expect.objectContaining({ status: "unverifiable", reason: "missing-location" }) }),
     ]));
     expect(result.warnings).toEqual([]);
   });

@@ -37,6 +37,11 @@ export function adjustSeverity(
         return finding;
       }
 
+      if (finding.evidence?.status !== "supported" ||
+        !finding.evidence.provenance.some((item) => item.kind === "deterministic-finding")) {
+        return { ...finding, severity: "info" };
+      }
+
       if (
         finding.confidence < 0.75
       ) {

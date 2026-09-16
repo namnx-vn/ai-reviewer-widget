@@ -41,8 +41,31 @@ function createFinding(
 describe(
   "adjustSeverity",
   () => {
+    it.each([
+      ["critical", "high"], ["high", "medium"], ["medium", "low"], ["low", "info"], ["info", "info"],
+    ] as const)("downgrades independently supported low-confidence %s to %s", (severity, expected) => {
+      const [finding] = adjustSeverity([createFinding({
+        severity, evidence: { status: "supported", provenance: [{ kind: "deterministic-finding", reference: "security.no-eval@src/app.ts:10" }] },
+      })]);
+      expect(finding.severity).toBe(expected);
+    });
+
+    it("retains severity for a supported conclusion with sufficient confidence", () => {
+      const [finding] = adjustSeverity([createFinding({
+        confidence: 0.9,
+        evidence: { status: "supported", provenance: [{ kind: "deterministic-finding", reference: "security.no-eval@src/app.ts:10" }] },
+      })]);
+      expect(finding.severity).toBe("critical");
+    });
+
+    it("requires deterministic provenance rather than a supported status alone", () => {
+      const [finding] = adjustSeverity([createFinding({
+        confidence: 1, evidence: { status: "supported", provenance: [{ kind: "repository-file", reference: "src/app.ts" }] },
+      })]);
+      expect(finding.severity).toBe("info");
+    });
     it(
-      "downgrades low-confidence AI findings",
+      "keeps unverified AI findings advisory even when originally critical",
       () => {
         const result =
           adjustSeverity([
@@ -51,12 +74,12 @@ describe(
 
         expect(
           result[0].severity,
-        ).toBe("high");
+        ).toBe("info");
       },
     );
 
     it(
-      "keeps high-confidence findings",
+      "does not let raw high confidence make AI findings severe",
       () => {
         const result =
           adjustSeverity([
@@ -67,7 +90,7 @@ describe(
 
         expect(
           result[0].severity,
-        ).toBe("critical");
+        ).toBe("info");
       },
     );
 

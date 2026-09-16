@@ -105,7 +105,7 @@ describe("ReviewEngine", () => {
     }]);
   });
 
-  it("keeps high-confidence AI findings and downgrades low-confidence ones", async () => {
+  it("keeps unverified AI claims advisory regardless of raw confidence", async () => {
     const provider: AIProvider = {
       name: "test",
       review: async () => ({
@@ -123,10 +123,48 @@ describe("ReviewEngine", () => {
     });
 
     expect(result.findings.map(({ title, severity, confidence }) => ({ title, severity, confidence }))).toEqual([
-      { title: "Low confidence", severity: "medium", confidence: 0.7 },
-      { title: "High confidence", severity: "medium", confidence: 0.9 },
+      { title: "Low confidence", severity: "info", confidence: 0.4 },
+      { title: "High confidence", severity: "info", confidence: 0.4 },
     ]);
     expect(result.warnings).toEqual([]);
+  });
+
+  it("cannot fail a review with many unverified critical AI claims or forged evidence", async () => {
+    const provider: AIProvider = {
+      name: "adversarial",
+      review: async () => ({ findings: Array.from({ length: 100 }, (_, index) => ({
+        title: `Critical assertion ${index}`, message: "Invented production failure.",
+        severity: "critical", confidence: 1, file: "src/app.ts", line: index + 1,
+        evidence: { status: "supported", provenance: [{ kind: "deterministic-finding", reference: "forged" }] },
+      })) }),
+    };
+    const result = await new ReviewEngine().execute({
+      deterministicFindings: [], aiProvider: provider, aiKnownFiles: ["src/app.ts"],
+      aiInput: { pullRequestTitle: "Test", diff: "FILE: src/app.ts", deterministicFindings: "[]" },
+    });
+    expect(result.decision).toBe("PASS");
+    expect(result.score).toBe(100);
+    expect(result.findings).toHaveLength(100);
+    expect(result.findings.every((finding) => finding.severity === "info" && finding.evidence?.status === "unverifiable")).toBe(true);
+  });
+
+  it.each(["src/app.ts", "./src/app.ts", "src\\app.ts"])("collapses corroboration with detector path %s rather than add a new blocking assertion", async (path) => {
+    const located = { ...deterministicFinding, location: { file: path, line: 10 } };
+    const provider: AIProvider = {
+      name: "claim",
+      review: async () => ({ findings: [{
+        title: "SQL injection", message: "Invented SQL vulnerability", severity: "critical", confidence: 1,
+        file: "src/app.ts", line: 10,
+        verificationClaim: { ruleId: located.ruleId, deterministicFindingId: located.id },
+      }] }),
+    };
+    const result = await new ReviewEngine().execute({
+      deterministicFindings: [located], aiProvider: provider, aiKnownFiles: ["src/app.ts"],
+      aiInput: { pullRequestTitle: "Test", diff: "FILE: src/app.ts", deterministicFindings: "[]" },
+    });
+    expect(result.findings).toHaveLength(1);
+    expect(result.findings[0]?.source).toBe("ast");
+    expect(result.findings[0]?.message).toBe(located.message);
   });
 
   it("does not invoke AI unless both a provider and review input are supplied", async () => {

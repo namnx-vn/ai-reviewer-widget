@@ -58,7 +58,17 @@ function parseFinding(item: unknown): AIReviewResult["findings"] {
     file: validatedOptionalString(item.file, MAXIMUM_FILE_LENGTH),
     line: isPositiveSafeInteger(item.line) ? item.line : undefined,
     agent: isAgent(item.agent) ? item.agent : undefined,
+    verificationClaim: parseVerificationClaim(item.verificationClaim),
   }];
+}
+
+function parseVerificationClaim(value: unknown): AIReviewResult["findings"][number]["verificationClaim"] {
+  if (!isRecord(value)) return undefined;
+  const ruleId = validatedString(value.ruleId, MAXIMUM_TITLE_LENGTH);
+  const deterministicFindingId = validatedString(value.deterministicFindingId, MAXIMUM_TITLE_LENGTH);
+  return ruleId === undefined || deterministicFindingId === undefined
+    ? undefined
+    : { ruleId, deterministicFindingId };
 }
 
 function parseWarning(item: unknown): AIReviewWarning[] {

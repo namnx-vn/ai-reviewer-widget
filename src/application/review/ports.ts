@@ -51,6 +51,10 @@ export interface AIReviewResponse {
     readonly file?: string;
     readonly line?: number;
     readonly agent?: "security" | "react" | "architecture";
+    readonly verificationClaim?: {
+      readonly ruleId: string;
+      readonly deterministicFindingId: string;
+    };
   }[];
   readonly warnings?: readonly {
     readonly code: "AI_AGENT_FAILED";
