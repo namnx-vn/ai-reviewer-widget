@@ -1,4 +1,10 @@
 export type * from "./contracts";
+export { generateImprovementProposals } from "./proposals";
+export type * from "./proposals";
+export { generateRegressionDraft, verifyGeneratedRegression } from "./regression";
+export type * from "./regression";
+export { buildRepositoryAdaptation } from "./adaptation";
+export type * from "./adaptation";
 export { createLearningService } from "./service";
 export type { LearningDependencies, LearningService } from "./service";
 export { createInMemoryLearningStore } from "./in-memory";
