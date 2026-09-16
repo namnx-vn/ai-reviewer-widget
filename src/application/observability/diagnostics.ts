@@ -8,6 +8,8 @@ export function categoryForReviewWarning(code: ReviewWarningCode): OperationalDi
     case "ANALYZER_CONTRIBUTION_FAILED":
     case "SECURITY_RULE_FAILED":
     case "REACT_RULE_FAILED":
+    case "FINDING_VERIFICATION_FAILED":
+    case "FINDING_TRUST_INSUFFICIENT":
       return "analyzer";
     case "AI_REVIEW_FAILED":
     case "AI_AGENT_FAILED":

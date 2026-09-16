@@ -61,7 +61,9 @@ export type ReviewWarningCode =
   | "SOURCE_PARSE_FAILED"
   | "ANALYZER_CONTRIBUTION_FAILED"
   | "SECURITY_RULE_FAILED"
-  | "REACT_RULE_FAILED";
+  | "REACT_RULE_FAILED"
+  | "FINDING_VERIFICATION_FAILED"
+  | "FINDING_TRUST_INSUFFICIENT";
 
 /** A non-fatal condition encountered while producing a review. */
 export interface ReviewWarning {
