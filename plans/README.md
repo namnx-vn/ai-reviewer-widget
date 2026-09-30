@@ -185,6 +185,30 @@ Phase 7 is organized into four execution waves: Measure Truth, Improve Reasoning
 
 ---
 
+# Phase 8 — Modern React & Next.js Review Intelligence
+
+Status: ⏳ Planned
+
+[Phase 8 Overview](./phase-8/README.md)
+
+| Phase | Status | Scope |
+| --- | --- | --- |
+| 8.1 | 📌 First | Framework Detection & Capability Model v2 |
+| 8.2 | ⏳ Planned | React 19.x Intelligence |
+| 8.3 | ⏳ Planned | React Compiler-Aware Review |
+| 8.4 | ⏳ Planned | Next.js App Router Intelligence v2 |
+| 8.5 | ⏳ Planned | Cache Components & Data Lifecycle Intelligence |
+| 8.6 | ⏳ Planned | Server Actions & Mutation Security |
+| 8.7 | ⏳ Planned | Routing, Streaming & Navigation Performance |
+| 8.8 | ⏳ Planned | Runtime & Deployment Correctness |
+| 8.9 | ⏳ Planned | Framework Evaluation Corpus & Qualification |
+| 8.10 | ⏳ Planned | Framework Context for AI Review |
+| 8.11 | ⏳ Planned | Hardening, Presets & Release |
+
+Phase 8 keeps the React core framework-agnostic and extends the opt-in Next.js plugin through a shared capability model. Framework-specific findings remain deterministic-first and must pass Phase 7 evidence/evaluation/promotion gates before blocking or default-on rollout.
+
+---
+
 # R1 — Source Architecture Refactor
 
 Status: ✅ Completed
