@@ -46,6 +46,73 @@ describe("ReactEngine", () => {
     expect(check).toHaveBeenCalled();
   });
 
+  it("passes resolved framework context to every rule", () => {
+    const check = vi.fn(() => []);
+    const framework = {
+      react: {
+        detected: true,
+        version: "19.2.8",
+        minimumVersion: { major: 19, minor: 2, patch: 8 },
+        compiler: "unknown" as const,
+      },
+    };
+
+    new ReactEngine().analyze({
+      source: "export function Component() { return <div />; }",
+      file: "Component.tsx",
+      plugins: [{
+        id: "framework-context-test",
+        name: "Framework context test",
+        version: "1.0.0",
+        rules: [{ id: "react.framework-context", description: "Test context", check }],
+      }],
+      framework,
+    });
+
+    expect(check).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ framework }),
+    );
+  });
+
+  it("keeps unqualified framework rules advisory", () => {
+    const findings = new ReactEngine().analyze({
+      source: "export const value = 1;",
+      file: "example.ts",
+      plugins: [{
+        id: "advisory-framework-plugin",
+        name: "Advisory framework plugin",
+        version: "1.0.0",
+        rules: [{
+          id: "framework.experimental",
+          description: "Unqualified framework rule",
+          rollout: "advisory",
+          check(node, context) {
+            return node.type === "Program"
+              ? [{
+                  id: "framework.experimental:example.ts:1",
+                  ruleId: "framework.experimental",
+                  title: "Experimental finding",
+                  message: "This rule is not empirically qualified.",
+                  severity: "high",
+                  source: "ast",
+                  confidence: 1,
+                  location: { file: context.file, line: 1 },
+                }]
+              : [];
+          },
+        }],
+      }],
+    });
+
+    expect(findings).toEqual([
+      expect.objectContaining({
+        ruleId: "framework.experimental",
+        severity: "info",
+      }),
+    ]);
+  });
+
   it("returns findings produced by rules", () => {
     const plugin: ReactPlugin = {
       id: "test",

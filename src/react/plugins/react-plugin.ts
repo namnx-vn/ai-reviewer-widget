@@ -1,4 +1,5 @@
 import type { ReactPlugin } from "../engine/react-plugin";
+import { reactCompilerInputMutationRule } from "../rules/compiler";
 import {
   reactContextConsumerInvalidationRule,
   reactContextProviderNestingRule,
@@ -31,6 +32,11 @@ import {
   reactPerformanceTrivialUseMemoRule,
   reactPerformanceUnboundedListRenderRule,
 } from "../rules/performance";
+import {
+  react19BrowserWithoutUseRule,
+  react19EffectEventMisuseRule,
+  react19UseInTryCatchRule,
+} from "../rules/react19";
 import {
   reactRenderingCallbackMisuseRule,
   reactRenderingKeyMisuseRule,
@@ -72,6 +78,10 @@ export const reactPlugin: ReactPlugin = {
     reactHooksStalePromiseRefRule,
     reactHooksExternalSubscriptionGapRule,
     reactHooksBrowserSubscriptionGapRule,
+    react19BrowserWithoutUseRule,
+    react19EffectEventMisuseRule,
+    react19UseInTryCatchRule,
+    reactCompilerInputMutationRule,
     reactRenderingCallbackMisuseRule,
     reactRenderingKeyMisuseRule,
     reactRenderingUnnecessaryRerenderRule,

@@ -7,6 +7,7 @@ import {
 } from "./react-context";
 import type { ReactPlugin } from "./react-plugin";
 import type { ReactPerformanceConfiguration, ReactRule } from "./react-rule";
+import type { FrameworkContext } from "../semantic/framework-context";
 
 const NON_AST_KEYS = new Set(["parent", "loc", "range", "tokens", "comments"]);
 
@@ -15,6 +16,7 @@ export interface ReactEngineInput {
   readonly file: string;
   readonly plugins: readonly ReactPlugin[];
   readonly performance?: ReactPerformanceConfiguration;
+  readonly framework?: FrameworkContext;
 }
 
 export interface ReactAnalysisResult {
@@ -42,6 +44,7 @@ export class ReactEngine {
       ast,
       input.plugins,
       input.performance,
+      input.framework,
     );
 
     const findings: ReviewFinding[] = [];
@@ -107,13 +110,18 @@ export class ReactEngine {
         hooks: context.hooks,
         dependencyHooks: context.dependencyHooks,
         performance: context.performance,
+        framework: context.framework,
       });
 
-      return Array.isArray(result)
+      const findings = Array.isArray(result)
         ? result.filter((finding): finding is ReviewFinding =>
           this.isReviewFinding(finding),
         )
         : [];
+
+      return rule.rollout === "advisory"
+        ? findings.map((finding) => ({ ...finding, severity: "info" }))
+        : findings;
     } catch {
       if (!failedRuleIds.has(rule.id)) {
         failedRuleIds.add(rule.id);

@@ -2,7 +2,7 @@
 
 > Engineering contract: [`../../AGENTS.md`](../../AGENTS.md)
 
-Status: ⏳ Planned
+Status: 🚧 Engineering mechanisms complete; empirical qualification pending
 
 Prerequisites:
 
@@ -164,7 +164,7 @@ This is a target shape, not authorization for a big-bang refactor. Reuse current
 
 ## 8.1 — Framework Detection & Capability Model v2
 
-Status: 📌 First implementation phase
+Status: ✅ Complete
 
 Objective: establish reliable framework context once and inject it into framework-aware rules.
 
@@ -205,11 +205,18 @@ Acceptance criteria:
 - missing package/config context degrades to `unknown` rather than fabricated certainty
 - framework context is deterministic for identical repository input
 
+Implemented:
+
+- Added deterministic `FrameworkContext` resolution in `src/react/semantic/framework-context.ts`.
+- React/Next.js dependency and config evidence now drive React detection, Next.js detection, router mode, React Compiler state, Cache Components state, and route runtime mode.
+- Next.js App Router rules now require established framework context in addition to an App Router path.
+- Added regression coverage for React-only `app/` paths, `app/`, `src/app/`, Pages Router, mixed router, missing evidence, compiler config, cacheComponents, and Node/Edge runtime evidence.
+
 ---
 
 ## 8.2 — React 19.x Intelligence
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Objective: cover modern React semantics that materially change correctness or review guidance.
 
@@ -240,7 +247,7 @@ Acceptance criteria:
 
 ## 8.3 — React Compiler-Aware Review
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Objective: prevent performance review from giving obsolete manual-memoization advice when React Compiler is active, while detecting code patterns that materially defeat or conflict with compiler assumptions.
 
@@ -262,7 +269,7 @@ Acceptance criteria:
 
 ## 8.4 — Next.js App Router Intelligence v2
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Objective: reason about App Router file roles and route-segment semantics rather than isolated files only.
 
@@ -297,7 +304,7 @@ Acceptance criteria:
 
 ## 8.5 — Cache Components & Data Lifecycle Intelligence
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Objective: analyze cache scope, mutation, and invalidation as a lifecycle rather than isolated API calls.
 
@@ -341,7 +348,7 @@ High-severity cache leakage findings require cross-file evidence strong enough t
 
 ## 8.6 — Server Actions & Mutation Security
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Objective: analyze Server Actions as server-side entry points that require the same trust-boundary discipline as API handlers.
 
@@ -383,7 +390,7 @@ Constraints:
 
 ## 8.7 — Routing, Streaming & Navigation Performance
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Objective: detect regressions that make modern App Router navigation block unnecessarily or create avoidable waterfalls.
 
@@ -411,7 +418,7 @@ Performance findings must explain the execution dependency that creates blocking
 
 ## 8.8 — Runtime & Deployment Correctness
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Objective: catch code that is valid TypeScript/React but incompatible with the selected Next.js runtime or deployment boundary.
 
@@ -432,7 +439,7 @@ Acceptance criteria:
 
 ## 8.9 — Framework Evaluation Corpus & Qualification
 
-Status: ⏳ Planned; execute before broad production promotion
+Status: 🚧 Synthetic qualification complete; verified-source evidence pending
 
 Objective: establish whether Phase 8 rules are trustworthy across framework versions and repository shapes.
 
@@ -460,11 +467,17 @@ Initial quality targets:
 
 Targets are qualification goals, not guarantees. If the corpus is too small, reports must say `insufficient evidence` and the rule remains experimental/advisory.
 
+Current qualification evidence:
+
+- `npm run evaluation:phase8-report` executes eight synthetic matrix cases through the production pipeline.
+- Deterministic repeatability is 100%, rule crash rate is 0%, and protected/version-gating regressions are 0.
+- The report status is `insufficient-evidence`; every new Phase 8 rule remains advisory pending a sufficiently large verified-source cohort.
+
 ---
 
 ## 8.10 — Framework Context for AI Review
 
-Status: ⏳ Planned
+Status: ✅ Complete
 
 Objective: let AI reason with verified framework facts without making framework detection itself probabilistic.
 
@@ -488,9 +501,11 @@ Constraints:
 
 ## 8.11 — Hardening, Presets & Release
 
-Status: ⏳ Planned
+Status: ✅ Complete for advisory rollout
 
 Objective: consolidate Phase 8 into maintainable framework support with explicit compatibility and rollout contracts.
+
+The advisory release contract, compatibility matrix, finding codes, and qualification command are documented in `docs/review-intelligence.md`. Promotion to qualified/blocking behavior remains intentionally incomplete until Phase 8.9 has verified-source evidence.
 
 Scope:
 

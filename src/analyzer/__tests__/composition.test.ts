@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   AnalyzerContributionRegistry,
+  createReactAnalyzerContribution,
   runAnalyzerContributions,
   type AnalyzerContribution,
 } from "../composition";
@@ -97,6 +98,54 @@ describe("deterministic analyzer composition", () => {
 
     expect(result.findings).toEqual([
       expect.objectContaining({ ruleId: "security.second", severity: "critical" }),
+    ]);
+  });
+
+  it("resolves React framework context per nearest package boundary", () => {
+    const reactContribution = createReactAnalyzerContribution(
+      "test.react-context",
+      10,
+      () => [{
+        id: "test.react-context-plugin",
+        name: "React context test plugin",
+        version: "1.0.0",
+        rules: [{
+          id: "test.next-context",
+          description: "Emits only for Next.js packages.",
+          check(node, context) {
+            if (node.type !== "Program" || context.framework?.nextjs === undefined) {
+              return [];
+            }
+
+            return [{
+              id: `test.next-context:${context.file}`,
+              ruleId: "test.next-context",
+              title: "Next.js context",
+              message: "Next.js context is package-local.",
+              severity: "info",
+              source: "ast",
+              confidence: 1,
+              location: { file: context.file, line: 1 },
+            }];
+          },
+        }],
+      }],
+    );
+    const result = reactContribution.analyze([
+      {
+        path: "packages/dashboard/package.json",
+        content: JSON.stringify({ dependencies: { next: "16.0.0", react: "19.2.0" } }),
+      },
+      { path: "packages/dashboard/src/app/page.tsx", content: "export default function Page() { return null; }" },
+      {
+        path: "packages/widget/package.json",
+        content: JSON.stringify({ dependencies: { react: "18.3.1" } }),
+      },
+      { path: "packages/widget/src/app/view.tsx", content: "export function View() { return null; }" },
+    ]);
+
+    expect(result.findings.map((finding) => finding.location?.file)).toEqual([
+      "packages/dashboard/src/app/page.tsx",
     ]);
   });
 });

@@ -37,7 +37,7 @@ export const nextjsClientHookInServerComponentRule: ReactRule = {
   check(node, context) {
     if (
       node.type !== "CallExpression" ||
-      !isAppRouterFile(context.file) ||
+      !isAppRouterContext(context) ||
       isClientComponent(context)
     ) {
       return [];
@@ -74,7 +74,7 @@ export const nextjsEventHandlerInServerComponentRule: ReactRule = {
   check(node, context) {
     if (
       node.type !== "JSXAttribute" ||
-      !isAppRouterFile(context.file) ||
+      !isAppRouterContext(context) ||
       isClientComponent(context)
     ) {
       return [];
@@ -107,7 +107,7 @@ export const nextjsServerImportInClientComponentRule: ReactRule = {
   check(node, context) {
     if (
       node.type !== "ImportDeclaration" ||
-      !isAppRouterFile(context.file) ||
+      !isAppRouterContext(context) ||
       !isClientComponent(context)
     ) {
       return [];
@@ -139,7 +139,7 @@ export const nextjsAsyncClientComponentRule: ReactRule = {
 
   check(node, context) {
     if (
-      !isAppRouterFile(context.file) ||
+      !isAppRouterContext(context) ||
       !isClientComponent(context) ||
       !isAsyncComponent(node, context)
     ) {
@@ -161,7 +161,7 @@ export const nextjsInvalidClientDirectivePlacementRule: ReactRule = {
   description: "Detect use client directives that appear after another statement.",
 
   check(node, context) {
-    if (node !== context.ast || !isAppRouterFile(context.file)) {
+    if (node !== context.ast || !isAppRouterContext(context)) {
       return [];
     }
 
@@ -195,6 +195,11 @@ function isClientComponent(context: ReactRuleContext): boolean {
 
 function isAppRouterFile(file: string): boolean {
   return /(^|\/)app(?:\/|$)/.test(file.replace(/\\/g, "/"));
+}
+
+function isAppRouterContext(context: ReactRuleContext): boolean {
+  const router = context.framework?.nextjs?.router;
+  return (router === "app" || router === "mixed") && isAppRouterFile(context.file);
 }
 
 function findClientDirective(

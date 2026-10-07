@@ -20,3 +20,9 @@ export {
   type ReactRule,
   type ReactRuleContext,
 } from "./react-rule";
+
+export {
+  resolveFrameworkContext,
+  type FrameworkContext,
+  type FrameworkMinimumVersion,
+} from "../semantic/framework-context";

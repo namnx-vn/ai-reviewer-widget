@@ -67,6 +67,31 @@ The file adapter uses restricted metadata files, fsync, an exclusive writer lock
 
 `npm run evaluation:phase7-report` emits the versioned scorecard, calibration diagnostics, operational SLO assessment, semantic program summaries and metamorphic/adversarial report. CI fails only if a maintained supported transformation becomes unstable; known capability gaps and insufficient sample sizes remain explicit report data and block promotion rather than being relabeled as passes.
 
+`npm run evaluation:phase8-report` runs the modern React/Next.js framework matrix through the production review pipeline. It covers React 18/19, React Compiler states, Next.js 15/16, App/Pages/mixed routers, Cache Components, and Node/Edge runtime evidence. The bundled fixtures are synthetic, so the report intentionally returns `insufficient-evidence` with advisory rollout even when deterministic repeatability and regression checks pass.
+
+Phase 8 framework rules use capability evidence resolved per nearest package boundary. React-only repositories are never classified as Next.js from an `app/` path alone. New Phase 8 rules declare `rollout: "advisory"`; the React engine preserves their findings but normalizes severity to `info` until verified-source evaluation satisfies promotion policy. Existing qualified React and Phase 3.4 Next.js rules retain their established behavior.
+
+Compatibility currently exercised by the framework corpus:
+
+| Target | Supported context |
+| --- | --- |
+| React | 18.x compatibility; 19.x capability-gated rules |
+| React Compiler | enabled, disabled, unknown |
+| Next.js | 15.x compatibility and 16.x App Router capabilities |
+| Router | App, Pages, mixed, unknown |
+| Runtime | Node.js, Edge, mixed, unknown |
+
+Phase 8 advisory finding codes:
+
+- React: `react.react19.browser-without-use`, `react.react19.effect-event-misuse`, `react.react19.use-in-try-catch`, `react.compiler.input-mutation`.
+- App Router/runtime/navigation: `next.app.invalid-metadata-client-component`, `next.app.route-handler-runtime-conflict`, `next.navigation.async-waterfall`, `next.runtime.node-import-in-edge`.
+- Cache lifecycle: `next.cache.request-data-inside-cache`, `next.cache.mutation-without-invalidation`, `next.cache.tag-never-invalidated`.
+- Server Actions: `nextjs.actions.unvalidated-mutation-input`, `nextjs.actions.client-controlled-owner`, `nextjs.actions.sensitive-return`.
+
+No generic warning is emitted merely for using `Activity`, `ViewTransition`, or Fragment refs. Those APIs remain capability facts until a defect can be established mechanically; this avoids version-driven unfamiliarity warnings.
+
+Framework context added to AI review is versioned, bounded, and deterministic. Facts marked `unknown` remain unknown; prompts explicitly prohibit overriding them from paths, PR text, diffs, or model memory.
+
 The local operator also exposes diagnostic report commands:
 
 ```bash

@@ -66,17 +66,28 @@ describe("reviewer orchestration", () => {
   it("integrates optional Next.js intelligence for App Router files", async () => {
     const result = await reviewPullRequest({
       title: "Add interactive page",
-      files: [{
-        path: "app/dashboard/page.tsx",
-        content: `
-          import { useState } from "react";
+      files: [
+        {
+          path: "package.json",
+          content: JSON.stringify({
+            dependencies: {
+              next: "16.0.0",
+              react: "19.2.8",
+            },
+          }),
+        },
+        {
+          path: "app/dashboard/page.tsx",
+          content: `
+            import { useState } from "react";
 
-          export default function Page() {
-            const [open] = useState(false);
-            return <button onClick={() => undefined}>{String(open)}</button>;
-          }
-        `,
-      }],
+            export default function Page() {
+              const [open] = useState(false);
+              return <button onClick={() => undefined}>{String(open)}</button>;
+            }
+          `,
+        },
+      ],
     });
 
     expect(result.findings).toEqual(expect.arrayContaining([
@@ -116,6 +127,62 @@ describe("reviewer orchestration", () => {
     expect(result.findings.map((finding) => finding.ruleId)).not.toContain(
       "nextjs.app-router.event-handler-in-server-component",
     );
+  });
+
+  it("runs Phase 8 Next.js rules for TypeScript App Router modules", () => {
+    const result = reviewFiles([
+      {
+        path: "package.json",
+        content: JSON.stringify({
+          dependencies: {
+            next: "16.0.0",
+            react: "19.2.0",
+          },
+        }),
+      },
+      {
+        path: "next.config.ts",
+        content: "export default { cacheComponents: true };",
+      },
+      {
+        path: "app/api/report/route.ts",
+        content: `
+          import { readFile } from "node:fs/promises";
+          export const runtime = "edge";
+          export function GET() { return Response.json({ readFile }); }
+        `,
+      },
+      {
+        path: "app/account/actions.ts",
+        content: `
+          "use server";
+
+          export async function updateProfile(formData: FormData) {
+            await db.user.update({
+              where: { id: "known-user" },
+              data: { displayName: formData.get("displayName") },
+            });
+          }
+        `,
+      },
+      {
+        path: "app/account/data.ts",
+        content: `
+          import { cookies } from "next/headers";
+
+          export async function getAccount() {
+            "use cache";
+            return (await cookies()).get("account");
+          }
+        `,
+      },
+    ]);
+
+    expect(result.findings).toEqual(expect.arrayContaining([
+      expect.objectContaining({ ruleId: "next.runtime.node-import-in-edge" }),
+      expect.objectContaining({ ruleId: "nextjs.actions.unvalidated-mutation-input" }),
+      expect.objectContaining({ ruleId: "next.cache.request-data-inside-cache" }),
+    ]));
   });
 
   it("keeps valid findings when another source file cannot be parsed", () => {

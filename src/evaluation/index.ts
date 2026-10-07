@@ -86,3 +86,11 @@ export { runCandidateTournament } from "./tournament";
 export type * from "./tournament";
 export { buildObservationScorecard } from "./observation-scorecard";
 export type { RepositorySnapshot, RepositoryReviewEvaluation, PullRequestEvaluationInput, PullRequestReviewEvaluation } from "./repository-review";
+export { PHASE_8_FRAMEWORK_CORPUS, runPhase8FrameworkQualification } from "./phase-8-framework";
+export type {
+  FrameworkEvidenceFidelity,
+  Phase8FrameworkCase,
+  Phase8FrameworkDimensions,
+  Phase8FrameworkQualificationOptions,
+  Phase8FrameworkQualificationReport,
+} from "./phase-8-framework";

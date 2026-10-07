@@ -22,3 +22,14 @@ export {
   type DependencyHookConfiguration,
   type ResolvedDependencyHookConfiguration,
 } from "./dependency-hooks";
+
+export {
+  resolveFrameworkContext,
+  type FrameworkContext,
+  type FrameworkContextFile,
+  type FrameworkContextInput,
+  type FrameworkMinimumVersion,
+  type FrameworkTriState,
+  type NextRouterMode,
+  type NextRuntimeMode,
+} from "./framework-context";

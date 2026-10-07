@@ -2,6 +2,7 @@ import {
   DEFAULT_AI_CONTEXT_BUDGET,
   selectAIRepositoryContext,
 } from "../../ai/context-selector";
+import { buildVerifiedFrameworkContextBlock } from "../../ai/framework-context";
 import { prepareAIReviewContext } from "../../ai/input-policy";
 import type { AIProvider } from "../../ai/types";
 import { parseAIResult } from "../../ai/parser";
@@ -19,6 +20,7 @@ import { evaluateSecurityReviewQualityGate } from "../../analyzer/security/quali
 import { ReviewEngine } from "../../engine/review-engine";
 import { nextjsPlugin, reactPlugin } from "../../react";
 import type { ReactPlugin } from "../../react/engine";
+import type { FrameworkContext } from "../../react/semantic";
 import type {
   AIReviewerPort,
   DeterministicReviewResult,
@@ -73,6 +75,10 @@ function prepareBoundedAIInput(input: {
   const repositoryContext = buildRepositoryContext(input.files);
   const changedFiles = input.files.filter((file) => file.patch !== undefined && file.patch.trim().length > 0);
   const changedPaths = changedFiles.map((file) => file.path);
+  const verifiedFrameworkContext = buildVerifiedFrameworkContextBlock({
+    files: input.files,
+    changedPaths,
+  });
   const context = selectAIRepositoryContext({
     files: input.files,
     changedPaths,
@@ -86,7 +92,7 @@ function prepareBoundedAIInput(input: {
   const prepared = prepareAIReviewContext({
     title: input.title,
     description: input.description,
-    deterministicFindings: input.deterministicFindings,
+    deterministicFindings: `${input.deterministicFindings}\n\n${verifiedFrameworkContext}`,
     files: [...changedFiles, ...selectedContext],
   });
   return {
@@ -125,12 +131,26 @@ function analyzeDeterministicFiles(
   }).analyze(files, selection, incrementalScope);
 }
 
-function getReactPlugins(path: string): readonly ReactPlugin[] {
-  return isAppRouterFile(path) ? [reactPlugin, nextjsPlugin] : [reactPlugin];
+function getReactPlugins(
+  path: string,
+  framework?: FrameworkContext,
+): readonly ReactPlugin[] {
+  const plugins: ReactPlugin[] = /\.(?:jsx|tsx)$/.test(path)
+    ? [reactPlugin]
+    : [];
+
+  if (isEstablishedAppRouterModule(path, framework)) {
+    plugins.push(nextjsPlugin);
+  }
+
+  return plugins;
 }
 
-function isAppRouterFile(path: string): boolean {
-  return /(^|\/)app(?:\/[^/]+)*\/(?:page|layout|template|loading|error|not-found|route)\.(?:tsx|jsx)$/.test(
-    path.replace(/\\/g, "/"),
-  );
+function isEstablishedAppRouterModule(
+  path: string,
+  framework: FrameworkContext | undefined,
+): boolean {
+  const router = framework?.nextjs?.router;
+  return (router === "app" || router === "mixed") &&
+    /(^|\/)(?:src\/)?app(?:\/|$)/.test(path.replace(/\\/g, "/"));
 }

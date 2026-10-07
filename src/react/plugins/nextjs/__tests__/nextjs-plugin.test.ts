@@ -3,14 +3,30 @@ import { describe, expect, it } from "vitest";
 import { ReactEngine } from "../../../engine/react-engine";
 import { reactPlugin } from "../../react-plugin";
 import { nextjsPlugin } from "..";
+import type { FrameworkContext } from "../../../semantic";
 
 function analyze(source: string) {
   return new ReactEngine().analyze({
     source,
     file: "app/example/page.tsx",
     plugins: [nextjsPlugin],
+    framework: nextAppContext,
   });
 }
+
+const nextAppContext: FrameworkContext = {
+  react: {
+    detected: true,
+    version: "19.2.8",
+    compiler: "unknown",
+  },
+  nextjs: {
+    version: "16.0.0",
+    router: "app",
+    cacheComponents: "unknown",
+    runtime: "unknown",
+  },
+};
 
 describe("nextjsPlugin", () => {
   it("is opt-in and never changes the default React plugin", () => {
@@ -32,6 +48,31 @@ describe("nextjsPlugin", () => {
       `,
       file: "src/components/Button.tsx",
       plugins: [nextjsPlugin],
+      framework: nextAppContext,
+    });
+
+    expect(findings).toHaveLength(0);
+  });
+
+  it("does not infer Next.js App Router semantics from an app path without framework evidence", () => {
+    const findings = new ReactEngine().analyze({
+      source: `
+        import { useState } from "react";
+
+        export default function Page() {
+          const [open] = useState(false);
+          return <button onClick={() => undefined}>{String(open)}</button>;
+        }
+      `,
+      file: "src/app/page.tsx",
+      plugins: [nextjsPlugin],
+      framework: {
+        react: {
+          detected: true,
+          version: "19.2.8",
+          compiler: "unknown",
+        },
+      },
     });
 
     expect(findings).toHaveLength(0);
