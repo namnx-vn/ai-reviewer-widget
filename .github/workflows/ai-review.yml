@@ -34,6 +34,9 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Pin npm
+        run: npm install --global npm@11.6.0 --no-audit --no-fund
+
       - name: Install dependencies
         run: npm ci
 
