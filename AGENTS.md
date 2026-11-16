@@ -138,8 +138,11 @@ Detailed plans are maintained in `/plans`.
 | 4.6    | ✅ Complete    | [Persistence & Review History](./plans/phase-4/4.6-persistence-review-history.md)      |
 | 4.7    | ✅ Complete    | [Observability & Operational Diagnostics](./plans/phase-4/4.7-observability.md)        |
 | 4.8    | ✅ Complete    | [Organization Platform & Policy Governance](./plans/phase-4/4.8-organization-platform.md) |
+| 5.1    | ✅ Complete    | [Advanced AI](./plans/phase-5/README.md)                                               |
+| 6      | ✅ Complete (6.1–6.11) | [Real-World Review Reliability](./plans/phase-6/README.md)                     |
 | R1     | ✅ Complete    | [Source Architecture Refactor](./plans/source-architecture-refactor.md)                |
 | 7      | 🚧 Mechanisms complete; empirical qualification pending | [Continuous Review Intelligence](./plans/phase-7/README.md) |
+| 8      | 🚧 Mechanisms complete; empirical qualification pending | [Modern React & Next.js Review Intelligence](./plans/phase-8/README.md) |
 
 ## Plan Execution Rule
 

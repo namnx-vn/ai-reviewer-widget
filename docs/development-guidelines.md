@@ -75,7 +75,7 @@ GitHub-specific code stays in `src/github/` or executable scripts that orchestra
 
 ## Components and styling
 
-The UI stack is React 18, Ant Design, styled-components, Framer Motion, and lucide-react. Do not introduce another UI framework, state library, CSS system, or build framework without explicit approval. In particular, `AGENTS.md` says not to introduce Redux, Zustand, MobX, React Query, Next.js, or Tailwind merely by preference.
+The UI stack is React 19, Ant Design, styled-components, Framer Motion, and lucide-react. Do not introduce another UI framework, state library, CSS system, or build framework without explicit approval. In particular, `AGENTS.md` says not to introduce Redux, Zustand, MobX, React Query, Next.js, or Tailwind merely by preference.
 
 Presentation components must not perform AST parsing, GitHub API calls, LLM calls, or review scoring.
 

@@ -148,9 +148,7 @@ Status: ✅ Complete through Phase 6.11
 
 # Phase 7 — Continuous Review Intelligence & Reliability
 
-Status: ✅ Engineering mechanisms implemented; 🚧 empirical production qualification pending
-
-Status: 🚧 Reliability foundation implemented; empirical qualification and remaining roadmap work continue.
+Status: ✅ Engineering mechanisms implemented; 🚧 empirical qualification and hard process isolation remain incomplete.
 
 Prerequisite: Phase 6.11 must be completed and its expanded evaluation/adjudication baseline frozen before Phase 7 production behavior changes are promoted.
 
@@ -160,26 +158,26 @@ Prerequisite: Phase 6.11 must be completed and its expanded evaluation/adjudicat
 
 | Phase | Status | Scope |
 | --- | --- | --- |
-| 7.1 | 📌 Next after 6.11 | Ground Truth & Adjudication Expansion |
-| 7.2 | ⏳ Planned | Reliability Scorecard |
-| 7.3 | ⏳ Planned | Confidence Calibration |
-| 7.4 | ⏳ Planned | Evidence Graph & Finding Evidence Contract |
-| 7.5 | ⏳ Planned | Semantic Program Intelligence |
-| 7.6 | ⏳ Planned | Finding Verification Pipeline |
-| 7.7 | ⏳ Planned | Counterexample Engine |
-| 7.8 | ⏳ Planned | Developer Outcome Learning |
-| 7.9 | ⏳ Planned | Automated Failure Mining |
-| 7.10 | ⏳ Planned | Improvement Proposal Agent |
-| 7.11 | ⏳ Planned | Regression Case Generation |
-| 7.12 | ⏳ Planned | Candidate Tournament & Promotion Gates |
-| 7.13 | ⏳ Planned | Shadow Review |
-| 7.14 | ⏳ Planned | Repository-Adaptive Intelligence |
-| 7.15 | ⏳ Planned | Temporal & Historical Review Intelligence |
-| 7.16 | ⏳ Planned | Differential / Change-Introduced Analysis |
-| 7.17 | ⏳ Planned | Metamorphic / Semantic Stability Testing |
-| 7.18 | ⏳ Planned | Adversarial Reviewer Testing |
-| 7.19 | ⏳ Planned | Reviewer Trust Policy |
-| 7.20 | ⏳ Planned | Production Reliability SLO & Continuous Quality Gate |
+| 7.1 | ✅ Adjudication implemented; 100-case/15-repository exit gate pending | Ground Truth & Adjudication Expansion |
+| 7.2 | ✅ Mechanism implemented; qualification pending | Reliability Scorecard |
+| 7.3 | ✅ Fit/report/drift mechanisms implemented; representative calibration data pending | Confidence Calibration |
+| 7.4 | ✅ Metadata contract implemented; production-wide evidence coverage pending | Evidence Graph & Finding Evidence Contract |
+| 7.5 | ✅ Bounded primitives implemented; wider interprocedural coverage pending | Semantic Program Intelligence |
+| 7.6 | ✅ Explicit reliable pipeline implemented; default production adoption pending qualification | Finding Verification Pipeline |
+| 7.7 | ✅ Registry and fail-closed stages implemented; measured FP reduction pending | Counterexample Engine |
+| 7.8 | ✅ Durable metadata learning implemented | Developer Outcome Learning |
+| 7.9 | ✅ Reproducible scoped clustering implemented | Automated Failure Mining |
+| 7.10 | ✅ Pending proposal generation implemented; production mutation prohibited | Improvement Proposal Agent |
+| 7.11 | ✅ Pending exact-capture drafts and independent verification implemented | Regression Case Generation |
+| 7.12 | ✅ Tournament and protected gates implemented; qualifying holdout pending | Candidate Tournament & Promotion Gates |
+| 7.13 | ✅ Isolated publication path implemented; hard process isolation pending | Shadow Review |
+| 7.14 | ✅ Advisory-only versioned priors implemented | Repository-Adaptive Intelligence |
+| 7.15 | ✅ Metadata history and staleness handling implemented | Temporal & Historical Review Intelligence |
+| 7.16 | ✅ Selected semantic property deltas implemented | Differential / Change-Introduced Analysis |
+| 7.17 | ✅ Bounded suite implemented; representative 99% qualification pending | Metamorphic / Semantic Stability Testing |
+| 7.18 | ✅ Versioned initial corpus implemented; expansion ongoing | Adversarial Reviewer Testing |
+| 7.19 | ✅ Central policy and reliable composition implemented; measured eligibility pending | Reviewer Trust Policy |
+| 7.20 | ✅ SLO/report/CI mechanisms implemented; production sample qualification pending | Production Reliability SLO & Continuous Quality Gate |
 
 Phase 7 is organized into four execution waves: Measure Truth, Improve Reasoning, Continuous Learning, and Safe Self-Improvement & Production Hardening. The detailed dependencies, safety contract, target metrics, and completion criteria are defined in the Phase 7 overview.
 

@@ -4,7 +4,7 @@ AI Reviewer Widget is an AI-assisted code review platform that combines determin
 
 ## Status
 
-Phase 3.6 — Security Intelligence is complete. Phase 3.7 — Performance Intelligence is active with partial sub-phases complete; Phase 3.8 — Plugin SDK remains planned in `plans/`.
+Phases 1–6 (including Phase 3.6 Security Intelligence, Phase 3.7 Performance Intelligence and Phase 3.8 Plugin SDK) and the R1 source architecture refactor are complete. Phase 7 (continuous review intelligence and reliability) and Phase 8 (modern React and Next.js review intelligence) have their engineering mechanisms implemented, while empirical production qualification is still pending. See `plans/README.md` for the roadmap and `docs/implementation-phases.md` for implementation evidence and limitations.
 
 The browser UI is currently a **demo presentation surface** backed by a static `ReviewResult`; the operational review workflow is the CLI/GitHub Actions path through `scripts/review-pr.ts`.
 
@@ -22,7 +22,7 @@ The browser UI is currently a **demo presentation surface** backed by a static `
 ## Technology stack
 
 - Node.js 22+, npm, TypeScript, ES modules
-- React 18, React DOM 18, Vite, `@vitejs/plugin-react-swc`
+- React 19, React DOM 19, Vite, `@vitejs/plugin-react-swc`
 - Ant Design, styled-components, Framer Motion, lucide-react
 - `@typescript-eslint/typescript-estree` for AST analysis
 - `@octokit/rest` for GitHub integration
