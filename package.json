@@ -38,10 +38,10 @@
   },
   "dependencies": {
     "@octokit/rest": "^22.0.1",
-    "@typescript-eslint/typescript-estree": "^8.68.0",
-    "antd": "^6.6.2",
-    "framer-motion": "^13.1.1",
-    "lucide-react": "^1.35.0",
+    "@typescript-eslint/typescript-estree": "^8.73.0",
+    "antd": "^6.7.1",
+    "framer-motion": "^14.14.0",
+    "lucide-react": "^1.77.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "styled-components": "^6.1.13"
